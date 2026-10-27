@@ -1,0 +1,4 @@
+module CMiniCore [system] {
+    header "../../../core/include/mini_core.h"
+    export *
+}

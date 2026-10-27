@@ -1,0 +1,4 @@
+/build/
+/core/target/
+/shell/.build/
+.DS_Store
