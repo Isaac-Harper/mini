@@ -9,7 +9,7 @@ CARGO_PROFILE_FLAG :=
 endif
 
 .DEFAULT_GOAL := bundle
-.PHONY: core shell bundle run install clean
+.PHONY: core shell bundle run install release clean
 
 core:
 	cd core && cargo build $(CARGO_PROFILE_FLAG)
@@ -33,6 +33,10 @@ install: bundle
 	ditto build/Mini.app /Applications/Mini.app
 	$(LSREGISTER) -f /Applications/Mini.app
 	open /Applications/Mini.app
+
+release:
+	@test -n "$(VERSION)" || { echo "usage: make release VERSION=X.Y.Z" >&2; exit 1; }
+	scripts/release.sh $(VERSION)
 
 clean:
 	rm -rf build

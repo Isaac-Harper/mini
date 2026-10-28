@@ -2,6 +2,8 @@
 
 A small, quiet macOS browser for one person. Chromium renders the pages; everything you touch is native: an AppKit window, a SwiftUI sidebar, Liquid Glass materials, and keyboard focus that behaves like a Mac app.
 
+Mini is an open source exploration project: a personal, minimal browser built to explore a native Swift shell over Chromium (CEF).
+
 - Vertical sidebar with nested tabs (a tree), pinned tabs as favicon tiles
 - Command bar for URLs, search (with Google suggestions) and switching tabs
 - Built-in ad and tracker blocking (uBlock Origin, EasyList and EasyPrivacy lists)
@@ -13,6 +15,10 @@ A small, quiet macOS browser for one person. Chromium renders the pages; everyth
 - A crashed page shows a Reload button instead of a blank tab
 - A one-line weather row at the bottom of the sidebar (Open-Meteo, city-level location; click to search the weather)
 - No extensions, sync, accounts or settings window
+
+## Download
+
+Signed and notarized builds for Apple Silicon (macOS 26 or later) are on the [Releases](https://github.com/Isaac-Harper/mini/releases) page. Unzip, move Mini to Applications and open it. There is no auto-update.
 
 ## Requirements
 
@@ -33,6 +39,7 @@ The first build downloads the Chromium Embedded Framework (about 300 MB) into `~
 | --- | --- |
 | `make` | Builds the Rust core, the Swift shell, and assembles `build/Mini.app` |
 | `make run` | Builds, then opens the app |
+| `make release VERSION=X.Y.Z` | Builds with a secure timestamp, notarizes and staples the app, and publishes `Mini-X.Y.Z-arm64.zip` as a GitHub release (needs a clean, pushed tree and the `lowlight-notary` profile) |
 | `make install` | Builds, quits a running Mini, copies it to `/Applications`, registers it with Launch Services and relaunches it |
 | `make CONFIG=debug run` | Debug build |
 | `make clean` | Removes all build output |

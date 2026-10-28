@@ -124,8 +124,17 @@ for helper_kind in "" "GPU" "Renderer" "Plugin" "Alerts"; do
 done
 
 echo "==> Signing with identity '$sign_identity'"
+signing_flags=(--force --sign "$sign_identity")
+if [[ "$sign_identity" != "-" ]]; then
+  signing_flags+=(--options runtime)
+fi
+if [[ "${MINI_TIMESTAMP:-0}" == "1" ]]; then
+  signing_flags+=(--timestamp)
+else
+  signing_flags+=(--timestamp=none)
+fi
 sign() {
-  codesign --force --sign "$sign_identity" "$@"
+  codesign "${signing_flags[@]}" "$@"
 }
 framework="$frameworks/Chromium Embedded Framework.framework"
 for library in "$framework/Libraries/"*.dylib; do
@@ -133,10 +142,14 @@ for library in "$framework/Libraries/"*.dylib; do
 done
 sign "$framework"
 for helper_app in "${helper_apps[@]}"; do
-  sign "$helper_app"
+  case "$helper_app" in
+    *"(GPU).app" | *"(Renderer).app" | *"(Plugin).app")
+      sign --entitlements "$repository_root/bundle/MiniHelper.entitlements" "$helper_app" ;;
+    *) sign "$helper_app" ;;
+  esac
 done
 if [[ -f "$contents/MacOS/Mini" ]]; then
-  sign "$app"
+  sign --entitlements "$repository_root/bundle/Mini.entitlements" "$app"
 else
   echo "==> No main executable; skipping signing of Mini.app itself"
 fi
