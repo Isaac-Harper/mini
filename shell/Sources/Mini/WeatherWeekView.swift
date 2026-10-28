@@ -39,11 +39,25 @@ final class WeatherPopoverPresenter {
         let popover = NSPopover()
         popover.behavior = .applicationDefined
         popover.animates = !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
-        popover.contentViewController = NSHostingController(rootView: WeatherWeekView(reading: reading) { [weak self] inside in
+        let content = NSHostingController(rootView: WeatherWeekView(reading: reading) { [weak self] inside in
             self?.popoverHoverChanged(inside)
         })
-        popover.show(relativeTo: anchor.bounds, of: anchor, preferredEdge: .maxX)
+        popover.contentViewController = content
+        let placement = Self.placement(for: content.view.fittingSize, from: anchor)
+        popover.show(relativeTo: placement.rect, of: anchor, preferredEdge: placement.edge)
         self.popover = popover
+    }
+
+    private static func placement(for size: NSSize, from anchor: NSView) -> (rect: NSRect, edge: NSRectEdge) {
+        guard let window = anchor.window else { preconditionFailure("weather anchor outside a window") }
+        let row = anchor.convert(anchor.bounds, to: nil)
+        let margin: CGFloat = 16
+        if row.midY - size.height / 2 >= margin, row.midY + size.height / 2 <= window.contentLayoutRect.maxY - margin {
+            return (anchor.bounds, .maxX)
+        }
+        let centerX = min(max(row.midX, margin + size.width / 2), row.maxX)
+        let pointX = anchor.convert(NSPoint(x: centerX, y: row.midY), from: nil).x
+        return (NSRect(x: pointX - 1, y: anchor.bounds.minY, width: 2, height: anchor.bounds.height), anchor.isFlipped ? .minY : .maxY)
     }
 
     private func popoverHoverChanged(_ inside: Bool) {
