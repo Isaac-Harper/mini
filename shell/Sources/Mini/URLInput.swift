@@ -40,6 +40,11 @@ enum URLInput {
         return host.hasPrefix("www.") ? String(host.dropFirst(4)) : host
     }
 
+    static func isInsecure(_ address: String) -> Bool {
+        guard let url = URL(string: address), url.scheme?.lowercased() == "http", let host = url.host()?.lowercased() else { return false }
+        return !(host == "localhost" || host.hasSuffix(".localhost") || host == "127.0.0.1" || host == "::1" || host == "[::1]")
+    }
+
     private static func hasScheme(_ input: String) -> Bool {
         guard !input.contains(" "), let colonIndex = input.firstIndex(of: ":") else { return false }
         let scheme = input[..<colonIndex]

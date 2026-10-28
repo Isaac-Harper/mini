@@ -135,15 +135,29 @@ struct SidebarActionRow: View {
 private struct AddressPill: View {
     let shell: ShellController
 
+    @State private var isHovered = false
+
     var body: some View {
         let selected = shell.store.selectedTab
         let host = selected.flatMap { URLInput.host(of: $0.url) }
+        let showsFullAddress = isHovered && host != nil
+        let isInsecure = selected.map { URLInput.isInsecure($0.url) } ?? false
         GlassEffectContainer(spacing: 8) {
             HStack(spacing: 0) {
+                if isInsecure {
+                    Image(systemName: "lock.slash")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(.secondary)
+                        .padding(.leading, 12)
+                        .padding(.trailing, -6)
+                        .frame(height: 32)
+                        .help("Not Secure: this page is not using HTTPS")
+                        .accessibilityLabel("Not Secure")
+                }
                 Button {
                     shell.commandBar.open(mode: .editCurrent)
                 } label: {
-                    Text(host ?? "Search or enter address")
+                    Text(showsFullAddress ? selected?.url ?? "" : host ?? "Search or enter address")
                         .lineLimit(1)
                         .truncationMode(.middle)
                         .foregroundStyle(host == nil ? .tertiary : .secondary)
@@ -154,6 +168,8 @@ private struct AddressPill: View {
                 }
                 .buttonStyle(.plain)
                 .focusable(false)
+                .help(selected?.url ?? "")
+                .onHover { self.isHovered = $0 }
                 if let selected, selected.hasLoginForm, selected.hasBrowser {
                     Button {
                         shell.fillPassword(nil)
