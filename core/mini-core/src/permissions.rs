@@ -2,7 +2,7 @@ use cef::*;
 use std::{cell::RefCell, collections::HashMap};
 
 use crate::{
-    MiniTabId,
+    MiniTabId, login, notifications,
     state::{c_string, callbacks, next_request_id},
 };
 
@@ -114,6 +114,10 @@ enum PendingCallback {
         prompt_id: u64,
         requested_mini: u32,
     },
+    Notifications {
+        browser: Browser,
+        frame_id: String,
+    },
 }
 
 struct PendingPermission {
@@ -170,6 +174,10 @@ pub fn request_prompt(
     );
 }
 
+pub fn request_notifications(tab: MiniTabId, origin: &str, browser: Browser, frame_id: String) {
+    request(tab, origin, NOTIFICATIONS, PendingCallback::Notifications { browser, frame_id });
+}
+
 pub fn respond(request: u64, granted: u32) {
     let Some(pending) = PENDING.with_borrow_mut(|pending| pending.remove(&request)) else {
         return;
@@ -192,6 +200,14 @@ pub fn respond(request: u64, granted: u32) {
                 PermissionRequestResult::DENY
             };
             callback.cont(result);
+        }
+        PendingCallback::Notifications { browser, frame_id } => {
+            let state = if granted & NOTIFICATIONS != 0 {
+                notifications::GRANTED
+            } else {
+                notifications::DENIED
+            };
+            notifications::deliver_permission_result(&browser, &frame_id, login::token(), state);
         }
     }
 }
@@ -233,8 +249,15 @@ pub fn dismiss_for_tab(tab: MiniTabId) {
             .collect()
     });
     for (request, entry) in dismissed {
-        if let PendingCallback::Media { callback, .. } = entry.callback {
-            callback.cancel();
+        match entry.callback {
+            PendingCallback::Media { callback, .. } => callback.cancel(),
+            PendingCallback::Notifications { browser, frame_id } => notifications::deliver_permission_result(
+                &browser,
+                &frame_id,
+                login::token(),
+                notifications::DEFAULT,
+            ),
+            PendingCallback::Prompt { .. } => {}
         }
         unsafe { (callbacks().permission_dismissed)(request) };
     }

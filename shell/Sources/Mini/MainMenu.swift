@@ -78,6 +78,7 @@ enum MainMenu {
         menu.addItem(item("Actual Size", #selector(ShellController.actualSizePage(_:)), "0", target: commands))
         menu.addItem(.separator())
         menu.addItem(item("Block Ads on This Site", #selector(ShellController.toggleAdBlockForSite(_:)), "", target: commands))
+        menu.addItem(item("Allow Notifications from This Site", #selector(ShellController.toggleNotificationsForSite(_:)), "", target: commands))
         menu.addItem(item("Reset Permissions for This Site", #selector(ShellController.resetPermissionsForSite(_:)), "", target: commands))
         menu.addItem(.separator())
         menu.addItem(item("Developer Tools", #selector(ShellController.showDeveloperTools(_:)), "i", [.command, .option], target: commands))

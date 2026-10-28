@@ -41,8 +41,36 @@ final class SitePreferences {
         return decision.allowed & permissions
     }
 
+    var onNotificationsGranted: (() -> Void)?
+
+    private static let notificationsBit = MINI_PERMISSION_NOTIFICATIONS.rawValue
+
+    func notificationPermission(forSiteAt address: String) -> MiniNotificationPermission {
+        guard let key = Self.origin(of: address), let decision = permissionDecisions[key] else { return MINI_NOTIFICATION_DEFAULT }
+        if decision.allowed & Self.notificationsBit != 0 { return MINI_NOTIFICATION_GRANTED }
+        if decision.denied & Self.notificationsBit != 0 { return MINI_NOTIFICATION_DENIED }
+        return MINI_NOTIFICATION_DEFAULT
+    }
+
+    func pushNotificationPermissions() {
+        for key in permissionDecisions.keys {
+            pushNotificationPermission(origin: key)
+        }
+    }
+
+    private func pushNotificationPermission(origin key: String) {
+        let state = notificationPermission(forSiteAt: key)
+        key.withCString { mini_set_notification_permission($0, Int32(state.rawValue)) }
+    }
+
     func remember(origin: String, permissions: UInt32, allowed: Bool) {
         guard let key = Self.origin(of: origin) else { return }
+        defer {
+            if permissions & Self.notificationsBit != 0 {
+                pushNotificationPermission(origin: key)
+                if allowed { onNotificationsGranted?() }
+            }
+        }
         var decision = permissionDecisions[key] ?? PermissionDecision()
         if allowed {
             decision.allowed |= permissions
@@ -62,6 +90,7 @@ final class SitePreferences {
     func resetPermissions(forSiteAt address: String) {
         guard let key = Self.origin(of: address), permissionDecisions.removeValue(forKey: key) != nil else { return }
         Self.save(permissionDecisions, to: permissionsFileURL)
+        pushNotificationPermission(origin: key)
     }
 
     func isAdBlockExempt(host: String) -> Bool {

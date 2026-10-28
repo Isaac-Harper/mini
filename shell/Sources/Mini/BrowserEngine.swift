@@ -111,6 +111,24 @@ final class BrowserEngine {
                     BrowserEngine.shared.requiredShell.loginFormPresenceChanged(identifier, hasLoginForm: hasLoginForm)
                 }
             },
+            notification_show: { identifier, frame, notification, origin, title, body, tag, silent in
+                let frame = requiredString(frame)
+                let origin = requiredString(origin)
+                let title = requiredString(title)
+                let body = requiredString(body)
+                let tag = requiredString(tag)
+                MainActor.assumeIsolated {
+                    BrowserEngine.shared.requiredShell.notificationShow(
+                        identifier, frame: frame, notification: notification, origin: origin,
+                        title: title, body: body, tag: tag, silent: silent)
+                }
+            },
+            notification_close: { identifier, frame, notification in
+                let frame = requiredString(frame)
+                MainActor.assumeIsolated {
+                    BrowserEngine.shared.requiredShell.notificationClose(identifier, frame: frame, notification: notification)
+                }
+            },
             browser_closed: { identifier in
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.browserClosed(identifier) }
             },

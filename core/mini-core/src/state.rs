@@ -26,6 +26,9 @@ pub struct Callbacks {
     pub login_field_focused: unsafe extern "C" fn(MiniTabId, *const c_char, *const c_char),
     pub render_process_terminated: unsafe extern "C" fn(MiniTabId, i32),
     pub login_form_presence_changed: unsafe extern "C" fn(MiniTabId, bool),
+    pub notification_show:
+        unsafe extern "C" fn(MiniTabId, *const c_char, u32, *const c_char, *const c_char, *const c_char, *const c_char, bool),
+    pub notification_close: unsafe extern "C" fn(MiniTabId, *const c_char, u32),
     pub browser_closed: unsafe extern "C" fn(MiniTabId),
     pub all_browsers_closed: unsafe extern "C" fn(),
 }
@@ -81,6 +84,12 @@ impl Callbacks {
             login_form_presence_changed: table
                 .login_form_presence_changed
                 .expect("MiniCallbacks.login_form_presence_changed is null"),
+            notification_show: table
+                .notification_show
+                .expect("MiniCallbacks.notification_show is null"),
+            notification_close: table
+                .notification_close
+                .expect("MiniCallbacks.notification_close is null"),
             browser_closed: table
                 .browser_closed
                 .expect("MiniCallbacks.browser_closed is null"),

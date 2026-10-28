@@ -13,6 +13,7 @@ Mini is an open source exploration project: a personal, minimal browser built to
 - Tabs left unselected for 12 hours archive themselves; find them again in the command bar
 - Downloads progress in the sidebar; click to cancel, or to show the file in Finder
 - A crashed page shows a Reload button instead of a blank tab
+- Web notifications appear as macOS notifications after you allow them for a site (View > Allow Notifications from This Site turns them on or off); clicking one returns you to its tab
 - A one-line weather row at the bottom of the sidebar (Open-Meteo, city-level location; click to search the weather)
 - No extensions, sync, accounts or settings window
 
@@ -107,7 +108,7 @@ Swift owns everything you see and every focus decision. Rust owns Chromium. They
 ## Known limits
 
 - One window and one profile.
-- Web notifications do not display (Chromium's content-only mode has no notification UI).
+- Web notifications only work while the page is open: Mini replaces the page's `Notification` API and `showNotification` with native macOS notifications, but a service worker cannot show notifications on its own, so push notifications for closed tabs never arrive.
 - Google sometimes refuses sign-in from embedded Chromium with "This browser or app may not be secure".
 
 ## License

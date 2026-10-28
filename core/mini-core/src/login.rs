@@ -48,7 +48,7 @@ pub fn initialize_token() {
     TOKEN.set(token).expect("login token initialized twice");
 }
 
-fn token() -> &'static str {
+pub fn token() -> &'static str {
     TOKEN
         .get()
         .expect("login token used before mini_initialize")
@@ -135,6 +135,11 @@ pub fn is_signal(message: &str) -> bool {
 }
 
 pub fn handle_signal(tab: MiniTabId, browser: &Browser, message: &str) {
+    if let Some(rest) = message.strip_prefix(token())
+        && crate::notifications::handle_signal(tab, browser, token(), rest)
+    {
+        return;
+    }
     if let Some((frame_id, present)) = parse_form_signal(token(), message) {
         if browser.frame_by_identifier(Some(&CefString::from(frame_id))).is_none() {
             return;

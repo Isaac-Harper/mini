@@ -82,6 +82,12 @@ typedef struct MiniCallbacks {
   // Whether any frame of the tab currently shows a password field. Fires only
   // on changes; a main-frame navigation resets it to false.
   void (*login_form_presence_changed)(MiniTabId tab, bool has_login_form);
+  // Web Notifications from the page shim. Only sent while the frame's origin
+  // is granted through mini_set_notification_permission. notification is
+  // unique per frame; strings are UTF-8 and only valid during the call.
+  void (*notification_show)(MiniTabId tab, const char *frame_id, uint32_t notification, const char *origin,
+                            const char *title, const char *body, const char *tag, bool silent);
+  void (*notification_close)(MiniTabId tab, const char *frame_id, uint32_t notification);
   void (*browser_closed)(MiniTabId tab);
   void (*all_browsers_closed)(void);
 } MiniCallbacks;
@@ -118,6 +124,18 @@ void mini_close_all_browsers(void);
 // Cancels an in-progress download reported by download_updated. No-op once
 // it has completed or been canceled.
 void mini_download_cancel(uint32_t download);
+
+// Notification permission the page shim reports for an origin
+// (scheme://host[:port]). Applies to frames that load afterwards; a pending
+// Notification.requestPermission resolves through mini_permission_respond.
+typedef enum MiniNotificationPermission {
+  MINI_NOTIFICATION_DEFAULT = 0,
+  MINI_NOTIFICATION_GRANTED = 1,
+  MINI_NOTIFICATION_DENIED = 2,
+} MiniNotificationPermission;
+void mini_set_notification_permission(const char *origin, int32_t state);
+// Fires the page's click event for a notification the user clicked.
+void mini_notification_clicked(MiniTabId tab, const char *frame_id, uint32_t notification);
 
 // granted is a MiniPermission bitmask; 0 denies everything requested.
 void mini_permission_respond(uint64_t request, uint32_t granted);

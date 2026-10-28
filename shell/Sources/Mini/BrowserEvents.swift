@@ -117,6 +117,15 @@ extension ShellController {
         liveTab(identifier)?.hasLoginForm = hasLoginForm
     }
 
+    func notificationShow(_ identifier: MiniTabId, frame: String, notification: UInt32, origin: String, title: String, body: String, tag: String, silent: Bool) {
+        guard liveTab(identifier) != nil else { return }
+        notifications.show(tab: identifier, frameIdentifier: frame, notification: notification, origin: origin, title: title, body: body, tag: tag, silent: silent)
+    }
+
+    func notificationClose(_ identifier: MiniTabId, frame: String, notification: UInt32) {
+        notifications.close(tab: identifier, frameIdentifier: frame, notification: notification)
+    }
+
     func browserClosed(_ identifier: MiniTabId) {
         if let tab = closingTabs.removeValue(forKey: identifier) {
             tab.hostView.removeFromSuperview()

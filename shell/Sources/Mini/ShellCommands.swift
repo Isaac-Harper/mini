@@ -182,6 +182,12 @@ extension ShellController: NSMenuItemValidation {
         reloadSelected()
     }
 
+    @objc func toggleNotificationsForSite(_ sender: Any?) {
+        guard let tab = store.selectedTab, SitePreferences.origin(of: tab.url) != nil else { return }
+        let allowed = sitePreferences.notificationPermission(forSiteAt: tab.url) == MINI_NOTIFICATION_GRANTED
+        sitePreferences.remember(origin: tab.url, permissions: MINI_PERMISSION_NOTIFICATIONS.rawValue, allowed: !allowed)
+    }
+
     @objc func resetPermissionsForSite(_ sender: Any?) {
         guard let tab = store.selectedTab else { return }
         sitePreferences.resetPermissions(forSiteAt: tab.url)
@@ -240,6 +246,13 @@ extension ShellController: NSMenuItemValidation {
                 return false
             }
             menuItem.state = sitePreferences.isAdBlockExempt(host: host) ? .off : .on
+            return true
+        case #selector(toggleNotificationsForSite(_:)):
+            guard let selected, SitePreferences.origin(of: selected.url) != nil else {
+                menuItem.state = .off
+                return false
+            }
+            menuItem.state = sitePreferences.notificationPermission(forSiteAt: selected.url) == MINI_NOTIFICATION_GRANTED ? .on : .off
             return true
         case #selector(resetPermissionsForSite(_:)):
             return selected.map { sitePreferences.hasPermissionDecisions(forSiteAt: $0.url) } ?? false

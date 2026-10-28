@@ -71,6 +71,10 @@ final class FaviconCache {
         }
     }
 
+    func fileURL(forPageAt address: String) -> URL? {
+        SitePreferences.host(of: address).map(file(for:))
+    }
+
     private func file(for host: String) -> URL {
         let digest = SHA256.hash(data: Data(host.utf8)).map { String(format: "%02x", $0) }.joined()
         return directory.appendingPathComponent("\(digest).png")

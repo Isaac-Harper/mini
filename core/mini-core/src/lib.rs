@@ -4,6 +4,7 @@ mod client;
 mod downloads;
 mod favicon;
 mod login;
+mod notifications;
 mod permissions;
 mod resource_requests;
 mod state;
@@ -47,6 +48,10 @@ pub struct MiniCallbacks {
     pub login_field_focused: Option<unsafe extern "C" fn(MiniTabId, *const c_char, *const c_char)>,
     pub render_process_terminated: Option<unsafe extern "C" fn(MiniTabId, i32)>,
     pub login_form_presence_changed: Option<unsafe extern "C" fn(MiniTabId, bool)>,
+    pub notification_show: Option<
+        unsafe extern "C" fn(MiniTabId, *const c_char, u32, *const c_char, *const c_char, *const c_char, *const c_char, bool),
+    >,
+    pub notification_close: Option<unsafe extern "C" fn(MiniTabId, *const c_char, u32)>,
     pub browser_closed: Option<unsafe extern "C" fn(MiniTabId)>,
     pub all_browsers_closed: Option<unsafe extern "C" fn()>,
 }
@@ -354,6 +359,19 @@ pub extern "C" fn mini_close_all_browsers() {
         let host = host(&browser);
         host.close_dev_tools();
         host.close_browser(1);
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn mini_set_notification_permission(origin: *const c_char, state: i32) {
+    notifications::set_permission(borrowed_text(origin, "origin"), state);
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn mini_notification_clicked(tab: MiniTabId, frame_id: *const c_char, notification: u32) {
+    let frame_id = borrowed_text(frame_id, "frame_id");
+    if let Some(browser) = created_browser(tab) {
+        notifications::deliver_click(&browser, frame_id, login::token(), notification);
     }
 }
 

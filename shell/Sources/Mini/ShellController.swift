@@ -21,6 +21,7 @@ final class ShellController: NSObject {
     @ObservationIgnored private(set) var loginFill: LoginFillController!
     @ObservationIgnored private(set) var crashOverlay: CrashOverlayController!
     @ObservationIgnored private(set) var toast: ToastController!
+    @ObservationIgnored private(set) var notifications: NotificationsController!
     @ObservationIgnored private(set) var isTerminating = false
     @ObservationIgnored var closingTabs: [MiniTabId: Tab] = [:]
 
@@ -41,6 +42,9 @@ final class ShellController: NSObject {
 
     func launch(openingURLs externalURLs: [URL]) {
         sitePreferences.pushAdBlockExemptions()
+        sitePreferences.pushNotificationPermissions()
+        notifications = NotificationsController(shell: self)
+        sitePreferences.onNotificationsGranted = { [weak self] in self?.notifications.requestAuthorizationIfNeeded() }
         windowController = MainWindowController(shell: self)
         commandBar = CommandBarController(shell: self)
         findBar = FindBarController(shell: self)
