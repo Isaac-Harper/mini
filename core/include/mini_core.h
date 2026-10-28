@@ -125,6 +125,14 @@ void mini_browser_create(MiniTabId tab, void *parent_view, const char *url, cons
 void mini_browser_load_url(MiniTabId tab, const char *url);
 void mini_browser_go_back(MiniTabId tab);
 void mini_browser_go_forward(MiniTabId tab);
+// Calls visitor synchronously once per entry of the tab's session history,
+// oldest first; is_current marks the entry being shown. Strings are only
+// valid during the call.
+typedef void (*MiniNavigationEntryVisitor)(void *context, int32_t index, bool is_current, const char *url,
+                                           const char *title);
+void mini_browser_visit_navigation_entries(MiniTabId tab, MiniNavigationEntryVisitor visitor, void *context);
+// Moves through session history by offset entries (negative is back).
+void mini_browser_go_to_history_offset(MiniTabId tab, int32_t offset);
 void mini_browser_reload(MiniTabId tab);
 void mini_browser_stop(MiniTabId tab);
 void mini_browser_set_focus(MiniTabId tab, bool focused);

@@ -52,6 +52,20 @@ extension ShellController: NSMenuItemValidation {
         keyLittleWindow == nil ? selectedBrowserTab : nil
     }
 
+    var selectedTabCanGoBack: Bool { selectedBrowserTab?.canGoBack ?? false }
+
+    var selectedTabCanGoForward: Bool { selectedBrowserTab?.canGoForward ?? false }
+
+    func historyMenu(forward: Bool) -> NSMenu {
+        guard let tab = selectedBrowserTab else { return NSMenu() }
+        return NavigationHistory.menu(for: tab, forward: forward, faviconCache: faviconCache, target: self, action: #selector(jumpInHistory(_:)))
+    }
+
+    @objc func jumpInHistory(_ sender: NSMenuItem) {
+        guard let jump = sender.representedObject as? HistoryJump, let tab = jump.tab, tab.hasBrowser else { return }
+        mini_browser_go_to_history_offset(tab.id, jump.offset)
+    }
+
     func goBack() {
         if let tab = commandBrowserTab { mini_browser_go_back(tab.id) }
     }

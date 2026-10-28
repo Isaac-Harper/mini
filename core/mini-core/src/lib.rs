@@ -5,6 +5,7 @@ mod downloads;
 mod favicon;
 mod login;
 mod media;
+mod navigation;
 mod notifications;
 mod permissions;
 mod resource_requests;
@@ -253,6 +254,25 @@ pub extern "C" fn mini_browser_go_back(tab: MiniTabId) {
 pub extern "C" fn mini_browser_go_forward(tab: MiniTabId) {
     if let Some(browser) = created_browser(tab) {
         browser.go_forward();
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn mini_browser_visit_navigation_entries(
+    tab: MiniTabId,
+    visitor: Option<navigation::EntryVisitor>,
+    context: *mut c_void,
+) {
+    let visitor = visitor.expect("navigation entry visitor is null");
+    if let Some(browser) = created_browser(tab) {
+        navigation::visit_entries(&browser, visitor, context);
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn mini_browser_go_to_history_offset(tab: MiniTabId, offset: i32) {
+    if let Some(browser) = created_browser(tab) {
+        navigation::go_to_offset(&browser, offset);
     }
 }
 

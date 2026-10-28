@@ -34,12 +34,30 @@ final class WindowToolbar: NSObject, NSToolbarDelegate {
         case Self.sidebarToggle:
             return item(itemIdentifier, "Hide Sidebar", "sidebar.left", #selector(ShellController.toggleTabSidebar(_:)))
         case Self.back:
-            return item(itemIdentifier, "Back", "chevron.left", #selector(ShellController.goBackInHistory(_:)))
+            return historyItem(itemIdentifier, "Back", "chevron.left", #selector(ShellController.goBackInHistory(_:)), forward: false)
         case Self.forward:
-            return item(itemIdentifier, "Forward", "chevron.right", #selector(ShellController.goForwardInHistory(_:)))
+            return historyItem(itemIdentifier, "Forward", "chevron.right", #selector(ShellController.goForwardInHistory(_:)), forward: true)
         default:
             return nil
         }
+    }
+
+    private func historyItem(_ identifier: NSToolbarItem.Identifier, _ label: String, _ symbolName: String, _ action: Selector, forward: Bool) -> NSToolbarItem {
+        guard let image = NSImage(systemSymbolName: symbolName, accessibilityDescription: label) else {
+            preconditionFailure("Missing SF Symbol \(symbolName)")
+        }
+        let button = HistoryButton(image: image, target: commands, action: action)
+        button.bezelStyle = .toolbar
+        button.toolTip = label
+        button.menuProvider = { [unowned commands] in commands.historyMenu(forward: forward) }
+        let toolbarItem = HistoryToolbarItem(itemIdentifier: identifier)
+        toolbarItem.label = label
+        toolbarItem.toolTip = label
+        toolbarItem.view = button
+        toolbarItem.validation = { [unowned commands] in
+            forward ? commands.selectedTabCanGoForward : commands.selectedTabCanGoBack
+        }
+        return toolbarItem
     }
 
     private func item(_ identifier: NSToolbarItem.Identifier, _ label: String, _ symbolName: String, _ action: Selector) -> NSToolbarItem {

@@ -76,7 +76,7 @@ To use Mini as your default browser, run `make install` and choose Mini > Set as
 | ⌃⌘\ | Split the current tab with the last one you used, or close the split |
 | ⌘\ | Fill password |
 | ⇧⌘C | Copy the page address |
-| ⌘[, ⌘] | Back and forward |
+| ⌘[, ⌘] | Back and forward (right-click or hold the toolbar buttons for the history list) |
 | ⌘R, ⌘. | Reload and stop |
 | ⌘F, ⌘G, ⇧⌘G | Find, next, previous |
 | ⌘=, ⌘-, ⌘0 | Zoom in, out, actual size (remembered per site) |
