@@ -34,6 +34,7 @@ pub struct Callbacks {
     pub fullscreen_mode_changed: unsafe extern "C" fn(MiniTabId, bool),
     pub loading_progress_changed: unsafe extern "C" fn(MiniTabId, f64),
     pub theme_color_changed: unsafe extern "C" fn(MiniTabId, u32),
+    pub horizontal_scroll_reported: unsafe extern "C" fn(MiniTabId, bool, bool),
     pub context_menu_requested: unsafe extern "C" fn(MiniTabId, *const crate::context_menu::MiniContextMenu),
     pub image_copied: unsafe extern "C" fn(MiniTabId, *const u8, usize),
     pub browser_closed: unsafe extern "C" fn(MiniTabId),
@@ -113,6 +114,9 @@ impl Callbacks {
             theme_color_changed: table
                 .theme_color_changed
                 .expect("MiniCallbacks.theme_color_changed is null"),
+            horizontal_scroll_reported: table
+                .horizontal_scroll_reported
+                .expect("MiniCallbacks.horizontal_scroll_reported is null"),
             context_menu_requested: table
                 .context_menu_requested
                 .expect("MiniCallbacks.context_menu_requested is null"),

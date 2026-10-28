@@ -149,6 +149,12 @@ typedef struct MiniCallbacks {
   // document is parsed and again whenever the meta tags or the color scheme
   // change.
   void (*theme_color_changed)(MiniTabId tab, uint32_t rgba);
+  // Sent from any frame at the start of every wheel gesture and when a
+  // horizontal wheel's scroll room changes: whether the element under the
+  // pointer (or one of its ancestors, or the document) can still scroll left
+  // or right. The shell only starts a swipe navigation toward an edge the
+  // page cannot scroll to.
+  void (*horizontal_scroll_reported)(MiniTabId tab, bool can_scroll_left, bool can_scroll_right);
   // The page wants a context menu. CEF's own menu is always cancelled; the
   // shell shows a native one and performs its items through mini_browser_*.
   void (*context_menu_requested)(MiniTabId tab, const MiniContextMenu *menu);

@@ -148,6 +148,11 @@ final class BrowserEngine {
             theme_color_changed: { identifier, rgba in
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.themeColorChanged(identifier, rgba: rgba) }
             },
+            horizontal_scroll_reported: { identifier, canScrollLeft, canScrollRight in
+                MainActor.assumeIsolated {
+                    BrowserEngine.shared.requiredShell.horizontalScrollReported(identifier, room: HorizontalScrollRoom(canScrollLeft: canScrollLeft, canScrollRight: canScrollRight))
+                }
+            },
             context_menu_requested: { identifier, menu in
                 guard let menu else { preconditionFailure("context_menu_requested without a menu") }
                 let request = PageContextRequest(menu.pointee)

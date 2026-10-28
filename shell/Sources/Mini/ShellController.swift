@@ -28,6 +28,7 @@ final class ShellController: NSObject {
     @ObservationIgnored private(set) var crashOverlay: CrashOverlayController!
     @ObservationIgnored private(set) var toast: ToastController!
     @ObservationIgnored private(set) var statusBubble: StatusBubbleController!
+    @ObservationIgnored private var swipeNavigation: SwipeNavigationController?
     @ObservationIgnored private(set) var notifications: NotificationsController!
     @ObservationIgnored private(set) var isTerminating = false
     @ObservationIgnored var closingTabs: [MiniTabId: Tab] = [:]
@@ -94,6 +95,7 @@ final class ShellController: NSObject {
         crashOverlay = CrashOverlayController(shell: self, windowController: windowController)
         toast = ToastController(windowController: windowController)
         statusBubble = StatusBubbleController(shell: self, windowController: windowController)
+        swipeNavigation = SwipeNavigationController(shell: self, windowController: windowController)
         registerSpacesWithEngine()
         for space in spaces {
             space.store.observer = self

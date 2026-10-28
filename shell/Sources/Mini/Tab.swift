@@ -22,6 +22,7 @@ final class Tab: Identifiable {
     var mediaTitle = ""
     var isPausedFromNowPlaying = false
     var themeColor: NSColor?
+    @ObservationIgnored var horizontalScrollRoom = HorizontalScrollRoom()
 
     @ObservationIgnored weak var parent: Tab?
     @ObservationIgnored let hostView = BrowserHostView()

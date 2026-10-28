@@ -5,6 +5,7 @@ mod client;
 mod context_menu;
 mod downloads;
 mod favicon;
+mod horizontal_scroll;
 mod login;
 mod media;
 mod navigation;
@@ -63,6 +64,7 @@ pub struct MiniCallbacks {
     pub fullscreen_mode_changed: Option<unsafe extern "C" fn(MiniTabId, bool)>,
     pub loading_progress_changed: Option<unsafe extern "C" fn(MiniTabId, f64)>,
     pub theme_color_changed: Option<unsafe extern "C" fn(MiniTabId, u32)>,
+    pub horizontal_scroll_reported: Option<unsafe extern "C" fn(MiniTabId, bool, bool)>,
     pub context_menu_requested: Option<unsafe extern "C" fn(MiniTabId, *const context_menu::MiniContextMenu)>,
     pub image_copied: Option<unsafe extern "C" fn(MiniTabId, *const u8, usize)>,
     pub browser_closed: Option<unsafe extern "C" fn(MiniTabId)>,

@@ -197,6 +197,10 @@ extension ShellController {
         if tab.themeColor != color { tab.themeColor = color }
     }
 
+    func horizontalScrollReported(_ identifier: MiniTabId, room: HorizontalScrollRoom) {
+        liveTab(identifier)?.horizontalScrollRoom = room
+    }
+
     func statusMessageChanged(_ identifier: MiniTabId, text: String) {
         guard let tab = liveTab(identifier) else { return }
         statusBubble.statusChanged(for: tab, text: text)
