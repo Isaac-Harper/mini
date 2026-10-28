@@ -42,6 +42,7 @@ struct TabRowView: View {
         .frame(height: SidebarMetrics.rowHeight)
         .background { rowBackground }
         .overlay { TabDropIndicator(shell: shell, tab: tab, depth: depth) }
+        .overlay { SidebarFocusRing(shell: shell, tab: tab, cornerRadius: SidebarMetrics.rowCornerRadius) }
         .contentShape(Rectangle())
         .onHover { isHovered = $0 }
         .onTapGesture { shell.store.select(tab) }
@@ -122,6 +123,7 @@ struct SplitTabRowView: View {
             }
         }
         .overlay { TabDropIndicator(shell: shell, tab: split.leading, depth: depth) }
+        .overlay { SidebarFocusRing(shell: shell, tab: split.leading, cornerRadius: SidebarMetrics.rowCornerRadius) }
         .contentShape(Rectangle())
         .onHover { isHovered = $0 }
         .onDrag { shell.sidebarDrag.beginDrag(split.leading) }

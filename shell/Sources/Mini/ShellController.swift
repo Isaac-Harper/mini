@@ -11,6 +11,7 @@ final class ShellController: NSObject {
     let weather = WeatherService()
     let weatherPopover = WeatherPopoverPresenter()
     let sidebarDrag = SidebarDragModel()
+    let sidebarKeyboard = SidebarKeyboardFocus()
     private(set) var nowPlayingTab: Tab?
 
     @ObservationIgnored let sitePreferences: SitePreferences
@@ -34,6 +35,7 @@ final class ShellController: NSObject {
     @ObservationIgnored var closingTabs: [MiniTabId: Tab] = [:]
     @ObservationIgnored private(set) var displayedTabs: [Tab] = []
     @ObservationIgnored private var splitFocusMonitor: Any?
+    @ObservationIgnored private var sidebarTabKeyMonitor: Any?
     @ObservationIgnored private(set) var littleWindows: [MiniTabId: LittleWindowController] = [:]
     @ObservationIgnored let tabIdentifiers = TabIdentifierMint()
     @ObservationIgnored let rootCacheDirectory: URL
@@ -110,6 +112,7 @@ final class ShellController: NSObject {
             MainActor.assumeIsolated { self?.focusSplitSide(under: event) }
             return event
         }
+        sidebarTabKeyMonitor = installSidebarTabKeyMonitor()
         showWindow()
         for saved in savedSession.spaces {
             guard let space = spaces.first(where: { $0.id == saved.id }) else { preconditionFailure("Saved space was not created") }

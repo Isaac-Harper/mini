@@ -34,30 +34,40 @@ struct SidebarView: View {
                     .padding(.horizontal, SidebarMetrics.edgeInset)
                     .padding(.bottom, 12)
             }
-            ScrollView {
-                LazyVStack(spacing: 0) {
-                    ForEach(store.visibleTabs) { visibleTab in
-                        Group {
-                            if let split = visibleTab.split {
-                                SplitTabRowView(shell: shell, split: split, depth: visibleTab.depth)
-                            } else {
-                                TabRowView(shell: shell, tab: visibleTab.tab, depth: visibleTab.depth)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(spacing: 0) {
+                        ForEach(store.visibleTabs) { visibleTab in
+                            Group {
+                                if let split = visibleTab.split {
+                                    SplitTabRowView(shell: shell, split: split, depth: visibleTab.depth)
+                                } else {
+                                    TabRowView(shell: shell, tab: visibleTab.tab, depth: visibleTab.depth)
+                                }
                             }
+                            .transition(rowTransition)
                         }
-                        .transition(rowTransition)
+                        Color.clear
+                            .frame(height: SidebarMetrics.rowHeight * 2)
+                            .overlay(alignment: .top) {
+                                if shell.sidebarDrag.target == .end { InsertionLine(depth: 0) }
+                            }
+                            .contentShape(Rectangle())
+                            .onDrop(of: SidebarDragModel.acceptedTypes, delegate: TabListEndDropDelegate(shell: shell))
                     }
-                    Color.clear
-                        .frame(height: SidebarMetrics.rowHeight * 2)
-                        .overlay(alignment: .top) {
-                            if shell.sidebarDrag.target == .end { InsertionLine(depth: 0) }
-                        }
-                        .contentShape(Rectangle())
-                        .onDrop(of: SidebarDragModel.acceptedTypes, delegate: TabListEndDropDelegate(shell: shell))
+                    .padding(.horizontal, SidebarMetrics.edgeInset)
+                    .animation(rowAnimation, value: store.visibleTabs.map(\.id))
                 }
-                .padding(.horizontal, SidebarMetrics.edgeInset)
-                .animation(rowAnimation, value: store.visibleTabs.map(\.id))
+                .scrollIndicators(.never)
+                .background {
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .onTapGesture { shell.focusSidebarFromKeyboard() }
+                }
+                .onChange(of: shell.sidebarKeyboard.focusedTabIdentifier) { _, identifier in
+                    if let identifier { proxy.scrollTo(identifier) }
+                }
             }
-            .scrollIndicators(.never)
             .id(shell.currentSpace.id)
             .transition(.opacity)
             Spacer(minLength: 0)
@@ -70,6 +80,7 @@ struct SidebarView: View {
             Color.clear
                 .contentShape(Rectangle())
                 .gesture(WindowDragGesture())
+                .simultaneousGesture(TapGesture().onEnded { shell.focusSidebarFromKeyboard() })
         }
         .background { SiteTintView(color: store.selectedTab?.themeColor) }
     }

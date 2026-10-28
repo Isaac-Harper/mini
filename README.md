@@ -95,6 +95,8 @@ To use Mini as your default browser, run `make install` and choose Mini > Set as
 | ⌥⌘P | Picture in picture for the largest playing video |
 | ⌥⌘I | Developer tools |
 
+In the sidebar: click its empty space (or press Tab when nothing has focus) to move the keyboard there. ↑ and ↓ move between pinned tabs and rows, ← and → collapse or expand a group (or go to its parent or first child), Return opens the tab, Delete closes it, and Esc or Tab returns to the page.
+
 Browser shortcuts take priority over the page, so ⌘T or ⌘W work even when a site tries to capture them. Copy, paste, undo and select all always go to the page.
 
 ## Passwords

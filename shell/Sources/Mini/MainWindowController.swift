@@ -6,6 +6,7 @@ import SwiftUI
 final class MainWindowController: NSWindowController, NSWindowDelegate {
     private let splitViewController = NSSplitViewController()
     private let sidebarItem: NSSplitViewItem
+    private let sidebarHostingView: SidebarHostingView
     private let webContentController = WebContentViewController()
     private let windowToolbar: WindowToolbar
     private var controlsCluster: WindowControlsCluster?
@@ -22,7 +23,9 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
     init(shell: ShellController) {
         windowToolbar = WindowToolbar(commands: shell)
         let sidebarController = NSViewController()
-        let sidebarHostingView = SidebarHostingView(rootView: SidebarView(shell: shell))
+        sidebarHostingView = SidebarHostingView(rootView: SidebarView(shell: shell))
+        sidebarHostingView.onKeyDown = { [weak shell] event in shell?.sidebarKeyDown(event) ?? false }
+        sidebarHostingView.onResignKeyboardFocus = { [weak shell] in shell?.sidebarResignedKeyboardFocus() }
         sidebarHostingView.sizingOptions = []
         sidebarHostingView.frame = NSRect(x: 0, y: 0, width: 240, height: 820)
         sidebarController.view = sidebarHostingView
@@ -84,6 +87,11 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
         webContentController.display(hostViews, split: split)
     }
 
+    func focusSidebar() -> Bool {
+        sidebarHostingView.allowsKeyboardFocus = true
+        return window?.makeFirstResponder(sidebarHostingView) ?? false
+    }
+
     func toggleSidebar() {
         splitViewController.toggleSidebar(nil)
     }
@@ -110,7 +118,24 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
 }
 
 final class SidebarHostingView: NSHostingView<SidebarView> {
-    override var acceptsFirstResponder: Bool { false }
+    var allowsKeyboardFocus = false
+    var onKeyDown: ((NSEvent) -> Bool)?
+    var onResignKeyboardFocus: (() -> Void)?
+
+    override var acceptsFirstResponder: Bool { allowsKeyboardFocus }
+
+    override func resignFirstResponder() -> Bool {
+        allowsKeyboardFocus = false
+        onResignKeyboardFocus?()
+        return super.resignFirstResponder()
+    }
+
+    override func keyDown(with event: NSEvent) {
+        guard allowsKeyboardFocus, onKeyDown?(event) == true else {
+            super.keyDown(with: event)
+            return
+        }
+    }
 
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 }

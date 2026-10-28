@@ -62,6 +62,7 @@ private struct PinnedTabTile: View {
                     Capsule().fill(Color.accentColor).frame(width: 2).padding(.vertical, 6).offset(x: -5).allowsHitTesting(false)
                 }
             }
+            .overlay { SidebarFocusRing(shell: shell, tab: tab, cornerRadius: 12) }
             .contentShape(shape)
             .help(tab.displayTitle)
             .onTapGesture { shell.store.select(tab) }
