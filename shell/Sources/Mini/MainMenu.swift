@@ -81,6 +81,8 @@ enum MainMenu {
         menu.addItem(item("Allow Notifications from This Site", #selector(ShellController.toggleNotificationsForSite(_:)), "", target: commands))
         menu.addItem(item("Reset Permissions for This Site", #selector(ShellController.resetPermissionsForSite(_:)), "", target: commands))
         menu.addItem(.separator())
+        menu.addItem(item("Picture in Picture", #selector(ShellController.togglePictureInPicture(_:)), "p", [.command, .option], target: commands))
+        menu.addItem(.separator())
         menu.addItem(item("Developer Tools", #selector(ShellController.showDeveloperTools(_:)), "i", [.command, .option], target: commands))
         menu.addItem(.separator())
         menu.addItem(item("Enter Full Screen", #selector(NSWindow.toggleFullScreen(_:)), "f", [.command, .control]))

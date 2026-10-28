@@ -169,6 +169,13 @@ extension ShellController: NSMenuItemValidation {
         }
     }
 
+    private static let pictureInPictureScript = "javascript:void((function(){if(document.pictureInPictureElement){document.exitPictureInPicture().catch(function(){});return;}var documents=[document];Array.prototype.forEach.call(document.querySelectorAll('iframe'),function(frame){try{if(frame.contentDocument)documents.push(frame.contentDocument);}catch(error){}});var videos=[];documents.forEach(function(candidate){videos=videos.concat(Array.prototype.slice.call(candidate.querySelectorAll('video')));});var playing=videos.filter(function(video){return !video.paused&&!video.ended&&video.readyState>2;});var pool=playing.length?playing:videos;var largest=pool.sort(function(first,second){return second.clientWidth*second.clientHeight-first.clientWidth*first.clientHeight;})[0];if(largest)largest.requestPictureInPicture().catch(function(){});})())"
+
+    @objc func togglePictureInPicture(_ sender: Any?) {
+        guard let tab = selectedBrowserTab else { return }
+        Self.pictureInPictureScript.withCString { mini_browser_load_url(tab.id, $0) }
+    }
+
     @objc func copyTabAddress(_ sender: Any?) {
         guard let url = store.selectedTab?.url, !url.isEmpty else { return }
         NSPasteboard.general.clearContents()
@@ -244,6 +251,8 @@ extension ShellController: NSMenuItemValidation {
             return true
         case #selector(selectTabAtIndex(_:)):
             return !store.selectableTabs.isEmpty
+        case #selector(togglePictureInPicture(_:)):
+            return selectedBrowserTab != nil
         case #selector(copyTabAddress(_:)):
             return !(selected?.url.isEmpty ?? true)
         case #selector(togglePinnedTab(_:)):

@@ -71,6 +71,7 @@ To use Mini as your default browser, run `make install` and choose Mini > Set as
 | ⌘R, ⌘. | Reload and stop |
 | ⌘F, ⌘G, ⇧⌘G | Find, next, previous |
 | ⌘=, ⌘-, ⌘0 | Zoom in, out, actual size (remembered per site) |
+| ⌥⌘P | Picture in picture for the largest playing video |
 | ⌥⌘I | Developer tools |
 
 Browser shortcuts take priority over the page, so ⌘T or ⌘W work even when a site tries to capture them. Copy, paste, undo and select all always go to the page.
