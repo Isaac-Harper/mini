@@ -10,6 +10,7 @@ final class ShellController: NSObject {
 
     @ObservationIgnored let sitePreferences: SitePreferences
     @ObservationIgnored let archive: ArchiveStore
+    @ObservationIgnored let faviconCache: FaviconCache
     @ObservationIgnored private var archiveTimer: Timer?
     @ObservationIgnored private let sessionStore: SessionStore
     @ObservationIgnored private(set) var windowController: MainWindowController!
@@ -24,7 +25,8 @@ final class ShellController: NSObject {
 
     private static let archiveInterval: TimeInterval = 10 * 60
 
-    init(sessionStore: SessionStore, sitePreferences: SitePreferences, archive: ArchiveStore) {
+    init(sessionStore: SessionStore, sitePreferences: SitePreferences, archive: ArchiveStore, faviconCache: FaviconCache) {
+        self.faviconCache = faviconCache
         self.sessionStore = sessionStore
         self.sitePreferences = sitePreferences
         self.archive = archive
@@ -57,6 +59,8 @@ final class ShellController: NSObject {
             openExternalURL(url)
         }
         archiveIdleTabs()
+        applyCachedFavicons()
+        faviconCache.prune(keepingPagesAt: store.allTabs.flatMap { [$0.url, $0.pinnedURL ?? ""] } + archive.entries.map(\.url))
         archiveTimer = Timer.scheduledTimer(withTimeInterval: Self.archiveInterval, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.archiveIdleTabs() }
         }
@@ -82,6 +86,12 @@ final class ShellController: NSObject {
             store.close(tab)
         }
         archive.add(archived)
+    }
+
+    func applyCachedFavicons() {
+        for tab in store.allTabs where tab.favicon == nil {
+            tab.favicon = faviconCache.image(forPageAt: tab.pinnedURL ?? tab.url)
+        }
     }
 
     func reopenArchived(_ entry: ArchivedTab) {
@@ -206,6 +216,7 @@ extension ShellController: TabStoreObserver {
     }
 
     func tabStoreDidChangeStructure(_ store: TabStore) {
+        applyCachedFavicons()
         scheduleSessionSave()
     }
 }

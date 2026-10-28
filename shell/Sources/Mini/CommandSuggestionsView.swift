@@ -2,6 +2,7 @@ import SwiftUI
 
 struct CommandSuggestionsView: View {
     let model: CommandBarModel
+    let faviconLookup: (String) -> NSImage?
     let activate: (CommandSuggestion) -> Void
 
     var body: some View {
@@ -17,7 +18,7 @@ struct CommandSuggestionsView: View {
                             .padding(.top, 8)
                             .padding(.bottom, 4)
                     }
-                    CommandSuggestionRow(suggestion: suggestion, isSelected: index == model.selectedIndex)
+                    CommandSuggestionRow(suggestion: suggestion, isSelected: index == model.selectedIndex, faviconLookup: faviconLookup)
                         .contentShape(Rectangle())
                         .onHover { isHovering in
                             if isHovering { model.selectedIndex = index }
@@ -34,6 +35,7 @@ struct CommandSuggestionsView: View {
 private struct CommandSuggestionRow: View {
     let suggestion: CommandSuggestion
     let isSelected: Bool
+    let faviconLookup: (String) -> NSImage?
 
     var body: some View {
         HStack(spacing: 12) {
@@ -76,8 +78,12 @@ private struct CommandSuggestionRow: View {
             Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
         case .searchSuggestion:
             Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
-        case .archived:
-            Image(systemName: "archivebox").foregroundStyle(.secondary)
+        case .archived(let entry):
+            if let favicon = faviconLookup(entry.url) {
+                FaviconView(image: favicon, size: 16)
+            } else {
+                Image(systemName: "archivebox").foregroundStyle(.secondary)
+            }
         }
     }
 

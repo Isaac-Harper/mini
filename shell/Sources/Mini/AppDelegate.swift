@@ -17,7 +17,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let shell = ShellController(
             sessionStore: SessionStore(directory: Self.supportDirectory),
             sitePreferences: SitePreferences(directory: Self.supportDirectory),
-            archive: ArchiveStore(directory: Self.supportDirectory)
+            archive: ArchiveStore(directory: Self.supportDirectory),
+            faviconCache: FaviconCache(directory: Self.supportDirectory)
         )
         self.shell = shell
         BrowserEngine.shared.shell = shell

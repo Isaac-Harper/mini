@@ -24,12 +24,12 @@ extension ShellController {
 
     func faviconChanged(_ identifier: MiniTabId, pngData: Data) {
         guard let tab = liveTab(identifier) else { return }
-        guard !pngData.isEmpty, let image = NSImage(data: pngData) else {
+        guard let image = FaviconCache.image(fromPNG: pngData) else {
             tab.favicon = nil
             return
         }
-        image.size = NSSize(width: image.size.width / 2, height: image.size.height / 2)
         tab.favicon = image
+        faviconCache.store(pngData, image: image, forPageAt: tab.url)
     }
 
     func loadingStateChanged(_ identifier: MiniTabId, isLoading: Bool, canGoBack: Bool, canGoForward: Bool) {

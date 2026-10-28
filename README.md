@@ -78,6 +78,7 @@ Passkeys are not supported until that entitlement is granted. Mini turns off Web
 - `~/Library/Application Support/Mini/Profile`: cookies, cache and site data
 - `~/Library/Application Support/Mini/session.json`: open tabs
 - `~/Library/Application Support/Mini/archive.json`: archived tabs (newest 200)
+- `~/Library/Application Support/Mini/Favicons`: cached site icons, so restored tabs show their icon before they load
 - `~/Library/Application Support/Mini/permissions.json`: per-site permission decisions
 - `~/Library/Application Support/Mini/Filters`: ad block lists, refreshed weekly
 - `~/Downloads`: downloads, saved without asking

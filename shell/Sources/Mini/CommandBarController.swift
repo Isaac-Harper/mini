@@ -20,9 +20,11 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
     init(shell: ShellController) {
         self.shell = shell
         super.init()
-        suggestionsView = OverlayHostingView(rootView: CommandSuggestionsView(model: model) { [weak self] suggestion in
-            self?.activate(suggestion)
-        })
+        suggestionsView = OverlayHostingView(rootView: CommandSuggestionsView(
+            model: model,
+            faviconLookup: { [weak shell] address in shell?.faviconCache.image(forPageAt: address) },
+            activate: { [weak self] suggestion in self?.activate(suggestion) }
+        ))
         suggestionsView.sizingOptions = [.minSize, .intrinsicContentSize]
         buildViews()
     }
