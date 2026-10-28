@@ -84,10 +84,10 @@ final class NotificationsController: NSObject, UNUserNotificationCenterDelegate 
     private func clicked(tab: MiniTabId, frameIdentifier: String, notification: UInt32, origin: String) {
         NSApp.activate()
         shell.showWindow()
-        guard let tabNode = shell.store.tab(withIdentifier: tab),
+        guard let tabNode = shell.space(containing: tab)?.store.tab(withIdentifier: tab),
               SitePreferences.origin(of: tabNode.url) == SitePreferences.origin(of: origin)
         else { return }
-        shell.store.select(tabNode)
+        shell.reveal(tabNode)
         if tabNode.hasBrowser {
             frameIdentifier.withCString { mini_notification_clicked(tab, $0, notification) }
         }

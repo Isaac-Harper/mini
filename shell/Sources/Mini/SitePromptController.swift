@@ -47,7 +47,7 @@ final class SitePromptController {
             mini_permission_respond(request, granted)
             return
         }
-        guard shell.store.tab(withIdentifier: identifier) != nil else {
+        guard shell.space(containing: identifier) != nil else {
             mini_permission_respond(request, 0)
             return
         }
@@ -66,7 +66,7 @@ final class SitePromptController {
     }
 
     func authenticationRequested(tab identifier: MiniTabId, request: UInt64, host: String, realm: String, isProxy: Bool) {
-        guard shell.store.tab(withIdentifier: identifier) != nil else {
+        guard shell.space(containing: identifier) != nil else {
             mini_auth_respond(request, nil, nil)
             return
         }

@@ -155,14 +155,47 @@ pub extern "C" fn mini_shutdown() {
 }
 
 #[unsafe(no_mangle)]
+pub extern "C" fn mini_space_create(space: *const c_char, cache_path: *const c_char) {
+    let space = borrowed_text(space, "space").to_owned();
+    let context = if cache_path.is_null() {
+        request_context_get_global_context().expect("CEF has no global request context")
+    } else {
+        let cache_path = borrowed_text(cache_path, "cache_path");
+        let settings = RequestContextSettings {
+            cache_path: CefString::from(cache_path),
+            persist_session_cookies: 1,
+            ..Default::default()
+        };
+        request_context_create_context(Some(&settings), None)
+            .unwrap_or_else(|| panic!("CEF refused a request context at {cache_path}"))
+    };
+    with_core(|core| {
+        let previous = core.request_contexts.insert(space.clone(), context);
+        assert!(previous.is_none(), "mini_space_create called twice for space {space}");
+    });
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn mini_space_destroy(space: *const c_char) {
+    let space = borrowed_text(space, "space");
+    with_core(|core| {
+        core.request_contexts
+            .remove(space)
+            .unwrap_or_else(|| panic!("mini_space_destroy for unknown space {space}"));
+    });
+}
+
+#[unsafe(no_mangle)]
 pub extern "C" fn mini_browser_create(
     tab: MiniTabId,
     parent_view: *mut c_void,
     url: *const c_char,
+    space: *const c_char,
 ) {
     assert_ne!(tab, 0, "tab id 0 is reserved");
     let url = borrowed_text(url, "url");
-    with_core(|core| {
+    let space = borrowed_text(space, "space");
+    let mut request_context = with_core(|core| {
         assert!(
             !core.closing_all,
             "mini_browser_create called while closing all browsers"
@@ -172,6 +205,10 @@ pub extern "C" fn mini_browser_create(
             previous.is_none(),
             "mini_browser_create called twice for tab {tab}"
         );
+        core.request_contexts
+            .get(space)
+            .unwrap_or_else(|| panic!("mini_browser_create for unknown space {space}"))
+            .clone()
     });
     let window_info = alloy_window_info(parent_view);
     let mut client = MiniClient::new(tab);
@@ -181,7 +218,7 @@ pub extern "C" fn mini_browser_create(
         Some(&CefString::from(url)),
         Some(&BrowserSettings::default()),
         None,
-        None,
+        Some(&mut request_context),
     );
     assert_eq!(started, 1, "browser creation failed for tab {tab}");
 }

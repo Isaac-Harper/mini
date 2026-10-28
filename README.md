@@ -6,6 +6,7 @@ Mini is an open source exploration project: a personal, minimal browser built to
 
 - Vertical sidebar with nested tabs (a tree), pinned tabs as favicon tiles
 - Links opened from other apps open in a little floating window with back, forward and an Open in Mini button (⌘O) that moves the live page into a tab
+- Spaces (Personal and Work to start), each with its own tabs, pins and its own cookies and logins; switch with the buttons at the bottom of the sidebar or ⌃1 to ⌃9
 - Split view: two tabs side by side with a draggable divider, shown as one joined row in the sidebar
 - Command bar for URLs, search (with Google suggestions) and switching tabs
 - Built-in ad and tracker blocking (uBlock Origin, EasyList and EasyPrivacy lists)
@@ -64,6 +65,7 @@ To use Mini as your default browser, run `make install` and choose Mini > Set as
 | ⇧⌘T | Reopen closed tab |
 | ⌃Tab, ⌃⇧Tab, ⌥⌘↓, ⌥⌘↑ | Next and previous tab |
 | ⌘1 to ⌘9 | Select tab (pinned first; ⌘9 is the last) |
+| ⌃1 to ⌃9 | Switch space |
 | ⌥⌘→, ⌥⌘← | Indent and outdent |
 | ⌥⌘\ | Collapse or expand a group |
 | ⌃⌘P | Pin or unpin tab |
@@ -90,8 +92,9 @@ Passkeys are not supported until that entitlement is granted. Mini turns off Web
 
 ## Where things live
 
-- `~/Library/Application Support/Mini/Profile`: cookies, cache and site data
-- `~/Library/Application Support/Mini/session.json`: open tabs
+- `~/Library/Application Support/Mini/Profile`: cookies, cache and site data of the Personal space (the first space, which keeps the profile Mini always used)
+- `~/Library/Application Support/Mini/Profile/Spaces/<id>`: cookies, cache and site data of every other space; deleting a space removes its folder
+- `~/Library/Application Support/Mini/session.json`: spaces and their open tabs
 - `~/Library/Application Support/Mini/archive.json`: archived tabs (newest 200)
 - Weather: the last reading is cached in Mini's user defaults (`WeatherReading`); coordinates are rounded to two decimals before they are sent to Open-Meteo and are never stored or logged
 - `~/Library/Application Support/Mini/zoom-levels.json`: per-site zoom levels
@@ -114,7 +117,7 @@ Swift owns everything you see and every focus decision. Rust owns Chromium. They
 
 ## Known limits
 
-- One main window and one profile. Little windows for outside links deny permission and HTTP sign-in prompts unless the site was already allowed; open the page in Mini to answer them.
+- One main window. The Personal space cannot be deleted, because it holds the original profile. Little windows for outside links deny permission and HTTP sign-in prompts unless the site was already allowed; open the page in Mini to answer them.
 - Web notifications only work while the page is open: Mini replaces the page's `Notification` API and `showNotification` with native macOS notifications, but a service worker cannot show notifications on its own, so push notifications for closed tabs never arrive.
 - Google sometimes refuses sign-in from embedded Chromium with "This browser or app may not be secure".
 

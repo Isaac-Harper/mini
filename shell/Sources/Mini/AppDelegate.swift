@@ -18,7 +18,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             sessionStore: SessionStore(directory: Self.supportDirectory),
             sitePreferences: SitePreferences(directory: Self.supportDirectory),
             archive: ArchiveStore(directory: Self.supportDirectory),
-            faviconCache: FaviconCache(directory: Self.supportDirectory)
+            faviconCache: FaviconCache(directory: Self.supportDirectory),
+            rootCacheDirectory: Self.supportDirectory.appendingPathComponent("Profile")
         )
         self.shell = shell
         BrowserEngine.shared.shell = shell

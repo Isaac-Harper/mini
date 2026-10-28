@@ -59,6 +59,6 @@ struct NowPlayingRowView: View {
         }
         .contentShape(Rectangle())
         .onHover { isHovered = $0 }
-        .onTapGesture { shell.store.select(tab) }
+        .onTapGesture { shell.reveal(tab) }
     }
 }

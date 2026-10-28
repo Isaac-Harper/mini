@@ -3,7 +3,7 @@ import CMiniCore
 
 extension ShellController {
     private func liveTab(_ identifier: MiniTabId) -> Tab? {
-        store.tab(withIdentifier: identifier) ?? littleWindow(containing: identifier)?.tab
+        space(containing: identifier)?.store.tab(withIdentifier: identifier) ?? littleWindow(containing: identifier)?.tab
     }
 
     func addressChanged(_ identifier: MiniTabId, url: String) {
@@ -53,15 +53,18 @@ extension ShellController {
     }
 
     func openTabRequested(_ opener: MiniTabId, url: String, foreground: Bool) {
-        if littleWindow(containing: opener) != nil {
+        if let littleWindow = littleWindow(containing: opener) {
+            let store = littleWindow.space.store
             let tab = store.newTab(url: url, parent: nil, after: store.selectedTab.map(store.rootAncestor))
             if foreground {
+                switchToSpace(littleWindow.space)
                 store.select(tab)
                 showWindow()
             }
             return
         }
-        let tab = store.newTab(url: url, parent: liveTab(opener))
+        guard let store = space(containing: opener)?.store else { return }
+        let tab = store.newTab(url: url, parent: store.tab(withIdentifier: opener))
         if foreground {
             store.select(tab)
         }
@@ -69,8 +72,8 @@ extension ShellController {
 
     func popupRequested(_ opener: MiniTabId, url: String) -> (tab: MiniTabId, hostView: BrowserHostView?) {
         guard !isTerminating else { return (0, nil) }
-        if littleWindow(containing: opener) != nil {
-            let tab = openLittleWindow(url: url, createsBrowser: false).tab
+        if let openerWindow = littleWindow(containing: opener) {
+            let tab = openLittleWindow(url: url, in: openerWindow.space, createsBrowser: false).tab
             tab.browserState = .pendingPopup
             DispatchQueue.main.async { [weak tab] in
                 MainActor.assumeIsolated {
@@ -80,7 +83,7 @@ extension ShellController {
             }
             return (tab.id, tab.hostView)
         }
-        guard let openerTab = store.tab(withIdentifier: opener) else { return (0, nil) }
+        guard let store = space(containing: opener)?.store, let openerTab = store.tab(withIdentifier: opener) else { return (0, nil) }
         let tab = store.newTab(url: url, parent: openerTab)
         tab.browserState = .pendingPopup
         tab.needsInitialFocus = true
@@ -169,6 +172,7 @@ extension ShellController {
     func browserClosed(_ identifier: MiniTabId) {
         if let tab = closingTabs.removeValue(forKey: identifier) {
             tab.hostView.removeFromSuperview()
+            browserFinishedClosing(identifier)
             return
         }
         guard !isTerminating else { return }
@@ -177,8 +181,8 @@ extension ShellController {
             littleWindow.close()
             return
         }
-        guard let tab = liveTab(identifier) else { return }
+        guard let tabStore = space(containing: identifier)?.store, let tab = tabStore.tab(withIdentifier: identifier) else { return }
         tab.browserState = .none
-        store.close(tab)
+        tabStore.close(tab)
     }
 }

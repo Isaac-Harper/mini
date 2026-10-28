@@ -5,6 +5,7 @@ struct ArchivedTab: Codable, Equatable {
     let url: String
     let title: String
     let archivedAt: Date
+    let spaceIdentifier: String?
 }
 
 enum ArchivePolicy {

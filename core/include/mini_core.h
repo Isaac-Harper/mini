@@ -104,9 +104,18 @@ void mini_run_message_loop(void);
 void mini_quit_message_loop(void);
 void mini_shutdown(void);
 
+// A space is a separate browsing profile (cookies, storage, cache) keyed by
+// the shell's space id. cache_path NULL uses the global profile (the
+// root_cache_path's Default directory); otherwise it must lie under
+// root_cache_path. Register every space before creating its browsers.
+// Popups share their opener's space. mini_space_destroy drops the profile;
+// close the space's browsers first.
+void mini_space_create(const char *space, const char *cache_path);
+void mini_space_destroy(const char *space);
+
 // Browser creation is asynchronous. Calls for a tab whose browser is not
 // created yet are applied once it is (latest url wins, focus/hidden replayed).
-void mini_browser_create(MiniTabId tab, void *parent_view, const char *url);
+void mini_browser_create(MiniTabId tab, void *parent_view, const char *url, const char *space);
 void mini_browser_load_url(MiniTabId tab, const char *url);
 void mini_browser_go_back(MiniTabId tab);
 void mini_browser_go_forward(MiniTabId tab);

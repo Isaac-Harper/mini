@@ -11,6 +11,7 @@ enum MainMenu {
             viewMenu(commands),
             historyMenu(commands),
             tabsMenu(commands),
+            spacesMenu(commands),
             windowMenu(),
         ] {
             let item = NSMenuItem()
@@ -118,6 +119,21 @@ enum MainMenu {
             let title = index == 9 ? "Select Last Tab" : "Select Tab \(index)"
             let selectItem = item(title, #selector(ShellController.selectTabAtIndex(_:)), "\(index)", target: commands)
             selectItem.tag = index
+            menu.addItem(selectItem)
+        }
+        return menu
+    }
+
+    private static func spacesMenu(_ commands: ShellController) -> NSMenu {
+        let menu = NSMenu(title: "Space")
+        menu.addItem(item("New Space\u{2026}", #selector(ShellController.newSpace(_:)), "", target: commands))
+        menu.addItem(item("Rename Space\u{2026}", #selector(ShellController.renameCurrentSpace(_:)), "", target: commands))
+        menu.addItem(item("Delete Space\u{2026}", #selector(ShellController.deleteCurrentSpace(_:)), "", target: commands))
+        menu.addItem(.separator())
+        for index in 1...9 {
+            let selectItem = item("Space \(index)", #selector(ShellController.selectSpaceAtIndex(_:)), "\(index)", [.control], target: commands)
+            selectItem.tag = index
+            selectItem.allowsKeyEquivalentWhenHidden = true
             menu.addItem(selectItem)
         }
         return menu

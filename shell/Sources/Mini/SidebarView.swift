@@ -37,10 +37,13 @@ struct SidebarView: View {
                 .padding(.horizontal, SidebarMetrics.edgeInset)
             }
             .scrollIndicators(.never)
+            .id(shell.currentSpace.id)
+            .transition(.opacity)
             Spacer(minLength: 0)
             footer
         }
         .font(.system(size: 13))
+        .animation(.easeInOut(duration: 0.2), value: shell.currentSpace.id)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background {
             Color.clear
@@ -64,6 +67,8 @@ struct SidebarView: View {
             SidebarActionRow(title: "New Tab", systemImage: "plus") {
                 shell.commandBar.open(mode: .newTab)
             }
+            SpaceBar(shell: shell)
+                .padding(.top, 6)
         }
         .animation(.easeInOut(duration: 0.3), value: shell.downloads.visibleDownloads.map(\.id))
         .padding(.horizontal, SidebarMetrics.edgeInset)
@@ -162,5 +167,71 @@ private struct AddressPill: View {
             }
             .glassEffect(.regular.interactive(), in: Capsule())
         }
+    }
+}
+
+private struct SpaceBar: View {
+    let shell: ShellController
+
+    var body: some View {
+        HStack(spacing: 2) {
+            ForEach(shell.spaces) { space in
+                SpaceButton(shell: shell, space: space)
+            }
+            Spacer(minLength: 0)
+            SpaceBarIconButton(systemImage: "plus", help: "New Space") { shell.newSpace(nil) }
+        }
+    }
+}
+
+private struct SpaceButton: View {
+    let shell: ShellController
+    let space: Space
+
+    private var isCurrent: Bool { shell.currentSpace === space }
+
+    var body: some View {
+        SpaceBarIconButton(systemImage: space.symbol, help: space.name, isSelected: isCurrent) {
+            shell.switchToSpace(space)
+        }
+        .contextMenu {
+            Button("Rename Space\u{2026}") {
+                shell.switchToSpace(space)
+                shell.renameCurrentSpace(nil)
+            }
+            Button("Delete Space\u{2026}") { shell.confirmDeletion(of: space) }
+                .disabled(!shell.canDelete(space))
+        }
+    }
+}
+
+private struct SpaceBarIconButton: View {
+    let systemImage: String
+    let help: String
+    var isSelected = false
+    let action: () -> Void
+
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(isSelected ? .primary : .secondary)
+                .frame(width: 28, height: 24)
+                .background {
+                    let shape = RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    if isSelected {
+                        shape.fill(.fill.secondary)
+                    } else if isHovered {
+                        shape.fill(.fill.quaternary)
+                    }
+                }
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .focusable(false)
+        .help(help)
+        .onHover { isHovered = $0 }
     }
 }

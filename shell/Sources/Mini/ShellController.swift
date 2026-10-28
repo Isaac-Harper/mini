@@ -5,7 +5,8 @@ import Observation
 @MainActor
 @Observable
 final class ShellController: NSObject {
-    let store = TabStore()
+    var spaces: [Space]
+    var currentSpace: Space
     let downloads = DownloadsModel()
     let weather = WeatherService()
     private(set) var nowPlayingTab: Tab?
@@ -28,15 +29,44 @@ final class ShellController: NSObject {
     @ObservationIgnored private var displayedTabs: [Tab] = []
     @ObservationIgnored private var splitFocusMonitor: Any?
     @ObservationIgnored private(set) var littleWindows: [MiniTabId: LittleWindowController] = [:]
+    @ObservationIgnored let tabIdentifiers = TabIdentifierMint()
+    @ObservationIgnored let rootCacheDirectory: URL
+    @ObservationIgnored private let savedSession: SavedSession
+    @ObservationIgnored var pendingSpaceDeletions: [String: Set<MiniTabId>] = [:]
 
     private static let archiveInterval: TimeInterval = 10 * 60
 
-    init(sessionStore: SessionStore, sitePreferences: SitePreferences, archive: ArchiveStore, faviconCache: FaviconCache) {
+    init(sessionStore: SessionStore, sitePreferences: SitePreferences, archive: ArchiveStore, faviconCache: FaviconCache, rootCacheDirectory: URL) {
         self.faviconCache = faviconCache
         self.sessionStore = sessionStore
         self.sitePreferences = sitePreferences
         self.archive = archive
+        self.rootCacheDirectory = rootCacheDirectory
+        let session = sessionStore.load()
+        savedSession = session
+        let identifiers = tabIdentifiers
+        let spaces = session.spaces.map { saved in
+            Space(id: saved.id, name: saved.name, symbol: saved.symbol, usesDefaultProfile: saved.usesDefaultProfile, identifiers: identifiers)
+        }
+        self.spaces = spaces
+        guard let current = spaces.first(where: { $0.id == session.currentSpace }) ?? spaces.first else {
+            preconditionFailure("A session always holds at least one space")
+        }
+        currentSpace = current
         super.init()
+    }
+
+    var store: TabStore { currentSpace.store }
+
+    var allSpaceTabs: [Tab] { spaces.flatMap(\.store.allTabs) }
+
+    func space(containing identifier: MiniTabId) -> Space? {
+        spaces.first { $0.store.tab(withIdentifier: identifier) != nil }
+    }
+
+    func space(of store: TabStore) -> Space {
+        guard let space = spaces.first(where: { $0.store === store }) else { preconditionFailure("Tab store without a space") }
+        return space
     }
 
     var window: NSWindow {
@@ -56,7 +86,10 @@ final class ShellController: NSObject {
         loginFill = LoginFillController(shell: self)
         crashOverlay = CrashOverlayController(shell: self, windowController: windowController)
         toast = ToastController(windowController: windowController)
-        store.observer = self
+        registerSpacesWithEngine()
+        for space in spaces {
+            space.store.observer = self
+        }
         windowController.webAreaView.onSplitFractionChanged = { [weak self] fraction, finished in
             guard let self, let selected = self.store.selectedTab, let split = self.store.split(containing: selected) else { return }
             split.fraction = fraction
@@ -67,25 +100,36 @@ final class ShellController: NSObject {
             return event
         }
         showWindow()
-        if let session = sessionStore.load(), !session.isEmpty {
-            sessionStore.restore(session, into: store)
-        } else if externalURLs.isEmpty {
+        for saved in savedSession.spaces {
+            guard let space = spaces.first(where: { $0.id == saved.id }) else { preconditionFailure("Saved space was not created") }
+            sessionStore.restore(saved.contents, into: space.store)
+        }
+        refreshDisplayedTabs()
+        if store.allTabs.isEmpty, externalURLs.isEmpty {
             store.select(store.newTab(url: "", parent: nil))
             commandBar.open(mode: .editCurrent)
         }
+        sessionStore.save(spaces, current: currentSpace)
         for url in externalURLs {
             openExternalURL(url)
         }
         archiveIdleTabs()
         weather.start()
         applyCachedFavicons()
-        faviconCache.prune(keepingPagesAt: store.allTabs.flatMap { [$0.url, $0.pinnedURL ?? ""] } + archive.entries.map(\.url))
+        faviconCache.prune(keepingPagesAt: allSpaceTabs.flatMap { [$0.url, $0.pinnedURL ?? ""] } + archive.entries.map(\.url))
         archiveTimer = Timer.scheduledTimer(withTimeInterval: Self.archiveInterval, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.archiveIdleTabs() }
         }
     }
 
     func archiveIdleTabs(now: Date = Date()) {
+        for space in spaces {
+            archiveIdleTabs(in: space, now: now)
+        }
+    }
+
+    private func archiveIdleTabs(in space: Space, now: Date) {
+        let store = space.store
         let selected = store.selectedTab
         let splitPartner = selected.flatMap { store.split(containing: $0)?.partner(of: $0) }
         func candidate(_ tab: Tab) -> ArchivePolicy.Candidate {
@@ -101,7 +145,7 @@ final class ShellController: NSObject {
         for identifier in identifiers {
             guard let tab = store.tab(withIdentifier: identifier) else { continue }
             if !tab.url.isEmpty {
-                archived.append(ArchivedTab(url: tab.url, title: tab.displayTitle, archivedAt: now))
+                archived.append(ArchivedTab(url: tab.url, title: tab.displayTitle, archivedAt: now, spaceIdentifier: space.id))
             }
             store.close(tab)
         }
@@ -109,7 +153,7 @@ final class ShellController: NSObject {
     }
 
     func applyCachedFavicons() {
-        for tab in store.allTabs where tab.favicon == nil {
+        for tab in allSpaceTabs where tab.favicon == nil {
             tab.favicon = faviconCache.image(forPageAt: tab.pinnedURL ?? tab.url)
         }
     }
@@ -134,13 +178,19 @@ final class ShellController: NSObject {
             tab.isPausedFromNowPlaying = false
             nowPlayingTab = tab
         } else if nowPlayingTab === tab, !tab.isPausedFromNowPlaying {
-            nowPlayingTab = store.allTabs.first { $0.isPlayingAudio }
+            nowPlayingTab = allSpaceTabs.first { $0.isPlayingAudio }
         }
     }
 
     func forgetNowPlaying(_ tabs: [Tab]) {
         guard let current = nowPlayingTab, tabs.contains(where: { $0 === current }) else { return }
-        nowPlayingTab = store.allTabs.first { $0.isPlayingAudio }
+        nowPlayingTab = allSpaceTabs.first { $0.isPlayingAudio }
+    }
+
+    func reveal(_ tab: Tab) {
+        guard let space = space(containing: tab.id), space.store.tab(withIdentifier: tab.id) === tab else { return }
+        switchToSpace(space)
+        space.store.select(tab)
     }
 
     func openWeatherSearch() {
@@ -149,6 +199,9 @@ final class ShellController: NSObject {
 
     func reopenArchived(_ entry: ArchivedTab) {
         archive.remove(entry)
+        if let space = spaces.first(where: { $0.id == entry.spaceIdentifier }) {
+            switchToSpace(space)
+        }
         let selectedRoot = store.selectedTab.map(store.rootAncestor)
         store.select(store.newTab(url: entry.url, title: entry.title, parent: nil, after: selectedRoot))
     }
@@ -164,9 +217,10 @@ final class ShellController: NSObject {
     }
 
     @discardableResult
-    func openLittleWindow(url: String, createsBrowser: Bool = true) -> LittleWindowController {
-        let tab = store.makeDetachedTab(url: url)
-        let littleWindow = LittleWindowController(tab: tab, shell: self, cascadeIndex: littleWindows.count)
+    func openLittleWindow(url: String, in space: Space? = nil, createsBrowser: Bool = true) -> LittleWindowController {
+        let space = space ?? currentSpace
+        let tab = space.store.makeDetachedTab(url: url)
+        let littleWindow = LittleWindowController(tab: tab, space: space, shell: self, cascadeIndex: littleWindows.count)
         littleWindows[tab.id] = littleWindow
         tab.hostView.onWebViewAttached = { [weak littleWindow] in
             guard let littleWindow, littleWindow.window?.isKeyWindow == true else { return }
@@ -177,7 +231,7 @@ final class ShellController: NSObject {
         if createsBrowser, !url.isEmpty {
             tab.browserState = .created
             let hostViewPointer = Unmanaged.passUnretained(tab.hostView).toOpaque()
-            url.withCString { mini_browser_create(tab.id, hostViewPointer, $0) }
+            url.withCString { url in space.id.withCString { mini_browser_create(tab.id, hostViewPointer, url, $0) } }
         }
         return littleWindow
     }
@@ -206,6 +260,7 @@ final class ShellController: NSObject {
         littleWindows[tab.id] = nil
         tab.hostView.onWebViewAttached = nil
         littleWindow.detachHostViewForPromotion()
+        switchToSpace(littleWindow.space)
         store.adopt(tab, after: store.selectedTab.map(store.rootAncestor))
         store.select(tab)
         showWindow()
@@ -231,7 +286,7 @@ final class ShellController: NSObject {
         for littleWindow in littleWindows.values {
             littleWindow.window?.orderOut(nil)
         }
-        sessionStore.save(store)
+        sessionStore.save(spaces, current: currentSpace)
     }
 
     var isOverlayActive: Bool {
@@ -261,7 +316,7 @@ final class ShellController: NSObject {
 
     func scheduleSessionSave() {
         guard !isTerminating else { return }
-        sessionStore.scheduleSave(of: store)
+        sessionStore.scheduleSave { [unowned self] in (self.spaces, self.currentSpace) }
     }
 
     private func createBrowser(for tab: Tab) {
@@ -269,7 +324,15 @@ final class ShellController: NSObject {
         tab.browserState = .created
         tab.needsInitialFocus = true
         let hostViewPointer = Unmanaged.passUnretained(tab.hostView).toOpaque()
-        tab.url.withCString { mini_browser_create(tab.id, hostViewPointer, $0) }
+        let spaceIdentifier = space(containingTab: tab).id
+        tab.url.withCString { url in spaceIdentifier.withCString { mini_browser_create(tab.id, hostViewPointer, url, $0) } }
+    }
+
+    private func space(containingTab tab: Tab) -> Space {
+        guard let space = spaces.first(where: { $0.store.tab(withIdentifier: tab.id) === tab }) else {
+            preconditionFailure("Tab \(tab.id) belongs to no space")
+        }
+        return space
     }
 
     func toggleSplitView() {
@@ -297,7 +360,7 @@ final class ShellController: NSObject {
         store.select(partner)
     }
 
-    private func refreshDisplayedTabs() {
+    func refreshDisplayedTabs() {
         let selected = store.selectedTab
         let split = selected.flatMap(store.split(containing:))
         let shownTabs = split.map { [$0.leading, $0.trailing] } ?? selected.map { [$0] } ?? []
@@ -335,6 +398,7 @@ final class ShellController: NSObject {
 
 extension ShellController: TabStoreObserver {
     func tabStore(_ store: TabStore, didSelect tab: Tab?, previous: Tab?) {
+        guard store === self.store else { return }
         findBar.close(restoringWebFocus: false)
         loginFill.closeIfOpen()
         commandBar.close(restoringWebFocus: false)
@@ -377,6 +441,7 @@ extension ShellController: TabStoreObserver {
     }
 
     func tabStoreDidChangeSplits(_ store: TabStore) {
+        guard store === self.store else { return }
         refreshDisplayedTabs()
     }
 

@@ -1,4 +1,4 @@
-use cef::{Browser, DownloadItemCallback};
+use cef::{Browser, DownloadItemCallback, RequestContext};
 use std::{
     cell::RefCell,
     collections::{HashMap, HashSet},
@@ -121,6 +121,7 @@ pub struct CoreState {
     pub tabs: HashMap<MiniTabId, TabState>,
     pub pending_popups: HashMap<i32, MiniTabId>,
     pub download_callbacks: HashMap<u32, DownloadItemCallback>,
+    pub request_contexts: HashMap<String, RequestContext>,
     pub closing_all: bool,
 }
 
@@ -138,6 +139,7 @@ pub fn install(callbacks: Callbacks) {
             tabs: HashMap::new(),
             pending_popups: HashMap::new(),
             download_callbacks: HashMap::new(),
+            request_contexts: HashMap::new(),
             closing_all: false,
         });
     });

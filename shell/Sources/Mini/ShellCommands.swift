@@ -143,7 +143,7 @@ extension ShellController: NSMenuItemValidation {
         let level = mini_browser_zoom(tab.id, direction)
         if let host = SitePreferences.host(of: tab.url) {
             sitePreferences.setZoomLevel(direction == 0 ? nil : level, host: host)
-            for other in store.allTabs + littleWindows.values.map(\.tab) where other !== tab && other.hasBrowser && SitePreferences.host(of: other.url) == host {
+            for other in allSpaceTabs + littleWindows.values.map(\.tab) where other !== tab && other.hasBrowser && SitePreferences.host(of: other.url) == host {
                 mini_browser_set_zoom_level(other.id, level)
             }
         }
@@ -305,6 +305,15 @@ extension ShellController: NSMenuItemValidation {
             return selected.map { sitePreferences.hasPermissionDecisions(forSiteAt: $0.url) } ?? false
         case #selector(toggleTabSidebar(_:)):
             menuItem.title = windowController.isSidebarVisible ? "Hide Sidebar" : "Show Sidebar"
+            return true
+        case #selector(deleteCurrentSpace(_:)):
+            return canDelete(currentSpace)
+        case #selector(selectSpaceAtIndex(_:)):
+            let index = menuItem.tag - 1
+            menuItem.isHidden = !spaces.indices.contains(index)
+            guard spaces.indices.contains(index) else { return false }
+            menuItem.title = spaces[index].name
+            menuItem.state = spaces[index] === currentSpace ? .on : .off
             return true
         case #selector(toggleSplitViewCommand(_:)):
             guard let selected else { return false }

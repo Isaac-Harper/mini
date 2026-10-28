@@ -4,6 +4,7 @@ import CMiniCore
 @MainActor
 final class LittleWindowController: NSWindowController, NSWindowDelegate, NSToolbarDelegate, NSToolbarItemValidation, NSTextFieldDelegate {
     let tab: Tab
+    let space: Space
     private unowned let shell: ShellController
     private let toolbar = NSToolbar(identifier: "LittleWindowToolbar")
     private let addressField = NSTextField()
@@ -15,8 +16,9 @@ final class LittleWindowController: NSWindowController, NSWindowDelegate, NSTool
     private static let address = NSToolbarItem.Identifier("LittleAddress")
     private static let openInMini = NSToolbarItem.Identifier("LittleOpenInMini")
 
-    init(tab: Tab, shell: ShellController, cascadeIndex: Int) {
+    init(tab: Tab, space: Space, shell: ShellController, cascadeIndex: Int) {
         self.tab = tab
+        self.space = space
         self.shell = shell
         let window = NSWindow(
             contentRect: NSRect(origin: .zero, size: Self.size),

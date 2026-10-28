@@ -50,13 +50,17 @@ final class TabStore {
     private(set) var splits: [TabSplit] = []
 
     @ObservationIgnored weak var observer: TabStoreObserver?
-    @ObservationIgnored private var nextIdentifier: MiniTabId = 1
+    @ObservationIgnored private let identifiers: TabIdentifierMint
     @ObservationIgnored private var tabsByIdentifier: [MiniTabId: Tab] = [:]
     @ObservationIgnored private var closedTabs: [ClosedTab] = []
 
     private struct ClosedTab {
         let url: String
         let parentIdentifier: MiniTabId?
+    }
+
+    init(identifiers: TabIdentifierMint) {
+        self.identifiers = identifiers
     }
 
     var visibleTabs: [VisibleTab] {
@@ -132,13 +136,11 @@ final class TabStore {
     }
 
     func makeDetachedTab(url: String) -> Tab {
-        let tab = Tab(id: nextIdentifier, url: url, title: "")
-        nextIdentifier += 1
-        return tab
+        Tab(id: identifiers.mint(), url: url, title: "")
     }
 
     func adopt(_ tab: Tab, after sibling: Tab?) {
-        precondition(tabsByIdentifier[tab.id] == nil && tab.id < nextIdentifier, "Adopting a tab the store already holds or did not mint")
+        precondition(tabsByIdentifier[tab.id] == nil, "Adopting a tab the store already holds")
         tabsByIdentifier[tab.id] = tab
         let index = sibling.map { $0.isPinned ? 0 : position(of: $0, in: rootTabs) + 1 } ?? rootTabs.count
         insert(tab, into: nil, at: index)
@@ -236,6 +238,19 @@ final class TabStore {
         observer?.tabStoreDidChangeStructure(self)
     }
 
+    func removeAll() -> [Tab] {
+        let removedTabs = allTabs
+        selectedTab = nil
+        pinnedTabs = []
+        rootTabs = []
+        splits = []
+        tabsByIdentifier = [:]
+        closedTabs = []
+        observer?.tabStore(self, didRemove: removedTabs)
+        observer?.tabStoreDidChangeStructure(self)
+        return removedTabs
+    }
+
     private func unload(pinned tab: Tab) {
         guard let pinnedURL = tab.pinnedURL else { preconditionFailure("Unloading a tab that is not pinned") }
         let index = position(of: tab, in: pinnedTabs)
@@ -326,8 +341,7 @@ final class TabStore {
     }
 
     private func makeTab(url: String, title: String) -> Tab {
-        let tab = Tab(id: nextIdentifier, url: url, title: title)
-        nextIdentifier += 1
+        let tab = Tab(id: identifiers.mint(), url: url, title: title)
         tabsByIdentifier[tab.id] = tab
         return tab
     }

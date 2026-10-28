@@ -1,6 +1,6 @@
 import Foundation
 
-struct SavedSession: Codable {
+struct SavedSpaceContents: Codable {
     struct SavedTab: Codable {
         let url: String
         let title: String
@@ -27,7 +27,26 @@ struct SavedSession: Codable {
     let selectedPinnedIndex: Int?
     let splits: [SavedSplit]?
 
-    var isEmpty: Bool { tabs.isEmpty && (pinnedTabs ?? []).isEmpty }
+    static let empty = SavedSpaceContents(tabs: [], selectedPath: nil, pinnedTabs: nil, selectedPinnedIndex: nil, splits: nil)
+}
+
+struct SavedSpace: Codable {
+    let id: String
+    let name: String
+    let symbol: String
+    let usesDefaultProfile: Bool
+    let contents: SavedSpaceContents
+}
+
+struct SavedSession: Codable {
+    let spaces: [SavedSpace]
+    let currentSpace: String
+
+    static func initial(personalContents: SavedSpaceContents) -> SavedSession {
+        let personal = SavedSpace(id: Space.newIdentifier(), name: "Personal", symbol: "person.fill", usesDefaultProfile: true, contents: personalContents)
+        let work = SavedSpace(id: Space.newIdentifier(), name: "Work", symbol: "briefcase.fill", usesDefaultProfile: false, contents: .empty)
+        return SavedSession(spaces: [personal, work], currentSpace: personal.id)
+    }
 }
 
 @MainActor
@@ -39,47 +58,46 @@ final class SessionStore {
         fileURL = directory.appendingPathComponent("session.json")
     }
 
-    func load() -> SavedSession? {
-        guard FileManager.default.fileExists(atPath: fileURL.path) else { return nil }
+    func load() -> SavedSession {
+        guard FileManager.default.fileExists(atPath: fileURL.path) else { return .initial(personalContents: .empty) }
+        let data: Data
         do {
-            return try JSONDecoder().decode(SavedSession.self, from: Data(contentsOf: fileURL))
+            data = try Data(contentsOf: fileURL)
+        } catch {
+            fatalError("Could not read session at \(fileURL.path): \(error)")
+        }
+        if let session = try? JSONDecoder().decode(SavedSession.self, from: data), !session.spaces.isEmpty {
+            return session
+        }
+        do {
+            return .initial(personalContents: try JSONDecoder().decode(SavedSpaceContents.self, from: data))
         } catch {
             NSLog("Mini: ignoring unreadable session at %@: %@", fileURL.path, String(describing: error))
-            return nil
+            return .initial(personalContents: .empty)
         }
     }
 
-    func scheduleSave(of store: TabStore) {
+    func scheduleSave(of spaces: @escaping () -> (spaces: [Space], current: Space)) {
         pendingSave?.cancel()
-        let save = DispatchWorkItem { [weak self, weak store] in
+        let save = DispatchWorkItem { [weak self] in
             MainActor.assumeIsolated {
-                guard let self, let store else { return }
-                self.save(store)
+                guard let self else { return }
+                let snapshot = spaces()
+                self.save(snapshot.spaces, current: snapshot.current)
             }
         }
         pendingSave = save
         DispatchQueue.main.asyncAfter(deadline: .now() + 1, execute: save)
     }
 
-    func save(_ store: TabStore) {
+    func save(_ spaces: [Space], current: Space) {
         pendingSave?.cancel()
         pendingSave = nil
-        let selected = store.selectedTab
         let session = SavedSession(
-            tabs: store.rootTabs.map(Self.savedTab),
-            selectedPath: selected.flatMap { $0.isPinned ? nil : Self.path(of: $0, in: store) },
-            pinnedTabs: store.pinnedTabs.map { tab in
-                guard let pinnedURL = tab.pinnedURL else { preconditionFailure("Pinned list holds an unpinned tab") }
-                return SavedSession.SavedPinnedTab(pinnedURL: pinnedURL, url: tab.url, title: tab.title)
+            spaces: spaces.map { space in
+                SavedSpace(id: space.id, name: space.name, symbol: space.symbol, usesDefaultProfile: space.usesDefaultProfile, contents: Self.contents(of: space.store))
             },
-            selectedPinnedIndex: selected.flatMap { selectedTab in store.pinnedTabs.firstIndex { $0 === selectedTab } },
-            splits: store.splits.map { split in
-                SavedSession.SavedSplit(
-                    leadingPath: Self.path(of: split.leading, in: store),
-                    trailingPath: Self.path(of: split.trailing, in: store),
-                    fraction: split.fraction
-                )
-            }
+            currentSpace: current.id
         )
         do {
             let encoder = JSONEncoder()
@@ -90,25 +108,45 @@ final class SessionStore {
         }
     }
 
-    func restore(_ session: SavedSession, into store: TabStore) {
-        for savedPinnedTab in session.pinnedTabs ?? [] {
+    private static func contents(of store: TabStore) -> SavedSpaceContents {
+        let selected = store.selectedTab
+        return SavedSpaceContents(
+            tabs: store.rootTabs.map(savedTab),
+            selectedPath: selected.flatMap { $0.isPinned ? nil : path(of: $0, in: store) },
+            pinnedTabs: store.pinnedTabs.map { tab in
+                guard let pinnedURL = tab.pinnedURL else { preconditionFailure("Pinned list holds an unpinned tab") }
+                return SavedSpaceContents.SavedPinnedTab(pinnedURL: pinnedURL, url: tab.url, title: tab.title)
+            },
+            selectedPinnedIndex: selected.flatMap { selectedTab in store.pinnedTabs.firstIndex { $0 === selectedTab } },
+            splits: store.splits.map { split in
+                SavedSpaceContents.SavedSplit(
+                    leadingPath: path(of: split.leading, in: store),
+                    trailingPath: path(of: split.trailing, in: store),
+                    fraction: split.fraction
+                )
+            }
+        )
+    }
+
+    func restore(_ contents: SavedSpaceContents, into store: TabStore) {
+        for savedPinnedTab in contents.pinnedTabs ?? [] {
             store.newPinnedTab(pinnedURL: savedPinnedTab.pinnedURL, url: savedPinnedTab.url, title: savedPinnedTab.title)
         }
-        for savedTab in session.tabs {
+        for savedTab in contents.tabs {
             restore(savedTab, parent: nil, into: store)
         }
-        for savedSplit in session.splits ?? [] {
+        for savedSplit in contents.splits ?? [] {
             guard let leading = Self.tab(at: savedSplit.leadingPath, in: store),
                   let trailing = Self.tab(at: savedSplit.trailingPath, in: store),
                   leading !== trailing
             else { continue }
             store.makeSplit(leading: leading, trailing: trailing, fraction: savedSplit.fraction)
         }
-        if let selectedPinnedIndex = session.selectedPinnedIndex, store.pinnedTabs.indices.contains(selectedPinnedIndex) {
+        if let selectedPinnedIndex = contents.selectedPinnedIndex, store.pinnedTabs.indices.contains(selectedPinnedIndex) {
             store.select(store.pinnedTabs[selectedPinnedIndex])
             return
         }
-        guard let selectedPath = session.selectedPath, !selectedPath.isEmpty else {
+        guard let selectedPath = contents.selectedPath, !selectedPath.isEmpty else {
             store.select(store.selectableTabs.first)
             return
         }
@@ -126,7 +164,7 @@ final class SessionStore {
         return found
     }
 
-    private func restore(_ savedTab: SavedSession.SavedTab, parent: Tab?, into store: TabStore) {
+    private func restore(_ savedTab: SavedSpaceContents.SavedTab, parent: Tab?, into store: TabStore) {
         let tab = store.newTab(url: savedTab.url, title: savedTab.title, parent: parent)
         for child in savedTab.children {
             restore(child, parent: tab, into: store)
@@ -135,8 +173,8 @@ final class SessionStore {
         tab.lastSelectedAt = savedTab.lastSelectedAt ?? Date()
     }
 
-    private static func savedTab(_ tab: Tab) -> SavedSession.SavedTab {
-        SavedSession.SavedTab(
+    private static func savedTab(_ tab: Tab) -> SavedSpaceContents.SavedTab {
+        SavedSpaceContents.SavedTab(
             url: tab.url,
             title: tab.title,
             isCollapsed: tab.isCollapsed,
