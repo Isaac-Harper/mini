@@ -172,6 +172,7 @@ Mini.app/Contents/Frameworks/
 - Popups get their opener's request context from CEF (`on_before_popup` does not set one), so popups stay in the opener's space.
 - CEF 156 Alloy embedding has no built-in history swipe (Chromium's history swiper lives in the Chrome layer's RenderWidgetHostView delegate), so Mini implements it. Scroll NSEvents made from a `CGEvent` (`NSEvent(cgEvent:)` with scroll phases) have no window, even after `postToPid` to Mini itself, so the debug harness feeds them through a hook that maps their screen location; the page never receives them, and page-side scroll room is tested with DOM `WheelEvent`s instead.
 - A second Mini process started on a profile that is in use prints "Opening in existing browser session.", `cef_initialize` returns 0 with `get_exit_code()` = `CEF_RESULT_CODE_NORMAL_EXIT_PROCESS_NOTIFIED` (24), and the running process gets `on_already_running_app_relaunch` with the new command line (verified with a URL argument and with none).
+- A plain (non-layer-backed) view added as a sibling above the layer-backed `webAreaView` draws underneath it, invisible; overlays on the card must set `wantsLayer` (verified with the empty page view).
 - zsh here has `noclobber`: overwrite files with `>|` or an editor, not `>`.
 - `swift build` in this toolchain uses the swiftbuild backend: products live in `shell/.build/out/Products/<Config>/`, so `bundle.sh` asks `swift build --show-bin-path` instead of assuming `.build/<config>/`.
 
