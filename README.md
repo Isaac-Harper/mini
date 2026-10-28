@@ -5,6 +5,7 @@ A small, quiet macOS browser for one person. Chromium renders the pages; everyth
 Mini is an open source exploration project: a personal, minimal browser built to explore a native Swift shell over Chromium (CEF).
 
 - No toolbar strip: the traffic lights, sidebar toggle and back/forward sit in the sidebar's top row, and the page is a rounded card that runs to the top of the window. With the sidebar hidden, point at the top-left corner to bring the controls back, or at the left edge to slide the sidebar out over the page (click the sidebar button to keep it open)
+- While a page loads its tab shows a spinner and a thin accent line runs along the top of the page
 - Vertical sidebar with nested tabs (a tree), pinned tabs as favicon tiles; drag rows to reorder, onto a row to nest, or onto the pinned area to pin
 - Links opened from other apps open in a little floating window with back, forward and an Open in Mini button (⌘O) that moves the live page into a tab
 - Spaces (Personal and Work to start), each with its own tabs, pins and its own cookies and logins; switch with the buttons at the bottom of the sidebar or ⌃1 to ⌃9

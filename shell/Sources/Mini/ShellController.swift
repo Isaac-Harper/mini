@@ -396,6 +396,7 @@ final class ShellController: NSObject {
             }
         }
         windowController.display(shownTabs.map(\.hostView), split: arrangement)
+        windowController.webAreaView.showLoadingProgress(of: pageFullscreen == nil ? selected : nil)
         for tab in shownTabs where !displayedTabs.contains(where: { $0 === tab }) {
             if tab.hasBrowser {
                 mini_browser_set_hidden(tab.id, false)

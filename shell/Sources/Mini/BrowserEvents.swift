@@ -56,6 +56,9 @@ extension ShellController {
             crashOverlay.refresh()
         }
         tab.isLoading = isLoading
+        if tab === store.selectedTab {
+            windowController.webAreaView.showLoadingProgress(of: tab)
+        }
         tab.canGoBack = canGoBack
         tab.canGoForward = canGoForward
         littleWindow(containing: identifier)?.updateAddress()
@@ -177,6 +180,14 @@ extension ShellController {
         }
         guard let tab = liveTab(identifier) else { return }
         audioStateChanged(tab, isPlaying: isPlaying, mediaTitle: mediaTitle)
+    }
+
+    func loadingProgressChanged(_ identifier: MiniTabId, progress: Double) {
+        guard let tab = liveTab(identifier) else { return }
+        tab.loadingProgress = progress
+        if tab === store.selectedTab {
+            windowController.webAreaView.showLoadingProgress(of: tab)
+        }
     }
 
     func statusMessageChanged(_ identifier: MiniTabId, text: String) {

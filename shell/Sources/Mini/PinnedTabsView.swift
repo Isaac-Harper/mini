@@ -50,7 +50,7 @@ private struct PinnedTabTile: View {
 
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: 12, style: .continuous)
-        FaviconView(image: tab.favicon, size: 18)
+        TabIconView(tab: tab, size: 18)
             .frame(maxWidth: .infinity)
             .frame(height: 40)
             .glassEffect(isSelected ? .regular.tint(.primary.opacity(0.12)).interactive() : .regular.interactive(), in: shape)

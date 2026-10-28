@@ -142,6 +142,9 @@ final class BrowserEngine {
             fullscreen_mode_changed: { identifier, fullscreen in
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.fullscreenModeChanged(identifier, fullscreen: fullscreen) }
             },
+            loading_progress_changed: { identifier, progress in
+                MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.loadingProgressChanged(identifier, progress: progress) }
+            },
             context_menu_requested: { identifier, menu in
                 guard let menu else { preconditionFailure("context_menu_requested without a menu") }
                 let request = PageContextRequest(menu.pointee)

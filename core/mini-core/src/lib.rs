@@ -59,6 +59,7 @@ pub struct MiniCallbacks {
     pub audio_state_changed: Option<unsafe extern "C" fn(MiniTabId, bool, *const c_char)>,
     pub status_message_changed: Option<unsafe extern "C" fn(MiniTabId, *const c_char)>,
     pub fullscreen_mode_changed: Option<unsafe extern "C" fn(MiniTabId, bool)>,
+    pub loading_progress_changed: Option<unsafe extern "C" fn(MiniTabId, f64)>,
     pub context_menu_requested: Option<unsafe extern "C" fn(MiniTabId, *const context_menu::MiniContextMenu)>,
     pub image_copied: Option<unsafe extern "C" fn(MiniTabId, *const u8, usize)>,
     pub browser_closed: Option<unsafe extern "C" fn(MiniTabId)>,

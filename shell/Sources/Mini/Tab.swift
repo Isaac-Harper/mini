@@ -11,6 +11,7 @@ final class Tab: Identifiable {
     var favicon: NSImage?
     var pinnedURL: String?
     var isLoading = false
+    @ObservationIgnored var loadingProgress = 1.0
     var canGoBack = false
     var canGoForward = false
     var children: [Tab] = []

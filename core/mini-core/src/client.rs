@@ -184,6 +184,10 @@ wrap_display_handler! {
             unsafe { (callbacks().fullscreen_mode_changed)(self.tab, fullscreen != 0) };
         }
 
+        fn on_loading_progress_change(&self, _browser: Option<&mut Browser>, progress: f64) {
+            unsafe { (callbacks().loading_progress_changed)(self.tab, progress) };
+        }
+
         fn on_title_change(&self, _browser: Option<&mut Browser>, title: Option<&CefString>) {
             let title = c_string(&text(title));
             unsafe { (callbacks().title_changed)(self.tab, title.as_ptr()) };

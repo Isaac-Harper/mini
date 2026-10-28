@@ -12,7 +12,7 @@ struct TabRowView: View {
     var body: some View {
         HStack(spacing: 4) {
             disclosure
-            FaviconView(image: tab.favicon, size: 16)
+            TabIconView(tab: tab, size: 16)
                 .opacity(tab.isLoading ? 0.4 : 1)
                 .animation(.easeInOut(duration: 0.3), value: tab.isLoading)
                 .padding(.trailing, 4)
@@ -145,7 +145,7 @@ private struct SplitTabHalfView: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            FaviconView(image: tab.favicon, size: 16)
+            TabIconView(tab: tab, size: 16)
                 .opacity(tab.isLoading ? 0.4 : 1)
                 .animation(.easeInOut(duration: 0.3), value: tab.isLoading)
             Text(tab.displayTitle)

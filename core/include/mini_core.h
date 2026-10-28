@@ -141,6 +141,9 @@ typedef struct MiniCallbacks {
   // The page entered or left element fullscreen (a video's fullscreen
   // button, requestFullscreen). Leave it with mini_browser_exit_fullscreen.
   void (*fullscreen_mode_changed)(MiniTabId tab, bool fullscreen);
+  // Main-frame loading progress from 0 to 1 (CefDisplayHandler
+  // OnLoadingProgressChange). Reaches 1 when the load finishes.
+  void (*loading_progress_changed)(MiniTabId tab, double progress);
   // The page wants a context menu. CEF's own menu is always cancelled; the
   // shell shows a native one and performs its items through mini_browser_*.
   void (*context_menu_requested)(MiniTabId tab, const MiniContextMenu *menu);

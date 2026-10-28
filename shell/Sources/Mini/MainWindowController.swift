@@ -1,4 +1,5 @@
 import AppKit
+import CMiniCore
 import SwiftUI
 
 @MainActor
@@ -234,11 +235,16 @@ final class WebAreaView: NSView {
 
     private let divider = SplitDividerView()
     private let focusBorder = SplitFocusBorderView()
+    private let progressLine = LoadingProgressLineView()
+    private var progressTabIdentifier: MiniTabId?
+    private var progressFraction: CGFloat = 0
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
         divider.isHidden = true
         focusBorder.isHidden = true
+        progressLine.isHidden = true
+        addSubview(progressLine)
         divider.onDrag = { [weak self] locationInWindow, finished in
             self?.dragDivider(to: locationInWindow, finished: finished)
         }
@@ -252,16 +258,17 @@ final class WebAreaView: NSView {
     override func layout() {
         super.layout()
         guard let splitArrangement else {
-            for subview in subviews where subview !== divider && subview !== focusBorder && subview.frame != bounds {
+            for subview in subviews where !isChrome(subview) && subview.frame != bounds {
                 subview.frame = bounds
             }
+            progressLine.frame = progressFrame(fraction: progressFraction)
             return
         }
         let leadingWidth = clampedLeadingWidth(fraction: splitArrangement.fraction)
         let leadingFrame = NSRect(x: 0, y: 0, width: leadingWidth, height: bounds.height)
         let trailingX = leadingWidth + Self.dividerWidth
         let trailingFrame = NSRect(x: trailingX, y: 0, width: max(0, bounds.width - trailingX), height: bounds.height)
-        for subview in subviews where subview !== divider && subview !== focusBorder {
+        for subview in subviews where !isChrome(subview) {
             let frame = subview === splitArrangement.leading ? leadingFrame : subview === splitArrangement.trailing ? trailingFrame : bounds
             if subview.frame != frame {
                 subview.frame = frame
@@ -269,6 +276,67 @@ final class WebAreaView: NSView {
         }
         divider.frame = NSRect(x: leadingWidth, y: 0, width: Self.dividerWidth, height: bounds.height)
         focusBorder.frame = splitArrangement.focused === splitArrangement.leading ? leadingFrame : trailingFrame
+        progressLine.frame = progressFrame(fraction: progressFraction)
+    }
+
+    private func isChrome(_ subview: NSView) -> Bool {
+        subview === divider || subview === focusBorder || subview === progressLine
+    }
+
+    private func progressFrame(fraction: CGFloat) -> NSRect {
+        let height = LoadingProgressLineView.thickness
+        return NSRect(x: 0, y: isFlipped ? 0 : bounds.height - height, width: (bounds.width * fraction).rounded(), height: height)
+    }
+
+    func showLoadingProgress(of tab: Tab?) {
+        let isSameTab = tab?.id == progressTabIdentifier
+        progressTabIdentifier = tab?.id
+        addSubview(progressLine, positioned: .above, relativeTo: nil)
+        guard let tab, tab.isLoading, tab.loadingProgress < 1 else {
+            finishLoadingProgress(animated: isSameTab && !progressLine.isHidden)
+            return
+        }
+        let fraction = CGFloat(tab.loadingProgress)
+        guard isSameTab, !progressLine.isHidden, fraction > progressFraction else {
+            progressFraction = fraction
+            progressLine.alphaValue = 1
+            progressLine.isHidden = false
+            progressLine.frame = progressFrame(fraction: fraction)
+            return
+        }
+        progressFraction = fraction
+        progressLine.alphaValue = 1
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.2
+            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            progressLine.animator().frame = progressFrame(fraction: fraction)
+        }
+    }
+
+    private func finishLoadingProgress(animated: Bool) {
+        guard animated else {
+            progressFraction = 0
+            progressLine.isHidden = true
+            return
+        }
+        progressFraction = 1
+        NSAnimationContext.runAnimationGroup({ context in
+            context.duration = 0.2
+            progressLine.animator().frame = progressFrame(fraction: 1)
+        }, completionHandler: {
+            MainActor.assumeIsolated {
+                NSAnimationContext.runAnimationGroup({ context in
+                    context.duration = 0.25
+                    self.progressLine.animator().alphaValue = 0
+                }, completionHandler: {
+                    MainActor.assumeIsolated {
+                        guard self.progressFraction == 1, self.progressLine.alphaValue == 0 else { return }
+                        self.progressFraction = 0
+                        self.progressLine.isHidden = true
+                    }
+                })
+            }
+        })
     }
 
     private var splitContentWidth: CGFloat { max(0, bounds.width - Self.dividerWidth) }
@@ -323,6 +391,28 @@ final class SplitDividerView: NSView {
             if finished { stop.pointee = true }
         }
     }
+}
+
+final class LoadingProgressLineView: NSView {
+    static let thickness: CGFloat = 2
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        wantsLayer = true
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) is not supported")
+    }
+
+    override var wantsUpdateLayer: Bool { true }
+
+    override func updateLayer() {
+        layer?.backgroundColor = NSColor.controlAccentColor.cgColor
+    }
+
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
 }
 
 final class SplitFocusBorderView: NSView {

@@ -17,6 +17,22 @@ struct FaviconView: View {
     }
 }
 
+struct TabIconView: View {
+    let tab: Tab
+    let size: CGFloat
+
+    var body: some View {
+        if tab.isLoading {
+            ProgressView()
+                .controlSize(.small)
+                .scaleEffect(size / 20)
+                .frame(width: size, height: size)
+        } else {
+            FaviconView(image: tab.favicon, size: size)
+        }
+    }
+}
+
 struct PermissionPromptView: View {
     let host: String
     let favicon: NSImage?
