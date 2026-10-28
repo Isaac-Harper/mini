@@ -85,6 +85,7 @@ enum MainMenu {
         menu.addItem(item("Block Ads on This Site", #selector(ShellController.toggleAdBlockForSite(_:)), "", target: commands))
         menu.addItem(item("Allow Notifications from This Site", #selector(ShellController.toggleNotificationsForSite(_:)), "", target: commands))
         menu.addItem(item("Reset Permissions for This Site", #selector(ShellController.resetPermissionsForSite(_:)), "", target: commands))
+        menu.addItem(item("Clear Data for This Site\u{2026}", #selector(ShellController.clearDataForSite(_:)), "", target: commands))
         menu.addItem(.separator())
         menu.addItem(item("Picture in Picture", #selector(ShellController.togglePictureInPicture(_:)), "p", [.command, .option], target: commands))
         menu.addItem(.separator())

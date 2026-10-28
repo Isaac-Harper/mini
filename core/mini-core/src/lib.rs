@@ -9,6 +9,7 @@ mod navigation;
 mod notifications;
 mod permissions;
 mod resource_requests;
+mod site_data;
 mod state;
 mod webauthn;
 
@@ -386,6 +387,14 @@ pub extern "C" fn mini_browser_show_dev_tools(tab: MiniTabId) {
 pub extern "C" fn mini_browser_exit_fullscreen(tab: MiniTabId) {
     if let Some(browser) = created_browser(tab) {
         host(&browser).exit_fullscreen(1);
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn mini_browser_clear_site_data(tab: MiniTabId, origin: *const c_char) {
+    let origin = borrowed_text(origin, "origin");
+    if let Some(browser) = created_browser(tab) {
+        site_data::clear(tab, &browser, origin);
     }
 }
 

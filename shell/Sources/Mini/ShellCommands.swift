@@ -257,6 +257,27 @@ extension ShellController: NSMenuItemValidation {
         sitePreferences.resetPermissions(forSiteAt: tab.url)
     }
 
+    private var selectedWebOrigin: String? {
+        guard let tab = selectedBrowserTab, tab.url.hasPrefix("http://") || tab.url.hasPrefix("https://") else { return nil }
+        return SitePreferences.origin(of: tab.url)
+    }
+
+    @objc func clearDataForSite(_ sender: Any?) {
+        guard let tab = selectedBrowserTab, let origin = selectedWebOrigin else { return }
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = "Clear data for \(URLInput.host(of: tab.url) ?? origin)?"
+        alert.informativeText = "Cookies and stored data for this site in \u{201C}\(currentSpace.name)\u{201D} are deleted, which signs you out of it. The page then reloads."
+        alert.addButton(withTitle: "Clear Data").hasDestructiveAction = true
+        alert.addButton(withTitle: "Cancel")
+        alert.beginSheetModal(for: window) { [weak tab] response in
+            MainActor.assumeIsolated {
+                guard response == .alertFirstButtonReturn, let tab, tab.hasBrowser, SitePreferences.origin(of: tab.url) == origin else { return }
+                origin.withCString { mini_browser_clear_site_data(tab.id, $0) }
+            }
+        }
+    }
+
     @objc func selectTabAtIndex(_ sender: NSMenuItem) {
         store.select(index: sender.tag)
     }
@@ -325,6 +346,8 @@ extension ShellController: NSMenuItemValidation {
             }
             menuItem.state = sitePreferences.notificationPermission(forSiteAt: selected.url) == MINI_NOTIFICATION_GRANTED ? .on : .off
             return true
+        case #selector(clearDataForSite(_:)):
+            return keyLittleWindow == nil && selectedWebOrigin != nil
         case #selector(resetPermissionsForSite(_:)):
             return selected.map { sitePreferences.hasPermissionDecisions(forSiteAt: $0.url) } ?? false
         case #selector(toggleTabSidebar(_:)):

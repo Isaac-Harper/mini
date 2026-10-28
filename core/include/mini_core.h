@@ -146,6 +146,10 @@ void mini_browser_stop_finding(MiniTabId tab);
 void mini_browser_show_dev_tools(MiniTabId tab);
 // Makes the page leave element fullscreen; fullscreen_mode_changed follows.
 void mini_browser_exit_fullscreen(MiniTabId tab);
+// Deletes cookies and all storage (local and session storage, IndexedDB,
+// caches, service workers) for origin (scheme://host[:port]) in the tab's
+// space, then reloads the tab.
+void mini_browser_clear_site_data(MiniTabId tab, const char *origin);
 // Opens the native print panel for the page.
 void mini_browser_print(MiniTabId tab);
 void mini_browser_close(MiniTabId tab);
