@@ -10,6 +10,8 @@ final class SitePreferences {
 
     private var permissionDecisions: [String: PermissionDecision]
     private var adBlockExemptHosts: Set<String>
+    private var zoomLevels: [String: Double]
+    private let zoomLevelsFileURL: URL
     private let permissionsFileURL: URL
     private let adBlockExemptionsFileURL: URL
 
@@ -18,6 +20,8 @@ final class SitePreferences {
         adBlockExemptionsFileURL = directory.appendingPathComponent("adblock-exempt.json")
         permissionDecisions = Self.load([String: PermissionDecision].self, from: permissionsFileURL) ?? [:]
         adBlockExemptHosts = Self.load(Set<String>.self, from: adBlockExemptionsFileURL) ?? []
+        zoomLevelsFileURL = directory.appendingPathComponent("zoom-levels.json")
+        zoomLevels = Self.load([String: Double].self, from: zoomLevelsFileURL) ?? [:]
     }
 
     static func origin(of address: String) -> String? {
@@ -91,6 +95,19 @@ final class SitePreferences {
         guard let key = Self.origin(of: address), permissionDecisions.removeValue(forKey: key) != nil else { return }
         Self.save(permissionDecisions, to: permissionsFileURL)
         pushNotificationPermission(origin: key)
+    }
+
+    func zoomLevel(host: String) -> Double {
+        zoomLevels[host] ?? 0
+    }
+
+    func setZoomLevel(_ level: Double?, host: String) {
+        if let level, level != 0 {
+            zoomLevels[host] = level
+        } else {
+            zoomLevels.removeValue(forKey: host)
+        }
+        Self.save(zoomLevels, to: zoomLevelsFileURL)
     }
 
     func isAdBlockExempt(host: String) -> Bool {

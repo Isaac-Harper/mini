@@ -111,8 +111,10 @@ void mini_browser_reload(MiniTabId tab);
 void mini_browser_stop(MiniTabId tab);
 void mini_browser_set_focus(MiniTabId tab, bool focused);
 void mini_browser_set_hidden(MiniTabId tab, bool hidden);
-// direction: -1 zoom out, 0 reset, +1 zoom in
-void mini_browser_zoom(MiniTabId tab, int direction);
+// direction: -1 zoom out, 0 reset, +1 zoom in. Returns the new zoom level
+// (CEF units: factor = 1.2^level; 0 is 100%), or 0 without a browser.
+double mini_browser_zoom(MiniTabId tab, int direction);
+void mini_browser_set_zoom_level(MiniTabId tab, double level);
 void mini_browser_find(MiniTabId tab, const char *text, bool forward, bool find_next);
 void mini_browser_stop_finding(MiniTabId tab);
 void mini_browser_show_dev_tools(MiniTabId tab);

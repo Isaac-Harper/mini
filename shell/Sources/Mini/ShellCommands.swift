@@ -104,15 +104,27 @@ extension ShellController: NSMenuItemValidation {
     }
 
     @objc func zoomInPage(_ sender: Any?) {
-        if let tab = selectedBrowserTab { mini_browser_zoom(tab.id, 1) }
+        zoomSelected(direction: 1)
     }
 
     @objc func zoomOutPage(_ sender: Any?) {
-        if let tab = selectedBrowserTab { mini_browser_zoom(tab.id, -1) }
+        zoomSelected(direction: -1)
     }
 
     @objc func actualSizePage(_ sender: Any?) {
-        if let tab = selectedBrowserTab { mini_browser_zoom(tab.id, 0) }
+        zoomSelected(direction: 0)
+    }
+
+    private func zoomSelected(direction: Int32) {
+        guard let tab = selectedBrowserTab else { return }
+        let level = mini_browser_zoom(tab.id, direction)
+        if let host = SitePreferences.host(of: tab.url) {
+            sitePreferences.setZoomLevel(direction == 0 ? nil : level, host: host)
+            for other in store.allTabs where other !== tab && other.hasBrowser && SitePreferences.host(of: other.url) == host {
+                mini_browser_set_zoom_level(other.id, level)
+            }
+        }
+        toast.show("\(Int((pow(1.2, level) * 100).rounded()))%")
     }
 
     @objc func showDeveloperTools(_ sender: Any?) {

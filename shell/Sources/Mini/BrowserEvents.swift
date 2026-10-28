@@ -12,6 +12,11 @@ extension ShellController {
             loginFill.close(forTab: identifier)
         }
         tab.url = url
+        let host = SitePreferences.host(of: url)
+        if host != tab.zoomedHost {
+            tab.zoomedHost = host
+            mini_browser_set_zoom_level(tab.id, host.map(sitePreferences.zoomLevel(host:)) ?? 0)
+        }
         focusIfAwaitingInitialFocus(tab)
         scheduleSessionSave()
     }

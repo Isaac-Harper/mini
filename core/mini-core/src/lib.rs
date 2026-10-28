@@ -256,9 +256,9 @@ pub extern "C" fn mini_browser_set_hidden(tab: MiniTabId, hidden: bool) {
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn mini_browser_zoom(tab: MiniTabId, direction: c_int) {
+pub extern "C" fn mini_browser_zoom(tab: MiniTabId, direction: c_int) -> f64 {
     let Some(browser) = created_browser(tab) else {
-        return;
+        return 0.0;
     };
     let host = host(&browser);
     let level = match direction {
@@ -268,6 +268,14 @@ pub extern "C" fn mini_browser_zoom(tab: MiniTabId, direction: c_int) {
         other => panic!("zoom direction must be -1, 0 or 1, got {other}"),
     };
     host.set_zoom_level(level);
+    level
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn mini_browser_set_zoom_level(tab: MiniTabId, level: f64) {
+    if let Some(browser) = created_browser(tab) {
+        host(&browser).set_zoom_level(level);
+    }
 }
 
 #[unsafe(no_mangle)]

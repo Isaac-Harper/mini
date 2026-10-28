@@ -69,7 +69,7 @@ To use Mini as your default browser, run `make install` and choose Mini > Set as
 | ⌘[, ⌘] | Back and forward |
 | ⌘R, ⌘. | Reload and stop |
 | ⌘F, ⌘G, ⇧⌘G | Find, next, previous |
-| ⌘=, ⌘-, ⌘0 | Zoom in, out, actual size |
+| ⌘=, ⌘-, ⌘0 | Zoom in, out, actual size (remembered per site) |
 | ⌥⌘I | Developer tools |
 
 Browser shortcuts take priority over the page, so ⌘T or ⌘W work even when a site tries to capture them. Copy, paste, undo and select all always go to the page.
@@ -88,6 +88,7 @@ Passkeys are not supported until that entitlement is granted. Mini turns off Web
 - `~/Library/Application Support/Mini/session.json`: open tabs
 - `~/Library/Application Support/Mini/archive.json`: archived tabs (newest 200)
 - Weather: the last reading is cached in Mini's user defaults (`WeatherReading`); coordinates are rounded to two decimals before they are sent to Open-Meteo and are never stored or logged
+- `~/Library/Application Support/Mini/zoom-levels.json`: per-site zoom levels
 - `~/Library/Application Support/Mini/Favicons`: cached site icons, so restored tabs show their icon before they load
 - `~/Library/Application Support/Mini/permissions.json`: per-site permission decisions
 - `~/Library/Application Support/Mini/Filters`: ad block lists, refreshed weekly

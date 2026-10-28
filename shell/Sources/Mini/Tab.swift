@@ -23,6 +23,7 @@ final class Tab: Identifiable {
     @ObservationIgnored var needsInitialFocus = false
     @ObservationIgnored var lastSelectedAt = Date()
     @ObservationIgnored var hasCrashed = false
+    @ObservationIgnored var zoomedHost: String?
 
     init(id: MiniTabId, url: String, title: String) {
         self.id = id
