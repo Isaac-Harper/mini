@@ -122,6 +122,7 @@ final class WebContentViewController: NSViewController {
 
     let webAreaView = WebAreaView()
     private let cardView = PageCardView()
+    private let emptyStateView = EmptyPageView()
     private var insetConstraints: [NSLayoutConstraint] = []
 
     override func loadView() {
@@ -133,6 +134,9 @@ final class WebContentViewController: NSViewController {
         webAreaView.layer?.cornerCurve = .continuous
         webAreaView.layer?.masksToBounds = true
         cardView.addSubview(webAreaView)
+        emptyStateView.translatesAutoresizingMaskIntoConstraints = false
+        emptyStateView.wantsLayer = true
+        cardView.addSubview(emptyStateView)
         container.addSubview(cardView)
         insetConstraints = [
             cardView.leadingAnchor.constraint(equalTo: container.safeAreaLayoutGuide.leadingAnchor, constant: Self.cardInset),
@@ -145,6 +149,8 @@ final class WebContentViewController: NSViewController {
             webAreaView.trailingAnchor.constraint(equalTo: cardView.trailingAnchor),
             webAreaView.topAnchor.constraint(equalTo: cardView.topAnchor),
             webAreaView.bottomAnchor.constraint(equalTo: cardView.bottomAnchor),
+            emptyStateView.centerXAnchor.constraint(equalTo: cardView.centerXAnchor),
+            emptyStateView.centerYAnchor.constraint(equalTo: cardView.centerYAnchor),
         ])
         view = container
     }
@@ -165,6 +171,7 @@ final class WebContentViewController: NSViewController {
         }
         webAreaView.splitArrangement = split
         webAreaView.layoutSubtreeIfNeeded()
+        emptyStateView.isHidden = !hostViews.isEmpty
         for hostView in hostViews {
             hostView.isHidden = false
         }
@@ -202,6 +209,31 @@ final class PageCardView: NSView {
         super.layout()
         needsDisplay = true
     }
+}
+
+final class EmptyPageView: NSStackView {
+    init() {
+        let title = NSTextField(labelWithString: "Mini")
+        title.font = .systemFont(ofSize: 28, weight: .semibold)
+        title.textColor = .secondaryLabelColor
+        let hint = NSTextField(labelWithString: "\u{2318}T to open a page")
+        hint.font = .systemFont(ofSize: 13)
+        hint.textColor = .tertiaryLabelColor
+        super.init(frame: .zero)
+        orientation = .vertical
+        alignment = .centerX
+        spacing = 6
+        addArrangedSubview(title)
+        addArrangedSubview(hint)
+        isHidden = true
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) is not supported")
+    }
+
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
 }
 
 extension NSAppearance {

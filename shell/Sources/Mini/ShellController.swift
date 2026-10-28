@@ -482,6 +482,9 @@ extension ShellController: TabStoreObserver {
                 tab.hostView.removeFromSuperview()
             }
         }
+        if store === self.store, displayedTabs.isEmpty {
+            refreshDisplayedTabs()
+        }
         sitePrompts.discardPrompts(for: tabs)
         forgetNowPlaying(tabs)
         for tab in tabs {
