@@ -62,7 +62,8 @@ final class ArchiveStore {
 
     func add(_ newEntries: [ArchivedTab]) {
         guard !newEntries.isEmpty else { return }
-        entries = Array((newEntries.reversed() + entries).prefix(Self.capacity))
+        var seenURLs = Set<String>()
+        entries = Array((newEntries.reversed() + entries).filter { seenURLs.insert($0.url).inserted }.prefix(Self.capacity))
         save()
     }
 

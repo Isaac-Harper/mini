@@ -63,6 +63,8 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
         ])
 
         glassView.cornerRadius = 20
+        glassView.style = .regular
+        glassView.tintColor = NSColor.windowBackgroundColor.withAlphaComponent(0.55)
         glassView.contentView = content
         glassView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
