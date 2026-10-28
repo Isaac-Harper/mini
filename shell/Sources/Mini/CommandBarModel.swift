@@ -12,6 +12,7 @@ enum CommandSuggestion: Identifiable {
     case open(URLInput.Interpretation)
     case searchSuggestion(String)
     case archived(ArchivedTab)
+    case history(HistoryEntry)
 
     var id: String {
         switch self {
@@ -19,11 +20,17 @@ enum CommandSuggestion: Identifiable {
         case .open: "open"
         case .searchSuggestion(let text): "suggestion-\(text)"
         case .archived(let entry): "archived-\(entry.url)"
+        case .history(let entry): "history-\(entry.url)"
         }
     }
 
     var isArchived: Bool {
         if case .archived = self { return true }
+        return false
+    }
+
+    var isHistory: Bool {
+        if case .history = self { return true }
         return false
     }
 }
@@ -38,11 +45,13 @@ final class CommandBarModel {
     @ObservationIgnored private var tabs: [Tab] = []
     @ObservationIgnored private weak var selectedTab: Tab?
     @ObservationIgnored private var archived: [ArchivedTab] = []
+    @ObservationIgnored private var history: [HistoryEntry] = []
     @ObservationIgnored private var searchSuggestions: [String] = []
     @ObservationIgnored private var searchSuggestionsQuery = ""
 
     private static let maximumSearchSuggestions = 4
     private static let maximumOtherRows = 5
+    private static let maximumHistoryRows = 4
     private static let recentTabCount = 5
 
     var trimmedQuery: String { query.trimmingCharacters(in: .whitespacesAndNewlines) }
@@ -65,11 +74,12 @@ final class CommandBarModel {
         selectedIndex = 0
     }
 
-    func update(query: String, tabs: [Tab], selectedTab: Tab?, archived: [ArchivedTab]) {
+    func update(query: String, tabs: [Tab], selectedTab: Tab?, archived: [ArchivedTab], history: [HistoryEntry]) {
         self.query = query
         self.tabs = tabs
         self.selectedTab = selectedTab
         self.archived = archived
+        self.history = history
         guard !trimmedQuery.isEmpty else {
             showRecentTabs(from: tabs, excluding: selectedTab)
             return
@@ -103,12 +113,17 @@ final class CommandBarModel {
             }
             .prefix(Self.maximumOtherRows - matchingTabs.count)
             .map(CommandSuggestion.archived)
+        let openURLs = Set(tabs.map(\.url))
+        let matchingHistory = Frecency.ranked(history, now: Date())
+            .filter { !openURLs.contains($0.url) }
+            .prefix(Self.maximumHistoryRows)
+            .map(CommandSuggestion.history)
         let lowercasedQuery = trimmed.lowercased()
         let searchRows = searchSuggestions
             .filter { $0.lowercased() != lowercasedQuery }
             .prefix(Self.maximumSearchSuggestions)
             .map(CommandSuggestion.searchSuggestion)
-        suggestions = [.open(URLInput.interpret(trimmed))] + searchRows + matchingTabs + matchingArchived
+        suggestions = [.open(URLInput.interpret(trimmed))] + searchRows + matchingTabs + matchingHistory + matchingArchived
         if let previouslySelectedIdentifier, let index = suggestions.firstIndex(where: { $0.id == previouslySelectedIdentifier }) {
             selectedIndex = index
         } else {

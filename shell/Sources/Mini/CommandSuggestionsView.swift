@@ -9,14 +9,11 @@ struct CommandSuggestionsView: View {
         if !model.suggestions.isEmpty {
             VStack(spacing: 0) {
                 ForEach(Array(model.suggestions.enumerated()), id: \.element.id) { index, suggestion in
+                    if suggestion.isHistory, index == 0 || !model.suggestions[index - 1].isHistory {
+                        SuggestionSectionHeader(title: "History")
+                    }
                     if suggestion.isArchived, index == 0 || !model.suggestions[index - 1].isArchived {
-                        Text("Archived")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(.tertiary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, 12)
-                            .padding(.top, 8)
-                            .padding(.bottom, 4)
+                        SuggestionSectionHeader(title: "Archived")
                     }
                     CommandSuggestionRow(suggestion: suggestion, isSelected: index == model.selectedIndex, faviconLookup: faviconLookup)
                         .contentShape(Rectangle())
@@ -29,6 +26,20 @@ struct CommandSuggestionsView: View {
             .padding(.horizontal, 8)
             .padding(.bottom, 8)
         }
+    }
+}
+
+private struct SuggestionSectionHeader: View {
+    let title: String
+
+    var body: some View {
+        Text(title)
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundStyle(.tertiary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 12)
+            .padding(.top, 8)
+            .padding(.bottom, 4)
     }
 }
 
@@ -78,6 +89,12 @@ private struct CommandSuggestionRow: View {
             Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
         case .searchSuggestion:
             Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+        case .history(let entry):
+            if let favicon = faviconLookup(entry.url) {
+                FaviconView(image: favicon, size: 16)
+            } else {
+                Image(systemName: "clock").foregroundStyle(.secondary)
+            }
         case .archived(let entry):
             if let favicon = faviconLookup(entry.url) {
                 FaviconView(image: favicon, size: 16)
@@ -94,6 +111,7 @@ private struct CommandSuggestionRow: View {
         case .open(.search(let query)): query
         case .searchSuggestion(let text): text
         case .archived(let entry): entry.title
+        case .history(let entry): entry.displayTitle
         }
     }
 
@@ -104,6 +122,7 @@ private struct CommandSuggestionRow: View {
         case .open(.search): "Search Google"
         case .searchSuggestion: nil
         case .archived(let entry): URLInput.host(of: entry.url)
+        case .history(let entry): URLInput.host(of: entry.url)
         }
     }
 
@@ -114,6 +133,7 @@ private struct CommandSuggestionRow: View {
         case .open(.search): "Search"
         case .searchSuggestion: "Search"
         case .archived: "Reopen"
+        case .history: "Open"
         }
     }
 }

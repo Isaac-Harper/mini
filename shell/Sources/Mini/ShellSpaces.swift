@@ -8,6 +8,7 @@ extension ShellController {
             registerWithEngine(space)
         }
         removeOrphanedSpaceDirectories()
+        history.removeHistory(ofSpacesOtherThan: Set(spaces.map(\.id)))
     }
 
     private func registerWithEngine(_ space: Space) {
@@ -66,6 +67,7 @@ extension ShellController {
         } else {
             window.makeFirstResponder(nil)
         }
+        historyWindow?.reload()
         scheduleSessionSave()
     }
 
@@ -134,6 +136,7 @@ extension ShellController {
         guard let remaining = pendingSpaceDeletions[spaceIdentifier], remaining.isEmpty else { return }
         pendingSpaceDeletions[spaceIdentifier] = nil
         spaceIdentifier.withCString { mini_space_destroy($0) }
+        history.removeHistory(ofSpace: spaceIdentifier)
         removeSpaceDirectory(Space.cacheDirectory(forSpace: spaceIdentifier, rootCacheDirectory: rootCacheDirectory))
     }
 

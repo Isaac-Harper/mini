@@ -172,6 +172,8 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
             shell.open(URLInput.Interpretation.search(text).url, from: mode)
         case .archived(let entry):
             shell.reopenArchived(entry)
+        case .history(let entry):
+            shell.open(entry.url, from: mode)
         }
         shell.focusSelectedWebContent()
     }
@@ -186,7 +188,8 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
     func controlTextDidChange(_ notification: Notification) {
         let store = shell.store
         withoutAnimation {
-            model.update(query: field.stringValue, tabs: store.allTabs, selectedTab: store.selectedTab, archived: shell.archive.entries)
+            let historyMatches = shell.history.store(forSpace: shell.currentSpace.id).search(field.stringValue, limit: 60)
+            model.update(query: field.stringValue, tabs: store.allTabs, selectedTab: store.selectedTab, archived: shell.archive.entries, history: historyMatches)
         }
         updateIcon()
         searchSuggestionFetcher.fetch(model.trimmedQuery) { [weak self] texts, query in

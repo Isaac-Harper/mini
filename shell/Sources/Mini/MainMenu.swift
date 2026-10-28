@@ -99,6 +99,10 @@ enum MainMenu {
         let menu = NSMenu(title: "History")
         menu.addItem(item("Back", #selector(ShellController.goBackInHistory(_:)), "[", target: commands))
         menu.addItem(item("Forward", #selector(ShellController.goForwardInHistory(_:)), "]", target: commands))
+        menu.addItem(.separator())
+        menu.addItem(item("Show All History", #selector(ShellController.showAllHistory(_:)), "y", target: commands))
+        menu.addItem(item("Clear History\u{2026}", #selector(ShellController.clearHistory(_:)), "", target: commands))
+        menu.delegate = commands
         return menu
     }
 

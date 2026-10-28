@@ -13,6 +13,7 @@ Mini is an open source exploration project: a personal, minimal browser built to
 - Fill logins from Apple Passwords through a native card with Touch ID
 - Native permission prompts for camera, microphone, location and the rest
 - Session restore with lazy tabs, so launch stays fast
+- History per space: recent pages in the History menu, a searchable History window (⌘Y), and frecency-ranked matches in the command bar
 - Tabs left unselected for 12 hours archive themselves; find them again in the command bar
 - Downloads progress in the sidebar; click to cancel, or to show the file in Finder
 - A crashed page shows a Reload button instead of a blank tab
@@ -78,6 +79,7 @@ To use Mini as your default browser, run `make install` and choose Mini > Set as
 | ⌃⌘\ | Split the current tab with the last one you used, or close the split |
 | ⌘\ | Fill password |
 | ⇧⌘C | Copy the page address |
+| ⌘Y | Show all history |
 | ⌘[, ⌘] | Back and forward (right-click or hold the toolbar buttons for the history list) |
 | ⌘R, ⌘. | Reload and stop |
 | ⌘F, ⌘G, ⇧⌘G | Find, next, previous |

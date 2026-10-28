@@ -19,6 +19,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             sitePreferences: SitePreferences(directory: Self.supportDirectory),
             archive: ArchiveStore(directory: Self.supportDirectory),
             faviconCache: FaviconCache(directory: Self.supportDirectory),
+            history: HistoryLibrary(directory: Self.supportDirectory.appendingPathComponent("History")),
             rootCacheDirectory: Self.supportDirectory.appendingPathComponent("Profile")
         )
         self.shell = shell

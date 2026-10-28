@@ -105,6 +105,8 @@ extension ShellController: NSMenuItemValidation {
     @objc func closeTab(_ sender: Any?) {
         if let littleWindow = keyLittleWindow {
             littleWindow.close()
+        } else if isHistoryWindowKey {
+            historyWindow?.close()
         } else if commandBar.isOpen {
             commandBar.close(restoringWebFocus: true)
         } else if let tab = store.selectedTab {

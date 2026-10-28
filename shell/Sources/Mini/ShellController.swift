@@ -14,6 +14,8 @@ final class ShellController: NSObject {
     @ObservationIgnored let sitePreferences: SitePreferences
     @ObservationIgnored let archive: ArchiveStore
     @ObservationIgnored let faviconCache: FaviconCache
+    @ObservationIgnored let history: HistoryLibrary
+    @ObservationIgnored var historyWindow: HistoryWindowController?
     @ObservationIgnored private var archiveTimer: Timer?
     @ObservationIgnored private let sessionStore: SessionStore
     @ObservationIgnored private(set) var windowController: MainWindowController!
@@ -38,8 +40,9 @@ final class ShellController: NSObject {
 
     private static let archiveInterval: TimeInterval = 10 * 60
 
-    init(sessionStore: SessionStore, sitePreferences: SitePreferences, archive: ArchiveStore, faviconCache: FaviconCache, rootCacheDirectory: URL) {
+    init(sessionStore: SessionStore, sitePreferences: SitePreferences, archive: ArchiveStore, faviconCache: FaviconCache, history: HistoryLibrary, rootCacheDirectory: URL) {
         self.faviconCache = faviconCache
+        self.history = history
         self.sessionStore = sessionStore
         self.sitePreferences = sitePreferences
         self.archive = archive
@@ -116,6 +119,10 @@ final class ShellController: NSObject {
         sessionStore.save(spaces, current: currentSpace)
         for url in externalURLs {
             openExternalURL(url)
+        }
+        history.onChange = { [weak self] in
+            guard let historyWindow = self?.historyWindow, historyWindow.window?.isVisible == true else { return }
+            historyWindow.reload()
         }
         archiveIdleTabs()
         weather.start()

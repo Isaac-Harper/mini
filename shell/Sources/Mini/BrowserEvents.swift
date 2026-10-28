@@ -6,8 +6,15 @@ extension ShellController {
         space(containing: identifier)?.store.tab(withIdentifier: identifier) ?? littleWindow(containing: identifier)?.tab
     }
 
+    private func spaceIdentifier(ofTab identifier: MiniTabId) -> String? {
+        space(containing: identifier)?.id ?? littleWindow(containing: identifier)?.space.id
+    }
+
     func addressChanged(_ identifier: MiniTabId, url: String) {
         guard let tab = liveTab(identifier) else { return }
+        if let spaceIdentifier = spaceIdentifier(ofTab: identifier) {
+            history.recordVisit(url: url, title: tab.url == url ? tab.title : "", inSpace: spaceIdentifier)
+        }
         if tab.url != url {
             loginFill.close(forTab: identifier)
         }
@@ -25,6 +32,9 @@ extension ShellController {
     func titleChanged(_ identifier: MiniTabId, title: String) {
         guard let tab = liveTab(identifier) else { return }
         tab.title = title
+        if let spaceIdentifier = spaceIdentifier(ofTab: identifier) {
+            history.updateTitle(title, url: tab.url, inSpace: spaceIdentifier)
+        }
         littleWindow(containing: identifier)?.updateAddress()
         scheduleSessionSave()
     }
