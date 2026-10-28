@@ -41,9 +41,12 @@ struct TabRowView: View {
         .padding(.trailing, 6)
         .frame(height: SidebarMetrics.rowHeight)
         .background { rowBackground }
+        .overlay { TabDropIndicator(shell: shell, tab: tab, depth: depth) }
         .contentShape(Rectangle())
         .onHover { isHovered = $0 }
         .onTapGesture { shell.store.select(tab) }
+        .onDrag { shell.sidebarDrag.beginDrag(tab) }
+        .onDrop(of: SidebarDragModel.acceptedTypes, delegate: TabRowDropDelegate(shell: shell, tab: tab))
         .contextMenu {
             Button("Open in Split View") { shell.openInSplitView(tab) }
                 .disabled(!canOpenInSplitView)
@@ -118,8 +121,11 @@ struct SplitTabRowView: View {
                 shape.fill(.fill.quaternary)
             }
         }
+        .overlay { TabDropIndicator(shell: shell, tab: split.leading, depth: depth) }
         .contentShape(Rectangle())
         .onHover { isHovered = $0 }
+        .onDrag { shell.sidebarDrag.beginDrag(split.leading) }
+        .onDrop(of: SidebarDragModel.acceptedTypes, delegate: TabRowDropDelegate(shell: shell, tab: split.leading))
         .contextMenu {
             Button("Separate Tabs") { shell.store.unsplit(split) }
             Button("Close \(split.leading.displayTitle)") { shell.store.close(split.leading) }

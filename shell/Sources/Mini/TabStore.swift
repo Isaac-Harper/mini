@@ -10,6 +10,12 @@ protocol TabStoreObserver: AnyObject {
     func tabStoreDidChangeSplits(_ store: TabStore)
 }
 
+enum TabDropPosition {
+    case before
+    case after
+    case inside
+}
+
 struct VisibleTab: Identifiable {
     let tab: Tab
     let depth: Int
@@ -156,7 +162,7 @@ final class TabStore {
         return tab
     }
 
-    func pin(_ tab: Tab) {
+    func pin(_ tab: Tab, at pinnedIndex: Int? = nil) {
         guard !tab.isPinned, !tab.url.isEmpty else { return }
         if let split = split(containing: tab) {
             unsplit(split)
@@ -170,8 +176,68 @@ final class TabStore {
         tab.children = []
         tab.isCollapsed = false
         tab.pinnedURL = tab.url
-        pinnedTabs.append(tab)
+        pinnedTabs.insert(tab, at: min(pinnedIndex ?? pinnedTabs.count, pinnedTabs.count))
         observer?.tabStoreDidChangeStructure(self)
+    }
+
+    func movePinned(_ tab: Tab, to index: Int) {
+        precondition(tab.isPinned, "Moving an unpinned tab among the pins")
+        let current = position(of: tab, in: pinnedTabs)
+        pinnedTabs.remove(at: current)
+        pinnedTabs.insert(tab, at: min(current < index ? index - 1 : index, pinnedTabs.count))
+        observer?.tabStoreDidChangeStructure(self)
+    }
+
+    func canMove(_ tab: Tab, relativeTo target: Tab) -> Bool {
+        tab !== target && !target.isPinned && !target.isDescendant(of: tab)
+    }
+
+    func move(_ tab: Tab, relativeTo target: Tab, position dropPosition: TabDropPosition) {
+        guard canMove(tab, relativeTo: target) else { return }
+        detachForMove(tab)
+        switch dropPosition {
+        case .before:
+            insert(tab, into: target.parent, at: position(of: target, in: children(of: target.parent)))
+        case .after:
+            insert(tab, into: target.parent, at: position(of: target, in: children(of: target.parent)) + 1)
+        case .inside:
+            insert(tab, into: target, at: target.children.count)
+            target.isCollapsed = false
+        }
+        observer?.tabStoreDidChangeStructure(self)
+    }
+
+    func moveToEnd(_ tab: Tab) {
+        detachForMove(tab)
+        insert(tab, into: nil, at: rootTabs.count)
+        observer?.tabStoreDidChangeStructure(self)
+    }
+
+    func move(_ tab: Tab, by offset: Int) {
+        if tab.isPinned {
+            let index = position(of: tab, in: pinnedTabs)
+            let destination = index + offset
+            guard pinnedTabs.indices.contains(destination) else { return }
+            pinnedTabs.swapAt(index, destination)
+        } else {
+            let parent = tab.parent
+            let siblings = children(of: parent)
+            let index = position(of: tab, in: siblings)
+            let destination = index + offset
+            guard siblings.indices.contains(destination) else { return }
+            detach(tab)
+            insert(tab, into: parent, at: destination)
+        }
+        observer?.tabStoreDidChangeStructure(self)
+    }
+
+    private func detachForMove(_ tab: Tab) {
+        if tab.isPinned {
+            pinnedTabs.remove(at: position(of: tab, in: pinnedTabs))
+            tab.pinnedURL = nil
+        } else {
+            detach(tab)
+        }
     }
 
     func unpin(_ tab: Tab) {

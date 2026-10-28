@@ -8,17 +8,43 @@ struct PinnedTabsView: View {
     var body: some View {
         GlassEffectContainer(spacing: 8) {
             LazyVGrid(columns: columns, spacing: 8) {
-                ForEach(shell.store.pinnedTabs) { tab in
-                    PinnedTabTile(shell: shell, tab: tab)
+                ForEach(Array(shell.store.pinnedTabs.enumerated()), id: \.element.id) { index, tab in
+                    PinnedTabTile(shell: shell, tab: tab, index: index)
+                }
+                if shell.sidebarDrag.isDraggingUnpinnedTab {
+                    PinDropTile(shell: shell, index: shell.store.pinnedTabs.count)
                 }
             }
         }
     }
 }
 
+private struct PinDropTile: View {
+    let shell: ShellController
+    let index: Int
+
+    private var isTargeted: Bool { shell.sidebarDrag.target == .pinned(index) }
+
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: 12, style: .continuous)
+        Image(systemName: "pin")
+            .font(.system(size: 13, weight: .medium))
+            .foregroundStyle(isTargeted ? Color.accentColor : Color.secondary)
+            .frame(maxWidth: .infinity)
+            .frame(height: 40)
+            .background(shape.fill(isTargeted ? Color.accentColor.opacity(0.15) : Color.clear))
+            .overlay(shape.strokeBorder(isTargeted ? Color.accentColor : Color.secondary.opacity(0.5), style: StrokeStyle(lineWidth: 1.5, dash: [4, 3])))
+            .help("Drop to Pin")
+            .onDrop(of: SidebarDragModel.acceptedTypes, delegate: PinnedDropDelegate(shell: shell, index: index))
+    }
+}
+
 private struct PinnedTabTile: View {
     let shell: ShellController
     let tab: Tab
+    let index: Int
+
+    private var isDropTarget: Bool { shell.sidebarDrag.target == .pinned(index) }
 
     private var isSelected: Bool { shell.store.selectedTab === tab }
 
@@ -31,9 +57,16 @@ private struct PinnedTabTile: View {
             .overlay(alignment: .topTrailing) {
                 AudioToggleButton(shell: shell, tab: tab).offset(x: 4, y: -4)
             }
+            .overlay(alignment: .leading) {
+                if isDropTarget {
+                    Capsule().fill(Color.accentColor).frame(width: 2).padding(.vertical, 6).offset(x: -5).allowsHitTesting(false)
+                }
+            }
             .contentShape(shape)
             .help(tab.displayTitle)
             .onTapGesture { shell.store.select(tab) }
+            .onDrag { shell.sidebarDrag.beginDrag(tab) }
+            .onDrop(of: SidebarDragModel.acceptedTypes, delegate: PinnedDropDelegate(shell: shell, index: index))
             .contextMenu {
                 Button("Duplicate Tab") { shell.duplicate(tab) }
                 Button("Unpin Tab") { shell.store.unpin(tab) }

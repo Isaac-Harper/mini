@@ -207,6 +207,14 @@ extension ShellController: NSMenuItemValidation {
         if let tab = store.selectedTab { duplicate(tab) }
     }
 
+    @objc func moveTabUp(_ sender: Any?) {
+        if let tab = store.selectedTab { store.move(tab, by: -1) }
+    }
+
+    @objc func moveTabDown(_ sender: Any?) {
+        if let tab = store.selectedTab { store.move(tab, by: 1) }
+    }
+
     @objc func togglePinnedTab(_ sender: Any?) {
         guard let tab = store.selectedTab else { return }
         if tab.isPinned {
@@ -326,6 +334,8 @@ extension ShellController: NSMenuItemValidation {
             return commandBrowserTab != nil
         case #selector(copyTabAddress(_:)):
             return !((keyLittleWindow?.tab ?? selected)?.url.isEmpty ?? true)
+        case #selector(moveTabUp(_:)), #selector(moveTabDown(_:)):
+            return selected != nil
         case #selector(duplicateSelectedTab(_:)):
             return !(selected?.url.isEmpty ?? true)
         case #selector(togglePinnedTab(_:)):

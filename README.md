@@ -4,7 +4,7 @@ A small, quiet macOS browser for one person. Chromium renders the pages; everyth
 
 Mini is an open source exploration project: a personal, minimal browser built to explore a native Swift shell over Chromium (CEF).
 
-- Vertical sidebar with nested tabs (a tree), pinned tabs as favicon tiles
+- Vertical sidebar with nested tabs (a tree), pinned tabs as favicon tiles; drag rows to reorder, onto a row to nest, or onto the pinned area to pin
 - Links opened from other apps open in a little floating window with back, forward and an Open in Mini button (⌘O) that moves the live page into a tab
 - Spaces (Personal and Work to start), each with its own tabs, pins and its own cookies and logins; switch with the buttons at the bottom of the sidebar or ⌃1 to ⌃9
 - Split view: two tabs side by side with a draggable divider, shown as one joined row in the sidebar
@@ -75,6 +75,7 @@ To use Mini as your default browser, run `make install` and choose Mini > Set as
 | ⌥⌘\ | Collapse or expand a group |
 | ⌃⌘P | Pin or unpin tab |
 | ⌥⌘D | Duplicate tab (opens right below it) |
+| ⌃⇧↑, ⌃⇧↓ | Move the tab up or down among its siblings |
 | ⌃⌘S | Show or hide the sidebar |
 | ⌃⌘\ | Split the current tab with the last one you used, or close the split |
 | ⌘\ | Fill password |

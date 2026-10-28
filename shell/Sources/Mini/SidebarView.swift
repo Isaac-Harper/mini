@@ -19,7 +19,7 @@ struct SidebarView: View {
                 .padding(.horizontal, SidebarMetrics.edgeInset)
                 .padding(.top, 4)
                 .padding(.bottom, 12)
-            if !store.pinnedTabs.isEmpty {
+            if !store.pinnedTabs.isEmpty || shell.sidebarDrag.isDraggingUnpinnedTab {
                 PinnedTabsView(shell: shell)
                     .padding(.horizontal, SidebarMetrics.edgeInset)
                     .padding(.bottom, 12)
@@ -33,6 +33,13 @@ struct SidebarView: View {
                             TabRowView(shell: shell, tab: visibleTab.tab, depth: visibleTab.depth)
                         }
                     }
+                    Color.clear
+                        .frame(height: SidebarMetrics.rowHeight * 2)
+                        .overlay(alignment: .top) {
+                            if shell.sidebarDrag.target == .end { InsertionLine(depth: 0) }
+                        }
+                        .contentShape(Rectangle())
+                        .onDrop(of: SidebarDragModel.acceptedTypes, delegate: TabListEndDropDelegate(shell: shell))
                 }
                 .padding(.horizontal, SidebarMetrics.edgeInset)
             }

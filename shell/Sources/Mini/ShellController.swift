@@ -9,6 +9,7 @@ final class ShellController: NSObject {
     var currentSpace: Space
     let downloads = DownloadsModel()
     let weather = WeatherService()
+    let sidebarDrag = SidebarDragModel()
     private(set) var nowPlayingTab: Tab?
 
     @ObservationIgnored let sitePreferences: SitePreferences
