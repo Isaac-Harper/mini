@@ -8,6 +8,8 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
     private let webContentController = WebContentViewController()
     private let windowToolbar: WindowToolbar
     private var controlsCluster: WindowControlsCluster?
+    private var peekSidebar: PeekSidebarController?
+    private var expandedSidebarWidth: CGFloat = 240
     private var showsCollapsedControls = false
     private var isToolbarVisible = true
 
@@ -50,7 +52,9 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
         window.setFrameAutosaveName("MainWindow")
         super.init(window: window)
         window.delegate = self
-        controlsCluster = WindowControlsCluster(commands: shell, window: window, rootView: rootView)
+        let cluster = WindowControlsCluster(commands: shell, window: window, rootView: rootView)
+        controlsCluster = cluster
+        peekSidebar = PeekSidebarController(shell: shell, cluster: cluster, rootView: rootView)
         NotificationCenter.default.addObserver(forName: NSSplitView.didResizeSubviewsNotification, object: splitViewController.splitView, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.updateCollapsedControls() }
         }
@@ -58,11 +62,16 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
     }
 
     private func updateCollapsedControls() {
+        let sidebarWidth = sidebarItem.viewController.view.frame.width
+        if !sidebarItem.isCollapsed, sidebarWidth >= sidebarItem.minimumThickness {
+            expandedSidebarWidth = sidebarWidth
+        }
         let shows = sidebarItem.isCollapsed && isToolbarVisible
         guard shows != showsCollapsedControls else { return }
         showsCollapsedControls = shows
         windowToolbar.setItemsHidden(shows)
         controlsCluster?.setEnabled(shows)
+        peekSidebar?.setEnabled(shows, sidebarWidth: expandedSidebarWidth)
     }
 
     @available(*, unavailable)

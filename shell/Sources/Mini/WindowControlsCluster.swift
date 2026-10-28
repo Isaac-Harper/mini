@@ -6,10 +6,12 @@ final class WindowControlsCluster {
     private unowned let window: NSWindow
     private let hoverZone = HoverZoneView()
     private let glassView = NSGlassEffectView()
+    private let controlsView = NSView()
     private let backButton: HistoryButton
     private let forwardButton: HistoryButton
     private var isEnabled = false
     private var isRevealed = false
+    private var isShownForPeek = false
     private var hideGeneration = 0
 
     private static let hideDelay: TimeInterval = 1
@@ -23,7 +25,7 @@ final class WindowControlsCluster {
         forwardButton = Self.historyButton("Forward", "chevron.right", #selector(ShellController.goForwardInHistory(_:)), commands: commands, forward: true)
         let toggle = Self.button("Show Sidebar", "sidebar.left", #selector(ShellController.toggleTabSidebar(_:)), commands: commands)
 
-        let content = NSView()
+        let content = controlsView
         for (button, centerX) in [(toggle, 108.0), (backButton, 173.0), (forwardButton, 218.0)] as [(NSButton, CGFloat)] {
             button.translatesAutoresizingMaskIntoConstraints = false
             content.addSubview(button)
@@ -34,17 +36,23 @@ final class WindowControlsCluster {
                 button.heightAnchor.constraint(equalToConstant: 28),
             ])
         }
-        glassView.contentView = content
         glassView.cornerRadius = Self.frame.height / 2
         glassView.translatesAutoresizingMaskIntoConstraints = false
         glassView.isHidden = true
+        controlsView.translatesAutoresizingMaskIntoConstraints = false
+        controlsView.isHidden = true
         hoverZone.translatesAutoresizingMaskIntoConstraints = false
         hoverZone.onHoverChange = { [weak self] inside in
             if inside { self?.reveal() } else { self?.scheduleHide() }
         }
         rootView.addSubview(glassView)
+        rootView.addSubview(controlsView)
         rootView.addSubview(hoverZone)
         NSLayoutConstraint.activate([
+            controlsView.leadingAnchor.constraint(equalTo: glassView.leadingAnchor),
+            controlsView.trailingAnchor.constraint(equalTo: glassView.trailingAnchor),
+            controlsView.topAnchor.constraint(equalTo: glassView.topAnchor),
+            controlsView.bottomAnchor.constraint(equalTo: glassView.bottomAnchor),
             glassView.leadingAnchor.constraint(equalTo: rootView.leadingAnchor, constant: Self.frame.minX),
             glassView.topAnchor.constraint(equalTo: rootView.topAnchor, constant: Self.frame.minY),
             glassView.widthAnchor.constraint(equalToConstant: Self.frame.width),
@@ -62,23 +70,53 @@ final class WindowControlsCluster {
         hoverZone.isHidden = !enabled
         hideGeneration += 1
         isRevealed = false
+        isShownForPeek = false
         glassView.isHidden = true
         glassView.alphaValue = 1
+        controlsView.isHidden = true
+        controlsView.alphaValue = 1
         setTrafficLightsHidden(enabled)
     }
 
     func reveal() {
-        guard isEnabled else { return }
+        guard isEnabled, !isShownForPeek else { return }
         hideGeneration += 1
-        backButton.isEnabled = commands.selectedTabCanGoBack
-        forwardButton.isEnabled = commands.selectedTabCanGoForward
+        updateHistoryButtons()
         guard !isRevealed else { return }
         isRevealed = true
-        glassView.superview?.addSubview(glassView, positioned: .above, relativeTo: nil)
-        hoverZone.superview?.addSubview(hoverZone, positioned: .above, relativeTo: nil)
+        bringToFront()
         glassView.isHidden = false
+        controlsView.isHidden = false
         setTrafficLightsHidden(false)
         OverlayAnimation.appear(glassView)
+        OverlayAnimation.appear(controlsView)
+    }
+
+    func setShownForPeek(_ shown: Bool) {
+        guard isEnabled, shown != isShownForPeek else { return }
+        isShownForPeek = shown
+        hideGeneration += 1
+        isRevealed = false
+        glassView.isHidden = true
+        controlsView.alphaValue = 1
+        controlsView.isHidden = !shown
+        setTrafficLightsHidden(!shown)
+        if shown {
+            updateHistoryButtons()
+            bringToFront()
+        }
+    }
+
+    private func updateHistoryButtons() {
+        backButton.isEnabled = commands.selectedTabCanGoBack
+        forwardButton.isEnabled = commands.selectedTabCanGoForward
+    }
+
+    private func bringToFront() {
+        guard let rootView = glassView.superview else { return }
+        for view in [glassView, controlsView, hoverZone] {
+            rootView.addSubview(view, positioned: .above, relativeTo: nil)
+        }
     }
 
     private func scheduleHide() {
@@ -89,9 +127,11 @@ final class WindowControlsCluster {
                 guard let self, self.hideGeneration == generation, self.isRevealed else { return }
                 self.isRevealed = false
                 self.setTrafficLightsHidden(true)
+                OverlayAnimation.disappear(self.controlsView) {}
                 OverlayAnimation.disappear(self.glassView) { [weak self] in
-                    guard let self, !self.isRevealed else { return }
+                    guard let self, !self.isRevealed, !self.isShownForPeek else { return }
                     self.glassView.isHidden = true
+                    self.controlsView.isHidden = true
                 }
             }
         }
