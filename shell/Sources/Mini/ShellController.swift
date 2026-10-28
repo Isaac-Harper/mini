@@ -121,6 +121,7 @@ extension ShellController: TabStoreObserver {
     func tabStore(_ store: TabStore, didSelect tab: Tab?, previous: Tab?) {
         findBar.close(restoringWebFocus: false)
         loginFill.closeIfOpen()
+        commandBar.close(restoringWebFocus: false)
         if let tab {
             tab.hostView.onWebViewAttached = { [weak self, weak tab] in
                 guard let self, let tab else { return }

@@ -12,21 +12,16 @@ static TOKEN: OnceLock<String> = OnceLock::new();
 const DETECTION_SCRIPT: &str = r#"(function(){
 var key=Symbol.for('mini-login-'+__TOKEN__);
 if(window[key])return;
-var token=__TOKEN__,frameId=__FRAME__,signal=console.debug.bind(console),last=new WeakMap(),state={username:null,password:null};
-function isPassword(e){return e instanceof HTMLInputElement&&e.type==='password';}
+var token=__TOKEN__,frameId=__FRAME__,signal=console.debug.bind(console),state={username:null,password:null};
 function hinted(e){var a=(e.autocomplete||'').toLowerCase();return a.indexOf('username')>=0||a.indexOf('email')>=0||e.type==='email';}
 function scope(e){return e.form||e.ownerDocument;}
-function passwordIn(root){return root.querySelector('input[type=password]');}
-function isUsernameLike(e){if(!(e instanceof HTMLInputElement))return false;if(hinted(e))return true;return e.type==='text'&&!!passwordIn(scope(e));}
 function usernameFor(password){var inputs=Array.prototype.slice.call(scope(password).querySelectorAll('input'));var match=inputs.filter(function(i){return i!==password&&hinted(i);})[0];if(match)return match;var candidate=null;for(var i=0;i<inputs.length;i++){if(inputs[i]===password)break;if(inputs[i].type==='text'||inputs[i].type==='email'||inputs[i].type==='tel')candidate=inputs[i];}return candidate;}
-function remember(e){if(isPassword(e)){state.password=e;state.username=usernameFor(e);}else{state.username=e;state.password=passwordIn(scope(e));}}
+function remember(password){state.password=password;state.username=usernameFor(password);}
 function emit(){signal(token+':login:'+frameId);}
-function due(root){var now=Date.now(),previous=last.get(root);if(previous!==undefined&&now-previous<2000)return false;last.set(root,now);return true;}
-document.addEventListener('focusin',function(event){var e=event.target;if(!isPassword(e)&&!isUsernameLike(e))return;remember(e);if(due(scope(e)))emit();},true);
 var setValue=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;
 function put(e,v){setValue.call(e,v);e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));}
 Object.defineProperty(window,key,{value:{
-request:function(){var inputs=document.querySelectorAll('input[type=password]');for(var i=0;i<inputs.length;i++){var input=inputs[i];if(input.getClientRects().length===0)continue;remember(input);last.set(scope(input),Date.now());input.focus();emit();return;}},
+request:function(){var inputs=document.querySelectorAll('input[type=password]');for(var i=0;i<inputs.length;i++){var input=inputs[i];if(input.getClientRects().length===0)continue;remember(input);input.focus();emit();return;}},
 fill:function(username,password){if(state.username&&username)put(state.username,username);if(state.password)put(state.password,password);}
 }});
 })();"#;

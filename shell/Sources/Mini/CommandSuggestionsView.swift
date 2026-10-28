@@ -5,51 +5,90 @@ struct CommandSuggestionsView: View {
     let activate: (CommandSuggestion) -> Void
 
     var body: some View {
-        VStack(spacing: 2) {
-            ForEach(Array(model.suggestions.enumerated()), id: \.element.id) { index, suggestion in
-                row(for: suggestion, isSelected: index == model.selectedIndex)
-                    .contentShape(Rectangle())
-                    .onTapGesture { activate(suggestion) }
+        if !model.suggestions.isEmpty {
+            VStack(spacing: 0) {
+                ForEach(Array(model.suggestions.enumerated()), id: \.element.id) { index, suggestion in
+                    CommandSuggestionRow(suggestion: suggestion, isSelected: index == model.selectedIndex)
+                        .contentShape(Rectangle())
+                        .onHover { isHovering in
+                            if isHovering { model.selectedIndex = index }
+                        }
+                        .onTapGesture { activate(suggestion) }
+                }
             }
+            .padding(.horizontal, 8)
+            .padding(.bottom, 8)
         }
-        .font(.system(size: 13))
     }
+}
 
-    private func row(for suggestion: CommandSuggestion, isSelected: Bool) -> some View {
-        HStack(spacing: 10) {
-            Image(systemName: iconName(for: suggestion))
-                .foregroundStyle(.secondary)
-                .frame(width: 16)
-            Text(title(for: suggestion))
-                .lineLimit(1)
-                .truncationMode(.tail)
-            Spacer(minLength: 8)
-            if case .switchToTab = suggestion {
-                Text("Switch to Tab").foregroundStyle(.tertiary)
+private struct CommandSuggestionRow: View {
+    let suggestion: CommandSuggestion
+    let isSelected: Bool
+
+    var body: some View {
+        HStack(spacing: 12) {
+            icon.frame(width: 18, height: 18)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title)
+                    .font(.system(size: 13))
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                if let detail {
+                    Text(detail)
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
             }
+            Spacer(minLength: 12)
+            Text(hint)
+                .font(.system(size: 11))
+                .foregroundStyle(.tertiary)
         }
         .padding(.horizontal, 12)
-        .frame(height: 34)
+        .frame(height: 36)
         .background {
             if isSelected {
-                RoundedRectangle(cornerRadius: 10, style: .continuous).fill(.primary.opacity(0.08))
+                RoundedRectangle(cornerRadius: 12, style: .continuous).fill(.fill.secondary)
             }
         }
     }
 
-    private func iconName(for suggestion: CommandSuggestion) -> String {
+    @ViewBuilder
+    private var icon: some View {
         switch suggestion {
-        case .switchToTab: "square.on.square"
-        case .open(.address): "globe"
-        case .open(.search): "magnifyingglass"
+        case .switchToTab(let tab):
+            FaviconView(image: tab.favicon, size: 16)
+        case .open(.address):
+            Image(systemName: "globe").foregroundStyle(.secondary)
+        case .open(.search):
+            Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
         }
     }
 
-    private func title(for suggestion: CommandSuggestion) -> String {
+    private var title: String {
         switch suggestion {
         case .switchToTab(let tab): tab.displayTitle
-        case .open(.address(let address)): "Open \(address)"
-        case .open(.search(let query)): "Search Google for \u{201C}\(query)\u{201D}"
+        case .open(.address(let address)): address
+        case .open(.search(let query)): query
+        }
+    }
+
+    private var detail: String? {
+        switch suggestion {
+        case .switchToTab(let tab): URLInput.host(of: tab.url)
+        case .open(.address): nil
+        case .open(.search): "Search Google"
+        }
+    }
+
+    private var hint: String {
+        switch suggestion {
+        case .switchToTab: "Switch to Tab"
+        case .open(.address): "Open"
+        case .open(.search): "Search"
         }
     }
 }

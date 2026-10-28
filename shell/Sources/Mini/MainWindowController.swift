@@ -6,14 +6,17 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
     private let splitViewController = NSSplitViewController()
     private let sidebarItem: NSSplitViewItem
     private let webContentController = WebContentViewController()
+    private let windowToolbar: WindowToolbar
 
     var rootView: NSView { webContentController.view }
     var webAreaView: NSView { webContentController.webAreaView }
     var isSidebarVisible: Bool { !sidebarItem.isCollapsed }
 
     init(shell: ShellController) {
+        windowToolbar = WindowToolbar(commands: shell)
         let sidebarController = NSViewController()
         let sidebarHostingView = SidebarHostingView(rootView: SidebarView(shell: shell))
+        sidebarHostingView.sizingOptions = []
         sidebarHostingView.frame = NSRect(x: 0, y: 0, width: 240, height: 820)
         sidebarController.view = sidebarHostingView
 
@@ -31,8 +34,11 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
 
         let window = NSWindow(contentViewController: splitViewController)
         window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
-        window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
+        window.titlebarAppearsTransparent = true
+        window.titlebarSeparatorStyle = .none
+        window.toolbar = windowToolbar.toolbar
+        window.toolbarStyle = .unified
         window.minSize = NSSize(width: 640, height: 400)
         window.collectionBehavior.insert(.fullScreenPrimary)
         window.setContentSize(NSSize(width: 1280, height: 820))
@@ -70,21 +76,37 @@ final class SidebarHostingView: NSHostingView<SidebarView> {
 @MainActor
 final class WebContentViewController: NSViewController {
     let webAreaView = WebAreaView()
-    private let extensionView = NSBackgroundExtensionView()
+    private let extensionView = PassthroughBackgroundExtensionView()
+    private var hasPinnedBelowTitlebar = false
 
     override func loadView() {
         let container = NSView()
         extensionView.translatesAutoresizingMaskIntoConstraints = false
+        extensionView.automaticallyPlacesContentView = false
         webAreaView.wantsLayer = true
+        webAreaView.translatesAutoresizingMaskIntoConstraints = false
         extensionView.contentView = webAreaView
         container.addSubview(extensionView)
         NSLayoutConstraint.activate([
             extensionView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
             extensionView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            extensionView.topAnchor.constraint(equalTo: container.topAnchor),
             extensionView.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+            webAreaView.leadingAnchor.constraint(equalTo: container.safeAreaLayoutGuide.leadingAnchor),
+            webAreaView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            webAreaView.topAnchor.constraint(equalTo: extensionView.topAnchor),
+            webAreaView.bottomAnchor.constraint(equalTo: container.bottomAnchor),
         ])
         view = container
+    }
+
+    override func viewWillAppear() {
+        super.viewWillAppear()
+        guard !hasPinnedBelowTitlebar else { return }
+        guard let window = view.window, let contentLayoutGuide = window.contentLayoutGuide as? NSLayoutGuide else {
+            preconditionFailure("Web content appeared without a window content layout guide")
+        }
+        hasPinnedBelowTitlebar = true
+        extensionView.topAnchor.constraint(equalTo: contentLayoutGuide.topAnchor).isActive = true
     }
 
     func display(_ hostView: BrowserHostView) {
@@ -98,7 +120,21 @@ final class WebContentViewController: NSViewController {
     }
 }
 
+final class PassthroughBackgroundExtensionView: NSBackgroundExtensionView {
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        guard let contentView, let contentSuperview = contentView.superview else { return nil }
+        return contentView.hitTest(contentSuperview.convert(point, from: superview))
+    }
+}
+
 final class WebAreaView: NSView {
+    override func layout() {
+        super.layout()
+        for subview in subviews where subview.frame != bounds {
+            subview.frame = bounds
+        }
+    }
+
     override var wantsUpdateLayer: Bool { true }
 
     override func updateLayer() {

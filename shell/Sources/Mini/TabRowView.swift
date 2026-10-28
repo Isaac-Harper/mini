@@ -7,14 +7,15 @@ struct TabRowView: View {
 
     @State private var isHovered = false
 
-    private static let indentation: CGFloat = 14
-
     private var isSelected: Bool { shell.store.selectedTab === tab }
 
     var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 4) {
             disclosure
-            favicon
+            FaviconView(image: tab.favicon, size: 16)
+                .opacity(tab.isLoading ? 0.4 : 1)
+                .animation(.easeInOut(duration: 0.3), value: tab.isLoading)
+                .padding(.trailing, 4)
             Text(tab.displayTitle)
                 .lineLimit(1)
                 .truncationMode(.tail)
@@ -25,18 +26,19 @@ struct TabRowView: View {
                     shell.store.close(tab)
                 } label: {
                     Image(systemName: "xmark")
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(.system(size: 9, weight: .bold))
                         .foregroundStyle(.secondary)
-                        .frame(width: 18, height: 18)
+                        .frame(width: 16, height: 16)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .focusable(false)
+                .help("Close Tab")
             }
         }
-        .padding(.leading, 4 + CGFloat(depth) * Self.indentation)
+        .padding(.leading, 4 + CGFloat(depth) * SidebarMetrics.indentation)
         .padding(.trailing, 6)
-        .frame(height: 30)
+        .frame(height: SidebarMetrics.rowHeight)
         .background { rowBackground }
         .contentShape(Rectangle())
         .onHover { isHovered = $0 }
@@ -50,11 +52,11 @@ struct TabRowView: View {
 
     @ViewBuilder
     private var rowBackground: some View {
-        let shape = RoundedRectangle(cornerRadius: 8, style: .continuous)
+        let shape = RoundedRectangle(cornerRadius: SidebarMetrics.rowCornerRadius, style: .continuous)
         if isSelected {
-            Color.clear.glassEffect(.regular, in: shape)
+            shape.fill(.fill.secondary)
         } else if isHovered {
-            shape.fill(.primary.opacity(0.05))
+            shape.fill(.fill.quaternary)
         }
     }
 
@@ -64,18 +66,13 @@ struct TabRowView: View {
             Color.clear.frame(width: 12, height: 12)
         } else {
             Image(systemName: "chevron.right")
-                .font(.system(size: 9, weight: .semibold))
+                .font(.system(size: 10, weight: .semibold))
                 .foregroundStyle(.tertiary)
                 .rotationEffect(.degrees(tab.isCollapsed ? 0 : 90))
+                .animation(.easeOut(duration: 0.15), value: tab.isCollapsed)
                 .frame(width: 12, height: 12)
                 .contentShape(Rectangle())
                 .onTapGesture { shell.store.toggleCollapse(tab) }
         }
-    }
-
-    private var favicon: some View {
-        FaviconView(image: tab.favicon, size: 16)
-            .opacity(tab.isLoading ? 0.35 : 1)
-            .animation(.easeInOut(duration: 0.3), value: tab.isLoading)
     }
 }

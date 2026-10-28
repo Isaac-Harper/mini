@@ -14,7 +14,7 @@ final class LoginFillCardView: NSGlassEffectView {
 
     init() {
         super.init(frame: .zero)
-        cornerRadius = 16
+        cornerRadius = 20
         translatesAutoresizingMaskIntoConstraints = false
 
         hostLabel.font = .systemFont(ofSize: 13, weight: .semibold)

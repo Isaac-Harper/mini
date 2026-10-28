@@ -20,6 +20,7 @@ final class Tab: Identifiable {
     @ObservationIgnored let hostView = BrowserHostView()
     @ObservationIgnored var browserState = BrowserState.none
     @ObservationIgnored var needsInitialFocus = false
+    @ObservationIgnored var lastSelectedAt: Date?
 
     init(id: MiniTabId, url: String, title: String) {
         self.id = id

@@ -93,6 +93,7 @@ final class SitePromptController {
         displayedPromptIdentity = prompt.identity
         hostingView.rootView = view(for: prompt, in: tab)
         hostingView.isHidden = false
+        OverlayAnimation.appear(hostingView)
     }
 
     private func view(for prompt: SitePrompt, in tab: Tab) -> AnyView {

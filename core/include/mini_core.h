@@ -60,9 +60,9 @@ typedef struct MiniCallbacks {
   // HTTP authentication (basic/digest, proxy). Answer later with
   // mini_auth_respond.
   void (*auth_requested)(MiniTabId tab, uint64_t request, const char *host, const char *realm, bool is_proxy);
-  // A username or password field gained focus in a frame (or
-  // mini_request_login_fill found one). frame_origin comes from the browser
-  // side (the frame's committed URL), never from page script.
+  // A login form was found in a frame in response to mini_request_login_fill
+  // (never from mere focus). frame_origin comes from the browser side (the
+  // frame's committed URL), never from page script.
   void (*login_field_focused)(MiniTabId tab, const char *frame_id, const char *frame_origin);
   void (*browser_closed)(MiniTabId tab);
   void (*all_browsers_closed)(void);

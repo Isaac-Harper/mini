@@ -62,11 +62,14 @@ final class FindBarController: NSObject, NSTextFieldDelegate {
             isOpen = true
             let windowController = shell.windowController!
             let webAreaView = windowController.webAreaView
-            windowController.rootView.addSubview(glassView)
-            NSLayoutConstraint.activate([
-                glassView.topAnchor.constraint(equalTo: webAreaView.topAnchor, constant: 10),
-                glassView.trailingAnchor.constraint(equalTo: webAreaView.trailingAnchor, constant: -10),
-            ])
+            if glassView.superview == nil {
+                windowController.rootView.addSubview(glassView)
+                NSLayoutConstraint.activate([
+                    glassView.topAnchor.constraint(equalTo: webAreaView.topAnchor, constant: 12),
+                    glassView.trailingAnchor.constraint(equalTo: webAreaView.trailingAnchor, constant: -12),
+                ])
+            }
+            OverlayAnimation.appear(glassView)
         }
         shell.window.makeFirstResponder(field)
         field.currentEditor()?.selectAll(nil)
@@ -83,7 +86,9 @@ final class FindBarController: NSObject, NSTextFieldDelegate {
     func close(restoringWebFocus: Bool) {
         guard isOpen else { return }
         isOpen = false
-        glassView.removeFromSuperview()
+        OverlayAnimation.disappear(glassView) { [weak self] in
+            self?.glassView.removeFromSuperview()
+        }
         if let searchedTab, shell.store.tab(withIdentifier: searchedTab.id) === searchedTab {
             mini_browser_stop_finding(searchedTab.id)
         }

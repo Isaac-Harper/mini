@@ -1,6 +1,22 @@
 import AppKit
 import CMiniCore
 
+extension ShellController: NSToolbarItemValidation {
+    func validateToolbarItem(_ item: NSToolbarItem) -> Bool {
+        switch item.action {
+        case #selector(goBackInHistory(_:)):
+            return selectedBrowserTab?.canGoBack ?? false
+        case #selector(goForwardInHistory(_:)):
+            return selectedBrowserTab?.canGoForward ?? false
+        case #selector(toggleTabSidebar(_:)):
+            item.toolTip = windowController.isSidebarVisible ? "Hide Sidebar" : "Show Sidebar"
+            return true
+        default:
+            return true
+        }
+    }
+}
+
 extension ShellController: NSMenuItemValidation {
     func open(_ url: String, from mode: CommandBarMode) {
         let selected = store.selectedTab
@@ -18,7 +34,11 @@ extension ShellController: NSMenuItemValidation {
         }
     }
 
-    private var selectedBrowserTab: Tab? {
+    func openInBackground(_ url: String) {
+        store.newTab(url: url, parent: nil, after: store.selectedTab.map(store.rootAncestor))
+    }
+
+    fileprivate var selectedBrowserTab: Tab? {
         guard let tab = store.selectedTab, tab.hasBrowser else { return nil }
         return tab
     }

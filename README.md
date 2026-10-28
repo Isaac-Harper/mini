@@ -32,7 +32,7 @@ The first build downloads the Chromium Embedded Framework (about 300 MB) into `~
 | `make CONFIG=debug run` | Debug build |
 | `make clean` | Removes all build output |
 
-Set `MINI_SIGN_IDENTITY` to a code signing identity to sign with it instead of ad hoc. A stable identity keeps the Keychain from asking again after every rebuild.
+The build signs with the first Developer ID Application or Apple Development identity in your keychain, so the Keychain grant for Mini's cookie key survives rebuilds. Set `MINI_SIGN_IDENTITY` to pick another identity. Without one it signs ad hoc, and every rebuild asks for Keychain access again; until that prompt is answered, pages never load.
 
 To use Mini as your default browser, copy `build/Mini.app` to `/Applications` and choose Mini > Set as Default Browser.
 
@@ -62,7 +62,7 @@ Browser shortcuts take priority over the page, so ⌘T or ⌘W work even when a 
 
 ## Passwords
 
-When you focus a login field, Mini shows a small card with the site's address and two native fields. Click the key icon in the password field, pick a login from Apple Passwords, confirm with Touch ID, and press Return to fill the page. Mini never stores or logs the values. ⌘\ opens the card when a login form is not detected.
+Press ⌘\ on a page with a login form and Mini shows a small card with the site's address and two native fields. Click the key icon in the password field, pick a login from Apple Passwords, confirm with Touch ID, and press Return to fill the page. Mini never shows the card on its own and never stores or logs the values.
 
 macOS does not know which website Mini is showing, so it lists all your logins instead of suggesting the matching one. Site-matched suggestions and passkeys need Apple's macOS Web Browser Public Key Credential entitlement, which has to be requested from Apple.
 

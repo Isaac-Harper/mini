@@ -4,7 +4,11 @@ set -euo pipefail
 repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 config="${CONFIG:-release}"
 export CEF_PATH="${CEF_PATH:-$HOME/.local/share/cef}"
-sign_identity="${MINI_SIGN_IDENTITY:--}"
+default_sign_identity="$(security find-identity -v -p codesigning | awk -F'"' '/Developer ID Application|Apple Development/ { print $2; exit }')"
+sign_identity="${MINI_SIGN_IDENTITY:-${default_sign_identity:--}}"
+if [[ "$sign_identity" == "-" ]]; then
+  echo "warning: no signing identity found, signing ad hoc. Every rebuild will ask for Keychain access again." >&2
+fi
 skip_shell="${SKIP_SHELL:-0}"
 
 case "$config" in

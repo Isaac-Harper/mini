@@ -1,3 +1,4 @@
+import Foundation
 import CMiniCore
 import Observation
 
@@ -115,6 +116,7 @@ final class TabStore {
         }
         let previous = selectedTab
         selectedTab = tab
+        tab?.lastSelectedAt = Date()
         observer?.tabStore(self, didSelect: tab, previous: previous)
         observer?.tabStoreDidChangeStructure(self)
     }

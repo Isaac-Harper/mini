@@ -40,9 +40,9 @@ struct PermissionPromptView: View {
             }
         }
         .font(.system(size: 13))
-        .padding(14)
+        .padding(16)
         .frame(width: 360)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         .focusable()
         .focused($isFocused)
         .focusEffectDisabled()
@@ -99,9 +99,9 @@ struct AuthenticationPromptView: View {
             }
         }
         .font(.system(size: 13))
-        .padding(14)
+        .padding(16)
         .frame(width: 320)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         .onSubmit { respond((username, password)) }
         .onExitCommand { respond(nil) }
         .task { focusedField = .username }
