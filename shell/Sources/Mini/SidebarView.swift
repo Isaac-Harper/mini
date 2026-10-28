@@ -13,6 +13,16 @@ struct SidebarView: View {
 
     private var store: TabStore { shell.store }
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var rowTransition: AnyTransition {
+        reduceMotion ? .opacity : .asymmetric(insertion: .move(edge: .leading).combined(with: .opacity), removal: .opacity)
+    }
+
+    private var rowAnimation: Animation {
+        return reduceMotion ? .easeInOut(duration: 0.15) : .spring(duration: 0.2)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             AddressPill(shell: shell)
@@ -27,11 +37,14 @@ struct SidebarView: View {
             ScrollView {
                 LazyVStack(spacing: 0) {
                     ForEach(store.visibleTabs) { visibleTab in
-                        if let split = visibleTab.split {
-                            SplitTabRowView(shell: shell, split: split, depth: visibleTab.depth)
-                        } else {
-                            TabRowView(shell: shell, tab: visibleTab.tab, depth: visibleTab.depth)
+                        Group {
+                            if let split = visibleTab.split {
+                                SplitTabRowView(shell: shell, split: split, depth: visibleTab.depth)
+                            } else {
+                                TabRowView(shell: shell, tab: visibleTab.tab, depth: visibleTab.depth)
+                            }
                         }
+                        .transition(rowTransition)
                     }
                     Color.clear
                         .frame(height: SidebarMetrics.rowHeight * 2)
@@ -42,6 +55,7 @@ struct SidebarView: View {
                         .onDrop(of: SidebarDragModel.acceptedTypes, delegate: TabListEndDropDelegate(shell: shell))
                 }
                 .padding(.horizontal, SidebarMetrics.edgeInset)
+                .animation(rowAnimation, value: store.visibleTabs.map(\.id))
             }
             .scrollIndicators(.never)
             .id(shell.currentSpace.id)
