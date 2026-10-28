@@ -139,6 +139,9 @@ final class BrowserEngine {
                 let text = requiredString(text)
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.statusMessageChanged(identifier, text: text) }
             },
+            fullscreen_mode_changed: { identifier, fullscreen in
+                MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.fullscreenModeChanged(identifier, fullscreen: fullscreen) }
+            },
             browser_closed: { identifier in
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.browserClosed(identifier) }
             },

@@ -19,6 +19,7 @@ Mini is an open source exploration project: a personal, minimal browser built to
 - Web notifications appear as macOS notifications after you allow them for a site (View > Allow Notifications from This Site turns them on or off); clicking one returns you to its tab
 - A Now Playing row with play/pause for the tab that last started audio; a speaker icon on playing tabs mutes them
 - A one-line weather row at the bottom of the sidebar (Open-Meteo, city-level location; click to search the weather)
+- Fullscreen video fills the whole screen; the sidebar and toolbar come back when it ends
 - Hovering a link shows its address in a small bubble at the bottom of the page
 - No extensions, sync, accounts or settings window
 

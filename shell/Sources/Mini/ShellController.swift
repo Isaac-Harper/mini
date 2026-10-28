@@ -34,6 +34,7 @@ final class ShellController: NSObject {
     @ObservationIgnored let rootCacheDirectory: URL
     @ObservationIgnored private let savedSession: SavedSession
     @ObservationIgnored var pendingSpaceDeletions: [String: Set<MiniTabId>] = [:]
+    @ObservationIgnored var pageFullscreen: PageFullscreen?
 
     private static let archiveInterval: TimeInterval = 10 * 60
 
@@ -92,6 +93,7 @@ final class ShellController: NSObject {
         for space in spaces {
             space.store.observer = self
         }
+        windowController.onDidExitFullScreen = { [weak self] in self?.windowDidExitNativeFullscreen() }
         windowController.webAreaView.onSplitFractionChanged = { [weak self] fraction, finished in
             guard let self, let selected = self.store.selectedTab, let split = self.store.split(containing: selected) else { return }
             split.fraction = fraction
@@ -371,8 +373,8 @@ final class ShellController: NSObject {
 
     func refreshDisplayedTabs() {
         let selected = store.selectedTab
-        let split = selected.flatMap(store.split(containing:))
-        let shownTabs = split.map { [$0.leading, $0.trailing] } ?? selected.map { [$0] } ?? []
+        let split = pageFullscreen == nil ? selected.flatMap(store.split(containing:)) : nil
+        let shownTabs = pageFullscreen.map { [$0.tab] } ?? split.map { [$0.leading, $0.trailing] } ?? selected.map { [$0] } ?? []
         for tab in displayedTabs where !shownTabs.contains(where: { $0 === tab }) {
             tab.hostView.isHidden = true
             if tab.hasBrowser, store.tab(withIdentifier: tab.id) === tab {
@@ -410,6 +412,9 @@ extension ShellController: TabStoreObserver {
         guard store === self.store else { return }
         findBar.close(restoringWebFocus: false)
         statusBubble.hide()
+        if let pageFullscreen, pageFullscreen.tab !== tab {
+            endPageFullscreen()
+        }
         loginFill.closeIfOpen()
         commandBar.close(restoringWebFocus: false)
         if let tab {
@@ -432,6 +437,9 @@ extension ShellController: TabStoreObserver {
     }
 
     func tabStore(_ store: TabStore, didRemove tabs: [Tab]) {
+        if let pageFullscreen, tabs.contains(where: { $0 === pageFullscreen.tab }) {
+            endPageFullscreen()
+        }
         displayedTabs.removeAll { displayed in tabs.contains { $0 === displayed } }
         for tab in tabs {
             tab.hostView.isHidden = true

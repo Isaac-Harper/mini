@@ -176,6 +176,10 @@ wrap_display_handler! {
             unsafe { (callbacks().status_message_changed)(self.tab, status.as_ptr()) };
         }
 
+        fn on_fullscreen_mode_change(&self, _browser: Option<&mut Browser>, fullscreen: ::std::os::raw::c_int) {
+            unsafe { (callbacks().fullscreen_mode_changed)(self.tab, fullscreen != 0) };
+        }
+
         fn on_title_change(&self, _browser: Option<&mut Browser>, title: Option<&CefString>) {
             let title = c_string(&text(title));
             unsafe { (callbacks().title_changed)(self.tab, title.as_ptr()) };

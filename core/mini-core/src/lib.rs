@@ -55,6 +55,7 @@ pub struct MiniCallbacks {
     pub notification_close: Option<unsafe extern "C" fn(MiniTabId, *const c_char, u32)>,
     pub audio_state_changed: Option<unsafe extern "C" fn(MiniTabId, bool, *const c_char)>,
     pub status_message_changed: Option<unsafe extern "C" fn(MiniTabId, *const c_char)>,
+    pub fullscreen_mode_changed: Option<unsafe extern "C" fn(MiniTabId, bool)>,
     pub browser_closed: Option<unsafe extern "C" fn(MiniTabId)>,
     pub all_browsers_closed: Option<unsafe extern "C" fn()>,
 }
@@ -359,6 +360,13 @@ pub extern "C" fn mini_browser_show_dev_tools(tab: MiniTabId) {
         Some(&BrowserSettings::default()),
         None,
     );
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn mini_browser_exit_fullscreen(tab: MiniTabId) {
+    if let Some(browser) = created_browser(tab) {
+        host(&browser).exit_fullscreen(1);
+    }
 }
 
 #[unsafe(no_mangle)]

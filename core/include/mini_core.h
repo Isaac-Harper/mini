@@ -94,6 +94,9 @@ typedef struct MiniCallbacks {
   // Status text from the page, the hovered link's URL in practice. "" when
   // the pointer leaves the link.
   void (*status_message_changed)(MiniTabId tab, const char *text);
+  // The page entered or left element fullscreen (a video's fullscreen
+  // button, requestFullscreen). Leave it with mini_browser_exit_fullscreen.
+  void (*fullscreen_mode_changed)(MiniTabId tab, bool fullscreen);
   void (*browser_closed)(MiniTabId tab);
   void (*all_browsers_closed)(void);
 } MiniCallbacks;
@@ -133,6 +136,8 @@ void mini_browser_set_zoom_level(MiniTabId tab, double level);
 void mini_browser_find(MiniTabId tab, const char *text, bool forward, bool find_next);
 void mini_browser_stop_finding(MiniTabId tab);
 void mini_browser_show_dev_tools(MiniTabId tab);
+// Makes the page leave element fullscreen; fullscreen_mode_changed follows.
+void mini_browser_exit_fullscreen(MiniTabId tab);
 // Opens the native print panel for the page.
 void mini_browser_print(MiniTabId tab);
 void mini_browser_close(MiniTabId tab);

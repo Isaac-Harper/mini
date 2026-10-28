@@ -11,6 +11,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
     var rootView: NSView { webContentController.view }
     var webAreaView: WebAreaView { webContentController.webAreaView }
     var isSidebarVisible: Bool { !sidebarItem.isCollapsed }
+    var onDidExitFullScreen: (() -> Void)?
 
     init(shell: ShellController) {
         windowToolbar = WindowToolbar(commands: shell)
@@ -59,6 +60,18 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
 
     func toggleSidebar() {
         splitViewController.toggleSidebar(nil)
+    }
+
+    func setSidebarCollapsed(_ collapsed: Bool) {
+        sidebarItem.isCollapsed = collapsed
+    }
+
+    func setToolbarVisible(_ visible: Bool) {
+        window?.toolbar?.isVisible = visible
+    }
+
+    func windowDidExitFullScreen(_ notification: Notification) {
+        onDidExitFullScreen?()
     }
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {
