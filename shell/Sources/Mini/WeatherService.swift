@@ -10,6 +10,17 @@ struct WeatherReading: Codable, Equatable {
     let code: Int
     let isDay: Bool
     let place: String?
+    let days: [WeatherDay]
+}
+
+struct WeatherDay: Codable, Equatable, Identifiable {
+    let date: String
+    let code: Int
+    let high: Double
+    let low: Double
+    let precipitationProbability: Int?
+
+    var id: String { date }
 }
 
 struct WeatherCondition: Equatable {
@@ -49,8 +60,11 @@ private struct OpenMeteoForecast: Decodable {
     }
 
     struct Daily: Decodable {
+        let time: [String]
+        let weather_code: [Int]
         let temperature_2m_max: [Double]
         let temperature_2m_min: [Double]
+        let precipitation_probability_max: [Int?]
     }
 
     let current: Current
@@ -138,9 +152,9 @@ final class WeatherService: NSObject, CLLocationManagerDelegate {
             URLQueryItem(name: "latitude", value: String(format: "%.2f", latitude)),
             URLQueryItem(name: "longitude", value: String(format: "%.2f", longitude)),
             URLQueryItem(name: "current", value: "temperature_2m,weather_code,is_day"),
-            URLQueryItem(name: "daily", value: "temperature_2m_max,temperature_2m_min"),
+            URLQueryItem(name: "daily", value: "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max"),
             URLQueryItem(name: "timezone", value: "auto"),
-            URLQueryItem(name: "forecast_days", value: "1"),
+            URLQueryItem(name: "forecast_days", value: "7"),
         ] + (usesFahrenheit ? [URLQueryItem(name: "temperature_unit", value: "fahrenheit")] : [])
         guard let url = components?.url else { preconditionFailure("Open-Meteo URL could not be built") }
         fetchTask = Task { @MainActor [weak self] in
@@ -149,6 +163,19 @@ final class WeatherService: NSObject, CLLocationManagerDelegate {
                   let high = forecast.daily.temperature_2m_max.first,
                   let low = forecast.daily.temperature_2m_min.first
             else { return }
+            let daily = forecast.daily
+            let days = daily.time.indices.compactMap { index -> WeatherDay? in
+                guard index < daily.weather_code.count, index < daily.temperature_2m_max.count,
+                      index < daily.temperature_2m_min.count, index < daily.precipitation_probability_max.count
+                else { return nil }
+                return WeatherDay(
+                    date: daily.time[index],
+                    code: daily.weather_code[index],
+                    high: daily.temperature_2m_max[index],
+                    low: daily.temperature_2m_min[index],
+                    precipitationProbability: daily.precipitation_probability_max[index]
+                )
+            }
             let place = await Self.placeName(latitude: latitude, longitude: longitude)
             guard let self, !Task.isCancelled else { return }
             let reading = WeatherReading(
@@ -157,7 +184,8 @@ final class WeatherService: NSObject, CLLocationManagerDelegate {
                 low: low,
                 code: forecast.current.weather_code,
                 isDay: forecast.current.is_day == 1,
-                place: place ?? self.reading?.place
+                place: place ?? self.reading?.place,
+                days: days
             )
             self.reading = reading
             if let encoded = try? JSONEncoder().encode(reading) {

@@ -65,7 +65,7 @@ struct SidebarView: View {
                 NowPlayingRowView(shell: shell, tab: tab)
             }
             if let reading = shell.weather.reading {
-                WeatherRowView(reading: reading) { shell.openWeatherSearch() }
+                WeatherRowView(reading: reading, presenter: shell.weatherPopover) { shell.openWeatherSearch() }
             }
             ForEach(shell.downloads.visibleDownloads) { download in
                 DownloadRowView(download: download) { shell.downloads.activate(download) }
