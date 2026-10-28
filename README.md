@@ -74,7 +74,7 @@ To use Mini as your default browser, run `make install` and choose Mini > Set as
 | ⌥⌘→, ⌥⌘← | Indent and outdent |
 | ⌥⌘\ | Collapse or expand a group |
 | ⌃⌘P | Pin or unpin tab |
-| ⌥⌘D | Duplicate tab (opens right below it) |
+| ⇧⌘D | Duplicate tab (opens right below it) |
 | ⌃⇧↑, ⌃⇧↓ | Move the tab up or down among its siblings |
 | ⌃⌘S | Show or hide the sidebar |
 | ⌃⌘\ | Split the current tab with the last one you used, or close the split |
