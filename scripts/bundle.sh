@@ -46,6 +46,7 @@ echo "==> Assembling $app"
 rm -rf "$app"
 mkdir -p "$contents/MacOS" "$contents/Resources" "$frameworks"
 cp "$repository_root/bundle/Info.plist" "$contents/Info.plist"
+cp "$repository_root/bundle/AppIcon.icns" "$contents/Resources/AppIcon.icns"
 if [[ -n "$main_binary" ]]; then
   cp "$main_binary" "$contents/MacOS/Mini"
 fi

@@ -8,6 +8,8 @@
 	<string>Mini</string>
 	<key>CFBundleExecutable</key>
 	<string>Mini</string>
+	<key>CFBundleIconFile</key>
+	<string>AppIcon</string>
 	<key>CFBundleIdentifier</key>
 	<string>dev.isaacharper.mini</string>
 	<key>CFBundleInfoDictionaryVersion</key>
