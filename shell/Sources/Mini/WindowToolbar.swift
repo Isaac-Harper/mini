@@ -17,6 +17,12 @@ final class WindowToolbar: NSObject, NSToolbarDelegate {
         toolbar.allowsUserCustomization = false
     }
 
+    func setItemsHidden(_ hidden: Bool) {
+        for item in toolbar.items where [Self.sidebarToggle, Self.back, Self.forward].contains(item.itemIdentifier) {
+            item.isHidden = hidden
+        }
+    }
+
     func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
         [Self.sidebarToggle, .flexibleSpace, Self.back, Self.forward, .sidebarTrackingSeparator]
     }

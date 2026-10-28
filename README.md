@@ -4,6 +4,7 @@ A small, quiet macOS browser for one person. Chromium renders the pages; everyth
 
 Mini is an open source exploration project: a personal, minimal browser built to explore a native Swift shell over Chromium (CEF).
 
+- No toolbar strip: the traffic lights, sidebar toggle and back/forward sit in the sidebar's top row, and the page is a rounded card that runs to the top of the window. With the sidebar hidden, point at the top-left corner to bring the controls back
 - Vertical sidebar with nested tabs (a tree), pinned tabs as favicon tiles; drag rows to reorder, onto a row to nest, or onto the pinned area to pin
 - Links opened from other apps open in a little floating window with back, forward and an Open in Mini button (⌘O) that moves the live page into a tab
 - Spaces (Personal and Work to start), each with its own tabs, pins and its own cookies and logins; switch with the buttons at the bottom of the sidebar or ⌃1 to ⌃9
@@ -20,7 +21,7 @@ Mini is an open source exploration project: a personal, minimal browser built to
 - Web notifications appear as macOS notifications after you allow them for a site (View > Allow Notifications from This Site turns them on or off); clicking one returns you to its tab
 - A Now Playing row with play/pause for the tab that last started audio; a speaker icon on playing tabs mutes them
 - A one-line weather row at the bottom of the sidebar (Open-Meteo, city-level location; click to search the weather)
-- Fullscreen video fills the whole screen; the sidebar and toolbar come back when it ends
+- Fullscreen video fills the whole screen; the sidebar and page card come back when it ends
 - View > Clear Data for This Site deletes that site's cookies and storage in the current space
 - Native right-click menus on pages: links, images, selections, spelling suggestions, Inspect Element
 - Hovering a link shows its address in a small bubble at the bottom of the page
@@ -81,7 +82,7 @@ To use Mini as your default browser, run `make install` and choose Mini > Set as
 | ⌘\ | Fill password |
 | ⇧⌘C | Copy the page address |
 | ⌘Y | Show all history |
-| ⌘[, ⌘] | Back and forward (right-click or hold the toolbar buttons for the history list) |
+| ⌘[, ⌘] | Back and forward (right-click or hold the arrow buttons for the history list) |
 | ⌘R, ⌘. | Reload and stop |
 | ⌘F, ⌘G, ⇧⌘G | Find, next, previous |
 | ⌘=, ⌘-, ⌘0 | Zoom in, out, actual size (remembered per site) |

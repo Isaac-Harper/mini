@@ -7,6 +7,9 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
     private let sidebarItem: NSSplitViewItem
     private let webContentController = WebContentViewController()
     private let windowToolbar: WindowToolbar
+    private var controlsCluster: WindowControlsCluster?
+    private var showsCollapsedControls = false
+    private var isToolbarVisible = true
 
     var rootView: NSView { webContentController.view }
     var webAreaView: WebAreaView { webContentController.webAreaView }
@@ -47,6 +50,19 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
         window.setFrameAutosaveName("MainWindow")
         super.init(window: window)
         window.delegate = self
+        controlsCluster = WindowControlsCluster(commands: shell, window: window, rootView: rootView)
+        NotificationCenter.default.addObserver(forName: NSSplitView.didResizeSubviewsNotification, object: splitViewController.splitView, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.updateCollapsedControls() }
+        }
+        updateCollapsedControls()
+    }
+
+    private func updateCollapsedControls() {
+        let shows = sidebarItem.isCollapsed && isToolbarVisible
+        guard shows != showsCollapsedControls else { return }
+        showsCollapsedControls = shows
+        windowToolbar.setItemsHidden(shows)
+        controlsCluster?.setEnabled(shows)
     }
 
     @available(*, unavailable)
@@ -68,6 +84,9 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
 
     func setToolbarVisible(_ visible: Bool) {
         window?.toolbar?.isVisible = visible
+        webContentController.setPageFillsWindow(!visible)
+        isToolbarVisible = visible
+        updateCollapsedControls()
     }
 
     func windowDidExitFullScreen(_ notification: Notification) {
@@ -88,38 +107,44 @@ final class SidebarHostingView: NSHostingView<SidebarView> {
 
 @MainActor
 final class WebContentViewController: NSViewController {
+    static let cardInset: CGFloat = 8
+    static let cardCornerRadius: CGFloat = 10
+
     let webAreaView = WebAreaView()
-    private let extensionView = PassthroughBackgroundExtensionView()
-    private var hasPinnedBelowTitlebar = false
+    private let cardView = PageCardView()
+    private var insetConstraints: [NSLayoutConstraint] = []
 
     override func loadView() {
         let container = NSView()
-        extensionView.translatesAutoresizingMaskIntoConstraints = false
-        extensionView.automaticallyPlacesContentView = false
+        cardView.translatesAutoresizingMaskIntoConstraints = false
         webAreaView.wantsLayer = true
         webAreaView.translatesAutoresizingMaskIntoConstraints = false
-        extensionView.contentView = webAreaView
-        container.addSubview(extensionView)
-        NSLayoutConstraint.activate([
-            extensionView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            extensionView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            extensionView.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-            webAreaView.leadingAnchor.constraint(equalTo: container.safeAreaLayoutGuide.leadingAnchor),
-            webAreaView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            webAreaView.topAnchor.constraint(equalTo: extensionView.topAnchor),
-            webAreaView.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+        webAreaView.layer?.cornerRadius = Self.cardCornerRadius
+        webAreaView.layer?.cornerCurve = .continuous
+        webAreaView.layer?.masksToBounds = true
+        cardView.addSubview(webAreaView)
+        container.addSubview(cardView)
+        insetConstraints = [
+            cardView.leadingAnchor.constraint(equalTo: container.safeAreaLayoutGuide.leadingAnchor, constant: Self.cardInset),
+            container.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: Self.cardInset),
+            cardView.topAnchor.constraint(equalTo: container.topAnchor, constant: Self.cardInset),
+            container.bottomAnchor.constraint(equalTo: cardView.bottomAnchor, constant: Self.cardInset),
+        ]
+        NSLayoutConstraint.activate(insetConstraints + [
+            webAreaView.leadingAnchor.constraint(equalTo: cardView.leadingAnchor),
+            webAreaView.trailingAnchor.constraint(equalTo: cardView.trailingAnchor),
+            webAreaView.topAnchor.constraint(equalTo: cardView.topAnchor),
+            webAreaView.bottomAnchor.constraint(equalTo: cardView.bottomAnchor),
         ])
         view = container
     }
 
-    override func viewWillAppear() {
-        super.viewWillAppear()
-        guard !hasPinnedBelowTitlebar else { return }
-        guard let window = view.window, let contentLayoutGuide = window.contentLayoutGuide as? NSLayoutGuide else {
-            preconditionFailure("Web content appeared without a window content layout guide")
+    func setPageFillsWindow(_ fills: Bool) {
+        for constraint in insetConstraints {
+            constraint.constant = fills ? 0 : Self.cardInset
         }
-        hasPinnedBelowTitlebar = true
-        extensionView.topAnchor.constraint(equalTo: contentLayoutGuide.topAnchor).isActive = true
+        webAreaView.layer?.cornerRadius = fills ? 0 : Self.cardCornerRadius
+        cardView.showsShadow = !fills
     }
 
     func display(_ hostViews: [BrowserHostView], split: WebAreaView.SplitArrangement?) {
@@ -136,11 +161,41 @@ final class WebContentViewController: NSViewController {
     }
 }
 
-final class PassthroughBackgroundExtensionView: NSBackgroundExtensionView {
-    override func hitTest(_ point: NSPoint) -> NSView? {
-        guard let contentView, let contentSuperview = contentView.superview else { return nil }
-        return contentView.hitTest(contentSuperview.convert(point, from: superview))
+final class PageCardView: NSView {
+    var showsShadow = true {
+        didSet { needsDisplay = true }
     }
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        wantsLayer = true
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) is not supported")
+    }
+
+    override var wantsUpdateLayer: Bool { true }
+
+    override func updateLayer() {
+        guard let layer else { return }
+        layer.shadowColor = NSColor.black.cgColor
+        layer.shadowOpacity = showsShadow ? (effectiveAppearance.isDark ? 0.45 : 0.14) : 0
+        layer.shadowRadius = 6
+        layer.shadowOffset = CGSize(width: 0, height: -1)
+        layer.shadowPath = CGPath(roundedRect: bounds, cornerWidth: WebContentViewController.cardCornerRadius,
+                                  cornerHeight: WebContentViewController.cardCornerRadius, transform: nil)
+    }
+
+    override func layout() {
+        super.layout()
+        needsDisplay = true
+    }
+}
+
+extension NSAppearance {
+    var isDark: Bool { bestMatch(from: [.darkAqua, .aqua]) == .darkAqua }
 }
 
 final class WebAreaView: NSView {
