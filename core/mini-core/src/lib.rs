@@ -54,6 +54,7 @@ pub struct MiniCallbacks {
     >,
     pub notification_close: Option<unsafe extern "C" fn(MiniTabId, *const c_char, u32)>,
     pub audio_state_changed: Option<unsafe extern "C" fn(MiniTabId, bool, *const c_char)>,
+    pub status_message_changed: Option<unsafe extern "C" fn(MiniTabId, *const c_char)>,
     pub browser_closed: Option<unsafe extern "C" fn(MiniTabId)>,
     pub all_browsers_closed: Option<unsafe extern "C" fn()>,
 }

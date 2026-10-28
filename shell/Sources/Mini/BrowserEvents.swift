@@ -169,6 +169,11 @@ extension ShellController {
         audioStateChanged(tab, isPlaying: isPlaying, mediaTitle: mediaTitle)
     }
 
+    func statusMessageChanged(_ identifier: MiniTabId, text: String) {
+        guard let tab = liveTab(identifier) else { return }
+        statusBubble.statusChanged(for: tab, text: text)
+    }
+
     func browserClosed(_ identifier: MiniTabId) {
         if let tab = closingTabs.removeValue(forKey: identifier) {
             tab.hostView.removeFromSuperview()

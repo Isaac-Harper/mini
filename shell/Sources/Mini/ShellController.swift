@@ -23,10 +23,11 @@ final class ShellController: NSObject {
     @ObservationIgnored private(set) var loginFill: LoginFillController!
     @ObservationIgnored private(set) var crashOverlay: CrashOverlayController!
     @ObservationIgnored private(set) var toast: ToastController!
+    @ObservationIgnored private(set) var statusBubble: StatusBubbleController!
     @ObservationIgnored private(set) var notifications: NotificationsController!
     @ObservationIgnored private(set) var isTerminating = false
     @ObservationIgnored var closingTabs: [MiniTabId: Tab] = [:]
-    @ObservationIgnored private var displayedTabs: [Tab] = []
+    @ObservationIgnored private(set) var displayedTabs: [Tab] = []
     @ObservationIgnored private var splitFocusMonitor: Any?
     @ObservationIgnored private(set) var littleWindows: [MiniTabId: LittleWindowController] = [:]
     @ObservationIgnored let tabIdentifiers = TabIdentifierMint()
@@ -86,6 +87,7 @@ final class ShellController: NSObject {
         loginFill = LoginFillController(shell: self)
         crashOverlay = CrashOverlayController(shell: self, windowController: windowController)
         toast = ToastController(windowController: windowController)
+        statusBubble = StatusBubbleController(shell: self, windowController: windowController)
         registerSpacesWithEngine()
         for space in spaces {
             space.store.observer = self
@@ -407,6 +409,7 @@ extension ShellController: TabStoreObserver {
     func tabStore(_ store: TabStore, didSelect tab: Tab?, previous: Tab?) {
         guard store === self.store else { return }
         findBar.close(restoringWebFocus: false)
+        statusBubble.hide()
         loginFill.closeIfOpen()
         commandBar.close(restoringWebFocus: false)
         if let tab {

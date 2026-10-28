@@ -171,6 +171,11 @@ wrap_display_handler! {
             1
         }
 
+        fn on_status_message(&self, _browser: Option<&mut Browser>, value: Option<&CefString>) {
+            let status = c_string(&text(value));
+            unsafe { (callbacks().status_message_changed)(self.tab, status.as_ptr()) };
+        }
+
         fn on_title_change(&self, _browser: Option<&mut Browser>, title: Option<&CefString>) {
             let title = c_string(&text(title));
             unsafe { (callbacks().title_changed)(self.tab, title.as_ptr()) };

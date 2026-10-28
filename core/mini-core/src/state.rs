@@ -30,6 +30,7 @@ pub struct Callbacks {
         unsafe extern "C" fn(MiniTabId, *const c_char, u32, *const c_char, *const c_char, *const c_char, *const c_char, bool),
     pub notification_close: unsafe extern "C" fn(MiniTabId, *const c_char, u32),
     pub audio_state_changed: unsafe extern "C" fn(MiniTabId, bool, *const c_char),
+    pub status_message_changed: unsafe extern "C" fn(MiniTabId, *const c_char),
     pub browser_closed: unsafe extern "C" fn(MiniTabId),
     pub all_browsers_closed: unsafe extern "C" fn(),
 }
@@ -94,6 +95,9 @@ impl Callbacks {
             audio_state_changed: table
                 .audio_state_changed
                 .expect("MiniCallbacks.audio_state_changed is null"),
+            status_message_changed: table
+                .status_message_changed
+                .expect("MiniCallbacks.status_message_changed is null"),
             browser_closed: table
                 .browser_closed
                 .expect("MiniCallbacks.browser_closed is null"),

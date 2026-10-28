@@ -135,6 +135,10 @@ final class BrowserEngine {
                     BrowserEngine.shared.requiredShell.audioStateChanged(identifier, isPlaying: isPlaying, mediaTitle: mediaTitle)
                 }
             },
+            status_message_changed: { identifier, text in
+                let text = requiredString(text)
+                MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.statusMessageChanged(identifier, text: text) }
+            },
             browser_closed: { identifier in
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.browserClosed(identifier) }
             },
