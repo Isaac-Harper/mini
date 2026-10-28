@@ -15,6 +15,7 @@ final class Tab: Identifiable {
     var canGoForward = false
     var children: [Tab] = []
     var isCollapsed = false
+    var hasLoginForm = false
 
     @ObservationIgnored weak var parent: Tab?
     @ObservationIgnored let hostView = BrowserHostView()

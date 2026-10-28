@@ -113,6 +113,10 @@ extension ShellController {
         mini_browser_reload(tab.id)
     }
 
+    func loginFormPresenceChanged(_ identifier: MiniTabId, hasLoginForm: Bool) {
+        liveTab(identifier)?.hasLoginForm = hasLoginForm
+    }
+
     func browserClosed(_ identifier: MiniTabId) {
         if let tab = closingTabs.removeValue(forKey: identifier) {
             tab.hostView.removeFromSuperview()

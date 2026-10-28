@@ -2,7 +2,7 @@ use cef::*;
 use std::ffi::c_void;
 
 use crate::{
-    MiniTabId, ad_blocking, authentication, downloads, favicon, login, permissions,
+    MiniTabId, ad_blocking, authentication, downloads, favicon, login, permissions, webauthn,
     resource_requests::MiniResourceRequestHandler,
     state::{TabState, c_string, callbacks, with_core},
 };
@@ -220,6 +220,14 @@ wrap_load_handler! {
         ) {
             let frame = frame.expect("load start without a frame");
             let frame_url = CefString::from(&frame.url()).to_string();
+            if frame.is_main() == 1 {
+                login::reset_form_presence(self.tab);
+            }
+            frame.execute_java_script(
+                Some(&CefString::from(webauthn::SUPPRESSION_SCRIPT)),
+                Some(&CefString::from(frame_url.as_str())),
+                0,
+            );
             let detection = login::detection_script(frame);
             frame.execute_java_script(
                 Some(&CefString::from(detection.as_str())),

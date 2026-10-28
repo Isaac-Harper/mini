@@ -79,6 +79,9 @@ typedef struct MiniCallbacks {
   // The tab's renderer process is gone (crash, kill, out of memory).
   // reason is a MiniRenderTermination.
   void (*render_process_terminated)(MiniTabId tab, int32_t reason);
+  // Whether any frame of the tab currently shows a password field. Fires only
+  // on changes; a main-frame navigation resets it to false.
+  void (*login_form_presence_changed)(MiniTabId tab, bool has_login_form);
   void (*browser_closed)(MiniTabId tab);
   void (*all_browsers_closed)(void);
 } MiniCallbacks;

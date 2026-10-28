@@ -67,9 +67,11 @@ Browser shortcuts take priority over the page, so ⌘T or ⌘W work even when a 
 
 ## Passwords
 
-Press ⌘\ on a page with a login form and Mini shows a small card with the site's address and two native fields. Click the key icon in the password field, pick a login from Apple Passwords, confirm with Touch ID, and press Return to fill the page. Mini never shows the card on its own and never stores or logs the values.
+When a page has a login form, a key button appears in the address pill. Click it or press ⌘\ and Mini shows a small card with the site's address and two native fields. Click the key icon in the password field, pick a login from Apple Passwords, confirm with Touch ID, and press Return to fill the page. Mini never shows the card on its own and never stores or logs the values.
 
 macOS does not know which website Mini is showing, so it lists all your logins instead of suggesting the matching one. Site-matched suggestions and passkeys need Apple's macOS Web Browser Public Key Credential entitlement, which has to be requested from Apple.
+
+Passkeys are not supported until that entitlement is granted. Mini turns off WebAuthn in pages (passkey requests fail as "not allowed" and platform authenticators report unavailable), so sites fall back to passwords and Chromium never shows its QR code or "use your phone" dialog.
 
 ## Where things live
 

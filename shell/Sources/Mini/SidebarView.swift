@@ -117,6 +117,20 @@ private struct AddressPill: View {
                 }
                 .buttonStyle(.plain)
                 .focusable(false)
+                if let selected, selected.hasLoginForm, selected.hasBrowser {
+                    Button {
+                        shell.fillPassword(nil)
+                    } label: {
+                        Image(systemName: "key.fill")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 28, height: 32)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .focusable(false)
+                    .help("Fill Password")
+                }
                 if let selected, !selected.url.isEmpty {
                     Button {
                         if selected.isLoading {

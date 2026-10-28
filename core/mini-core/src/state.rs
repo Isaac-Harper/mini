@@ -1,7 +1,7 @@
 use cef::{Browser, DownloadItemCallback};
 use std::{
     cell::RefCell,
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     ffi::{CString, c_char, c_void},
     sync::atomic::{AtomicU64, Ordering},
 };
@@ -25,6 +25,7 @@ pub struct Callbacks {
     pub auth_requested: unsafe extern "C" fn(MiniTabId, u64, *const c_char, *const c_char, bool),
     pub login_field_focused: unsafe extern "C" fn(MiniTabId, *const c_char, *const c_char),
     pub render_process_terminated: unsafe extern "C" fn(MiniTabId, i32),
+    pub login_form_presence_changed: unsafe extern "C" fn(MiniTabId, bool),
     pub browser_closed: unsafe extern "C" fn(MiniTabId),
     pub all_browsers_closed: unsafe extern "C" fn(),
 }
@@ -77,6 +78,9 @@ impl Callbacks {
             render_process_terminated: table
                 .render_process_terminated
                 .expect("MiniCallbacks.render_process_terminated is null"),
+            login_form_presence_changed: table
+                .login_form_presence_changed
+                .expect("MiniCallbacks.login_form_presence_changed is null"),
             browser_closed: table
                 .browser_closed
                 .expect("MiniCallbacks.browser_closed is null"),
@@ -95,6 +99,7 @@ pub struct TabState {
     pub pending_hidden: Option<bool>,
     pub pending_close: bool,
     pub favicon_generation: u64,
+    pub login_form_frames: HashSet<String>,
 }
 
 pub struct CoreState {

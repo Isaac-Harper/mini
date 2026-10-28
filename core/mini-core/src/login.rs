@@ -4,7 +4,7 @@ use zeroize::Zeroize;
 
 use crate::{
     MiniTabId,
-    state::{c_string, callbacks},
+    state::{c_string, callbacks, with_core},
 };
 
 static TOKEN: OnceLock<String> = OnceLock::new();
@@ -20,6 +20,14 @@ function remember(password){state.password=password;state.username=usernameFor(p
 function emit(){signal(token+':login:'+frameId);}
 var setValue=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;
 function put(e,v){setValue.call(e,v);e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));}
+var hasForm=false,checkScheduled=false;
+function visiblePassword(){var inputs=document.querySelectorAll('input[type=password]');for(var i=0;i<inputs.length;i++){if(inputs[i].getClientRects().length>0)return true;}return false;}
+function check(){checkScheduled=false;var present=visiblePassword();if(present===hasForm)return;hasForm=present;signal(token+':form:'+frameId+':'+(present?'1':'0'));}
+function scheduleCheck(){if(checkScheduled)return;checkScheduled=true;setTimeout(check,700);}
+new MutationObserver(scheduleCheck).observe(document,{childList:true,subtree:true,attributes:true,attributeFilter:['type','style','class','hidden']});
+document.addEventListener('DOMContentLoaded',scheduleCheck);
+window.addEventListener('load',scheduleCheck);
+scheduleCheck();
 Object.defineProperty(window,key,{value:{
 request:function(){var inputs=document.querySelectorAll('input[type=password]');for(var i=0;i<inputs.length;i++){var input=inputs[i];if(input.getClientRects().length===0)continue;remember(input);input.focus();emit();return;}},
 fill:function(username,password){if(state.username&&username)put(state.username,username);if(state.password)put(state.password,password);}
@@ -67,6 +75,36 @@ pub fn parse_signal<'message>(token: &str, message: &'message str) -> Option<&'m
     (!frame_id.is_empty()).then_some(frame_id)
 }
 
+pub fn parse_form_signal<'message>(token: &str, message: &'message str) -> Option<(&'message str, bool)> {
+    let rest = message.strip_prefix(token)?.strip_prefix(":form:")?;
+    let (frame_id, presence) = rest.rsplit_once(':')?;
+    if frame_id.is_empty() {
+        return None;
+    }
+    match presence {
+        "1" => Some((frame_id, true)),
+        "0" => Some((frame_id, false)),
+        _ => None,
+    }
+}
+
+fn report_form_presence(tab: MiniTabId, change: impl FnOnce(&mut std::collections::HashSet<String>)) {
+    let changed_to = with_core(|core| {
+        let state = core.tabs.get_mut(&tab)?;
+        let had_form = !state.login_form_frames.is_empty();
+        change(&mut state.login_form_frames);
+        let has_form = !state.login_form_frames.is_empty();
+        (had_form != has_form).then_some(has_form)
+    });
+    if let Some(has_form) = changed_to {
+        unsafe { (callbacks().login_form_presence_changed)(tab, has_form) };
+    }
+}
+
+pub fn reset_form_presence(tab: MiniTabId) {
+    report_form_presence(tab, |frames| frames.clear());
+}
+
 fn frame_identifier(frame: &Frame) -> String {
     CefString::from(&frame.identifier()).to_string()
 }
@@ -97,6 +135,20 @@ pub fn is_signal(message: &str) -> bool {
 }
 
 pub fn handle_signal(tab: MiniTabId, browser: &Browser, message: &str) {
+    if let Some((frame_id, present)) = parse_form_signal(token(), message) {
+        if browser.frame_by_identifier(Some(&CefString::from(frame_id))).is_none() {
+            return;
+        }
+        let frame_id = frame_id.to_owned();
+        report_form_presence(tab, |frames| {
+            if present {
+                frames.insert(frame_id);
+            } else {
+                frames.remove(&frame_id);
+            }
+        });
+        return;
+    }
     let Some(frame_id) = parse_signal(token(), message) else {
         return;
     };
@@ -172,6 +224,11 @@ mod tests {
             None
         );
         assert_eq!(parse_signal(token, &format!("{token}:login:")), None);
+        assert_eq!(parse_form_signal(token, &format!("{token}:form:7-12:1")), Some(("7-12", true)));
+        assert_eq!(parse_form_signal(token, &format!("{token}:form:7-12:0")), Some(("7-12", false)));
+        assert_eq!(parse_form_signal(token, &format!("{token}:form::1")), None);
+        assert_eq!(parse_form_signal(token, &format!("{token}:form:7-12:2")), None);
+        assert_eq!(parse_form_signal("ffffffffffffffffffffffffffffffff", &format!("{token}:form:7-12:1")), None);
         assert_eq!(parse_signal(token, &format!("{token}:logout:7")), None);
         assert_eq!(parse_signal(token, "hello"), None);
     }

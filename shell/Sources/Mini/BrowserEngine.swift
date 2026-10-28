@@ -106,6 +106,11 @@ final class BrowserEngine {
                     BrowserEngine.shared.requiredShell.renderProcessTerminated(identifier, reason: reason)
                 }
             },
+            login_form_presence_changed: { identifier, hasLoginForm in
+                MainActor.assumeIsolated {
+                    BrowserEngine.shared.requiredShell.loginFormPresenceChanged(identifier, hasLoginForm: hasLoginForm)
+                }
+            },
             browser_closed: { identifier in
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.browserClosed(identifier) }
             },

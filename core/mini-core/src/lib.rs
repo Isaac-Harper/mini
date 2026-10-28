@@ -7,6 +7,7 @@ mod login;
 mod permissions;
 mod resource_requests;
 mod state;
+mod webauthn;
 
 use cef::{library_loader::LibraryLoader, *};
 use objc2_app_kit::NSView;
@@ -45,6 +46,7 @@ pub struct MiniCallbacks {
         Option<unsafe extern "C" fn(MiniTabId, u64, *const c_char, *const c_char, bool)>,
     pub login_field_focused: Option<unsafe extern "C" fn(MiniTabId, *const c_char, *const c_char)>,
     pub render_process_terminated: Option<unsafe extern "C" fn(MiniTabId, i32)>,
+    pub login_form_presence_changed: Option<unsafe extern "C" fn(MiniTabId, bool)>,
     pub browser_closed: Option<unsafe extern "C" fn(MiniTabId)>,
     pub all_browsers_closed: Option<unsafe extern "C" fn()>,
 }
