@@ -63,9 +63,17 @@ final class BrowserEngine {
             web_got_focus: { identifier in
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.webGotFocus(identifier) }
             },
-            download_finished: { path in
-                let path = requiredString(path)
-                MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.downloadFinished(path: path) }
+            download_updated: { download, fileName, path, receivedBytes, totalBytes, isComplete, isCanceled in
+                let progress = DownloadProgress(
+                    id: download,
+                    fileName: requiredString(fileName),
+                    path: requiredString(path),
+                    receivedBytes: receivedBytes,
+                    totalBytes: totalBytes,
+                    isComplete: isComplete,
+                    isCanceled: isCanceled
+                )
+                MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.downloadUpdated(progress) }
             },
             permission_requested: { identifier, request, origin, permissions in
                 let origin = requiredString(origin)
@@ -91,6 +99,11 @@ final class BrowserEngine {
                 MainActor.assumeIsolated {
                     BrowserEngine.shared.requiredShell.loginFieldFocused(
                         identifier, frameIdentifier: frameIdentifier, origin: origin)
+                }
+            },
+            render_process_terminated: { identifier, reason in
+                MainActor.assumeIsolated {
+                    BrowserEngine.shared.requiredShell.renderProcessTerminated(identifier, reason: reason)
                 }
             },
             browser_closed: { identifier in

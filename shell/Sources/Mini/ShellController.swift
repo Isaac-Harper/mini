@@ -2,31 +2,32 @@ import AppKit
 import CMiniCore
 import Observation
 
-struct DownloadNotice: Identifiable, Equatable {
-    let id = UUID()
-    let path: String
-    var fileName: String { (path as NSString).lastPathComponent }
-}
-
 @MainActor
 @Observable
 final class ShellController: NSObject {
     let store = TabStore()
-    var downloadNotice: DownloadNotice?
+    let downloads = DownloadsModel()
 
     @ObservationIgnored let sitePreferences: SitePreferences
+    @ObservationIgnored let archive: ArchiveStore
+    @ObservationIgnored private var archiveTimer: Timer?
     @ObservationIgnored private let sessionStore: SessionStore
     @ObservationIgnored private(set) var windowController: MainWindowController!
     @ObservationIgnored private(set) var commandBar: CommandBarController!
     @ObservationIgnored private(set) var findBar: FindBarController!
     @ObservationIgnored private(set) var sitePrompts: SitePromptController!
     @ObservationIgnored private(set) var loginFill: LoginFillController!
+    @ObservationIgnored private(set) var crashOverlay: CrashOverlayController!
+    @ObservationIgnored private(set) var toast: ToastController!
     @ObservationIgnored private(set) var isTerminating = false
     @ObservationIgnored var closingTabs: [MiniTabId: Tab] = [:]
 
-    init(sessionStore: SessionStore, sitePreferences: SitePreferences) {
+    private static let archiveInterval: TimeInterval = 10 * 60
+
+    init(sessionStore: SessionStore, sitePreferences: SitePreferences, archive: ArchiveStore) {
         self.sessionStore = sessionStore
         self.sitePreferences = sitePreferences
+        self.archive = archive
         super.init()
     }
 
@@ -42,6 +43,8 @@ final class ShellController: NSObject {
         findBar = FindBarController(shell: self)
         sitePrompts = SitePromptController(shell: self, preferences: sitePreferences, windowController: windowController)
         loginFill = LoginFillController(shell: self)
+        crashOverlay = CrashOverlayController(shell: self, windowController: windowController)
+        toast = ToastController(windowController: windowController)
         store.observer = self
         showWindow()
         if let session = sessionStore.load(), !session.isEmpty {
@@ -53,6 +56,38 @@ final class ShellController: NSObject {
         for url in externalURLs {
             openExternalURL(url)
         }
+        archiveIdleTabs()
+        archiveTimer = Timer.scheduledTimer(withTimeInterval: Self.archiveInterval, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.archiveIdleTabs() }
+        }
+    }
+
+    func archiveIdleTabs(now: Date = Date()) {
+        let selected = store.selectedTab
+        func candidate(_ tab: Tab) -> ArchivePolicy.Candidate {
+            ArchivePolicy.Candidate(
+                identifier: tab.id,
+                lastSelectedAt: tab.lastSelectedAt,
+                isSelected: tab === selected,
+                children: tab.children.map(candidate)
+            )
+        }
+        let identifiers = ArchivePolicy.tabsToArchive(in: store.rootTabs.map(candidate), now: now)
+        var archived: [ArchivedTab] = []
+        for identifier in identifiers {
+            guard let tab = store.tab(withIdentifier: identifier) else { continue }
+            if !tab.url.isEmpty {
+                archived.append(ArchivedTab(url: tab.url, title: tab.displayTitle, archivedAt: now))
+            }
+            store.close(tab)
+        }
+        archive.add(archived)
+    }
+
+    func reopenArchived(_ entry: ArchivedTab) {
+        archive.remove(entry)
+        let selectedRoot = store.selectedTab.map(store.rootAncestor)
+        store.select(store.newTab(url: entry.url, title: entry.title, parent: nil, after: selectedRoot))
     }
 
     func showWindow() {
@@ -130,6 +165,9 @@ extension ShellController: TabStoreObserver {
             windowController.display(tab.hostView)
             if tab.hasBrowser {
                 mini_browser_set_hidden(tab.id, false)
+                if tab.hasCrashed {
+                    mini_browser_reload(tab.id)
+                }
             } else {
                 createBrowser(for: tab)
             }
@@ -142,6 +180,7 @@ extension ShellController: TabStoreObserver {
             }
         }
         sitePrompts.refresh()
+        crashOverlay.refresh()
         if tab != nil {
             focusSelectedWebContent()
         } else if commandBar.isOpen == false {

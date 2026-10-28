@@ -28,6 +28,7 @@ Mini.app/Contents/Frameworks/
 - Popups with an opener are parented into a new child tab via `popup_requested` (keeps OAuth popups working); opener-less new-tab links use `open_tab_requested`.
 - Login fill: password and username values from the shell are never logged, persisted or echoed (including under `MINI_ADBLOCK_LOG`); Rust zeroizes the script strings it builds from them. The origin passed to `login_field_focused` and checked by `mini_fill_login` is always derived browser-side from the frame's committed URL (http/https only); nothing in the page's console signal except the frame id is trusted, and the frame id is verified with `frame_by_identifier`.
 - The C header is the contract: change it, then both sides, in the same commit.
+- Auto-archive never closes the selected tab or pinned tabs, and only closes a parent after all its children qualify; it is the only code path that closes tabs without user action besides `browser_closed`.
 - Style: no comments unless a genuine trap, full-word names, no em/en dashes, no AI attribution anywhere.
 
 ## File map
@@ -44,7 +45,7 @@ Mini.app/Contents/Frameworks/
   - `src/login.rs`: login-form script (injected into every frame at `on_load_start`, regardless of ad block state; it never signals on focus, only when `mini_request_login_fill` runs its request), the console signal `<token>:login:<frame_id>` (128-bit per-process token from `/dev/urandom`, sent through a `console.debug` captured at injection, consumed in `on_console_message` so it never reaches devtools), `mini_request_login_fill` and `mini_fill_login` scripts (values as escaped JSON literals, native `HTMLInputElement` value setter, `input` + `change` events, never submits). Page-side state lives on `window[Symbol.for('mini-login-' + token)]`.
   - `src/resource_requests.rs`: `MiniResourceRequestHandler` (IO thread), `on_before_resource_load` returns `CANCEL` for ad block matches.
   - `src/ad_blocking/`: Brave `adblock` engine. `mod.rs` shared state (engine `RwLock<Option<Arc<Engine>>>`, enabled `AtomicBool`, exempt hosts) and the background loader thread; `lists.rs` list URLs, 7-day refresh, download (ureq + rustls), build, `engine.dat` (de)serialization; `resources.rs` scriptlet/redirect resources; `matching.rs` CEF resource type mapping, network decision, cosmetic script. `MINI_ADBLOCK_LOG=1` logs loads and every cancelled request to stderr.
-  - `src/downloads.rs`: `~/Downloads/<name>` destination with `name (1).ext` uniquifying (unit tested).
+  - `src/downloads.rs`: `~/Downloads/<name>` destination with `name (1).ext` uniquifying (unit tested). The download handler reports every `on_download_updated` through `download_updated` (interrupted counts as canceled) and keeps the latest `DownloadItemCallback` per id in `CoreState.download_callbacks` for `mini_download_cancel`.
 - `core/mini-helper/`: Rust helper executable (sandbox init + `cef_execute_process`).
 - `shell/Package.swift`: SwiftPM manifest; links `core/target/<config>/libmini_core.a` with `-dead_strip`, `-lc++`, `-lobjc`.
 - `shell/Sources/CMiniCore/module.modulemap`: system-library module pointing at `core/include/mini_core.h` (no header copy).
@@ -57,10 +58,14 @@ Mini.app/Contents/Frameworks/
 - `shell/Sources/Mini/ShellCommands.swift`: menu actions and validation (extension of ShellController).
 - `shell/Sources/Mini/MenuKeyEquivalents.swift`: matches `pre_key_event` NSEvents to main-menu items, excluding standard edit actions.
 - `shell/Sources/Mini/MainMenu.swift`: the main menu, built in code.
-- `shell/Sources/Mini/Tab.swift`: tab node (observable) with favicon image, pinned URL, host view and browser state.
+- `shell/Sources/Mini/Tab.swift`: tab node (observable) with favicon image, pinned URL, host view, browser state, `lastSelectedAt` (persisted) and `hasCrashed`.
 - `shell/Sources/Mini/BrowserHostView.swift`: NSView that CEF embeds the browser view into; sizes subviews to bounds.
 - `shell/Sources/Mini/TabStore.swift`: pinned tabs (flat) plus the tab tree, selection and tree operations; id minting. Closing a pinned tab swaps in a fresh unloaded Tab (new id) at its pinned URL.
-- `shell/Sources/Mini/SessionStore.swift`: session.json encode/restore and debounced saves; `pinnedTabs` and `selectedPinnedIndex` are optional so older files still load.
+- `shell/Sources/Mini/SessionStore.swift`: session.json encode/restore and debounced saves; `pinnedTabs`, `selectedPinnedIndex` and per-tab `lastSelectedAt` are optional so older files still load (a tab without `lastSelectedAt` counts as just selected).
+- `shell/Sources/Mini/TabArchive.swift`: `ArchivePolicy.tabsToArchive` (pure: unpinned, unselected, idle 12 h, leaves before parents, a parent only when every child goes too) and `ArchiveStore` (archive.json, newest first, cap 200). ShellController runs it at launch and every 10 min; the command bar lists matches under "Archived" and reopens them as new tabs. Audio-playing tabs are not detected.
+- `shell/Sources/Mini/Downloads.swift`: `DownloadsModel` (active downloads plus ones finished in the last 10 s) and the sidebar `DownloadRowView` (click cancels while active, reveals in Finder when complete).
+- `shell/Sources/Mini/CrashOverlayController.swift`: "This page crashed" overlay over the web area for the selected tab when `render_process_terminated` marked it; Reload calls `mini_browser_reload`, the next loading start clears it, and a crashed background tab reloads when selected.
+- `shell/Sources/Mini/ToastController.swift`: transient glass toast at the bottom of the web area (Copy URL shows "Copied").
 - `shell/Sources/Mini/MainWindowController.swift`: window built on NSSplitViewController (native floating glass sidebar item, autosaved as `MainSplitView`), web content item with `automaticallyAdjustsSafeAreaInsets` and an NSBackgroundExtensionView around `webAreaView` (host views live there).
 - `shell/Sources/Mini/WindowToolbar.swift`: NSToolbar whose only items (sidebar toggle, back, forward) sit before `.sidebarTrackingSeparator`, so they render inside the sidebar next to the traffic lights.
 - `shell/Sources/Mini/OverlayAnimation.swift`: shared appear (fade plus spring scale, fade only with Reduce Motion) and disappear for overlays.
@@ -69,7 +74,7 @@ Mini.app/Contents/Frameworks/
 - `shell/Sources/Mini/SitePromptController.swift`, `SitePromptViews.swift`: per-tab queued permission and HTTP auth cards over the web card; `FaviconView`.
 - `shell/Sources/Mini/LoginFillController.swift`, `LoginFillCardView.swift`: password fill card, shown only on Cmd-\ (Fill Password) via `mini_request_login_fill`, never automatically (AppKit NSTextField/NSSecureTextField with username/password content types so macOS Passwords AutoFill attaches); values are never stored and are cleared on every close.
 - `shell/Sources/Mini/DefaultBrowser.swift`: default-browser check and registration for http and https.
-- `shell/Sources/Mini/CommandBarController.swift`, `CommandBarModel.swift`, `CommandSuggestionsView.swift`: the floating command bar (760pt glass panel, clamped to window width minus 80, open/search row first then matching tabs, recent tabs on empty Cmd-T, Cmd-Return opens in background).
+- `shell/Sources/Mini/CommandBarController.swift`, `CommandBarModel.swift`, `CommandSuggestionsView.swift`: the floating command bar (760pt glass panel, clamped to window width minus 80 and to the web area width minus 32, open/search row first then matching tabs, recent tabs on empty Cmd-T, Cmd-Return opens in background).
 - `shell/Sources/Mini/FindBarController.swift`: find-in-page capsule.
 - `shell/Sources/Mini/URLInput.swift`: input to URL or search (search template constant lives here).
 - `bundle/Info.plist`: main app plist template (`NSPrincipalClass` `Mini.MiniApplication`, http/https URL types).
@@ -95,6 +100,8 @@ Mini.app/Contents/Frameworks/
 - - `do_close` must not return 0 for a browser embedded in the shell's window: CEF then calls `performClose:` on the host NSWindow and the browser never reaches `on_before_close`. Mini removes the browser NSView from its superview and returns 1, which destroys just that browser.
 - Ad-hoc signing traps cookie encryption: Chromium reads the "Chromium Safe Storage" login-keychain item at startup, and its ACL trusts each ad-hoc build by cdhash. Any code change gives a new cdhash, so the next launch raises a SecurityAgent "Always Allow" prompt; until it is answered the cookie store never loads and every navigation stalls before reaching the network (blank page, stop button, no load_start). bundle.sh therefore signs with a stable certificate identity by default, whose keychain grant survives rebuilds. With ad-hoc signing, answer the prompt. `--use-mock-keychain` confirms the diagnosis but re-encrypts cookies with a fixed key, so never run it against the real profile. Identical sources rebuild to the same cdhash.
 - Two browser processes sharing one `root_cache_path` collide (`bootstrap_check_in ... Permission denied`) and the second hangs in `cef_shutdown` until "Teardown watchdog expired". Kill stale instances before relaunching.
+- `chrome://crash` loaded with `load_url` crashes the renderer and fires `on_render_process_terminated` (used to test the crash overlay).
+- After a download is canceled CEF may report an empty `full_path` and file name; the shell keeps the last non-empty values.
 - Renderer-initiated `window.open` to a `data:` URL is blocked by Chromium even after `on_before_popup` allows it; test popups with real URLs.
 - Swift 6: the CrApp/CefApp protocols are declared `@MainActor @objc(Name)` so the main-actor NSApplication subclass can conform. C callbacks convert strings to `String` before `MainActor.assumeIsolated`, and pass pointers across it as `UInt` bit patterns (raw pointers are not Sendable).
 - Every `mini_browser_*` call for a tab whose browser does not exist (lazy tab, or after `browser_closed`) panics in Rust. The shell gates on `Tab.browserState == .created`; a popup tab is `.pendingPopup` until the `popup_requested` callback has returned (promoted on the next main-queue turn).

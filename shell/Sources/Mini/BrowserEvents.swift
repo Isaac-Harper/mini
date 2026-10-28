@@ -2,8 +2,6 @@ import AppKit
 import CMiniCore
 
 extension ShellController {
-    private static let downloadNoticeDuration: TimeInterval = 6
-
     private func liveTab(_ identifier: MiniTabId) -> Tab? {
         store.tab(withIdentifier: identifier)
     }
@@ -36,6 +34,10 @@ extension ShellController {
 
     func loadingStateChanged(_ identifier: MiniTabId, isLoading: Bool, canGoBack: Bool, canGoForward: Bool) {
         guard let tab = liveTab(identifier) else { return }
+        if isLoading, tab.hasCrashed {
+            tab.hasCrashed = false
+            crashOverlay.refresh()
+        }
         tab.isLoading = isLoading
         tab.canGoBack = canGoBack
         tab.canGoForward = canGoForward
@@ -79,20 +81,8 @@ extension ShellController {
         loginFill.closeIfFieldsLostFocus()
     }
 
-    func downloadFinished(path: String) {
-        let notice = DownloadNotice(path: path)
-        downloadNotice = notice
-        DispatchQueue.main.asyncAfter(deadline: .now() + Self.downloadNoticeDuration) { [weak self] in
-            MainActor.assumeIsolated {
-                guard let self, self.downloadNotice == notice else { return }
-                self.downloadNotice = nil
-            }
-        }
-    }
-
-    func revealDownload(_ notice: DownloadNotice) {
-        NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: notice.path)])
-        downloadNotice = nil
+    func downloadUpdated(_ progress: DownloadProgress) {
+        downloads.update(progress)
     }
 
     func permissionRequested(_ identifier: MiniTabId, request: UInt64, origin: String, permissions: UInt32) {
@@ -109,6 +99,18 @@ extension ShellController {
 
     func loginFieldFocused(_ identifier: MiniTabId, frameIdentifier: String, origin: String) {
         loginFill.loginFieldFocused(tab: identifier, frameIdentifier: frameIdentifier, origin: origin)
+    }
+
+    func renderProcessTerminated(_ identifier: MiniTabId, reason: Int32) {
+        guard let tab = liveTab(identifier) else { return }
+        tab.hasCrashed = true
+        tab.isLoading = false
+        crashOverlay.refresh()
+    }
+
+    func reloadCrashedTab() {
+        guard let tab = store.selectedTab, tab.hasBrowser else { return }
+        mini_browser_reload(tab.id)
     }
 
     func browserClosed(_ identifier: MiniTabId) {

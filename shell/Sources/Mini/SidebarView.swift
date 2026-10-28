@@ -47,17 +47,15 @@ struct SidebarView: View {
 
     private var footer: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if let notice = shell.downloadNotice {
-                SidebarActionRow(title: "Downloaded \(notice.fileName)", systemImage: "arrow.down.circle") {
-                    shell.revealDownload(notice)
-                }
-                .transition(.opacity)
+            ForEach(shell.downloads.visibleDownloads) { download in
+                DownloadRowView(download: download) { shell.downloads.activate(download) }
+                    .transition(.opacity)
             }
             SidebarActionRow(title: "New Tab", systemImage: "plus") {
                 shell.commandBar.open(mode: .newTab)
             }
         }
-        .animation(.easeInOut(duration: 0.3), value: shell.downloadNotice)
+        .animation(.easeInOut(duration: 0.3), value: shell.downloads.visibleDownloads.map(\.id))
         .padding(.horizontal, SidebarMetrics.edgeInset)
         .padding(.bottom, SidebarMetrics.edgeInset)
     }

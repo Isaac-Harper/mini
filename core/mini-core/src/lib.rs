@@ -37,12 +37,14 @@ pub struct MiniCallbacks {
     pub pre_key_event: Option<unsafe extern "C" fn(MiniTabId, *mut c_void) -> bool>,
     pub focus_requested: Option<unsafe extern "C" fn(MiniTabId) -> bool>,
     pub web_got_focus: Option<unsafe extern "C" fn(MiniTabId)>,
-    pub download_finished: Option<unsafe extern "C" fn(*const c_char)>,
+    pub download_updated:
+        Option<unsafe extern "C" fn(u32, *const c_char, *const c_char, i64, i64, bool, bool)>,
     pub permission_requested: Option<unsafe extern "C" fn(MiniTabId, u64, *const c_char, u32)>,
     pub permission_dismissed: Option<unsafe extern "C" fn(u64)>,
     pub auth_requested:
         Option<unsafe extern "C" fn(MiniTabId, u64, *const c_char, *const c_char, bool)>,
     pub login_field_focused: Option<unsafe extern "C" fn(MiniTabId, *const c_char, *const c_char)>,
+    pub render_process_terminated: Option<unsafe extern "C" fn(MiniTabId, i32)>,
     pub browser_closed: Option<unsafe extern "C" fn(MiniTabId)>,
     pub all_browsers_closed: Option<unsafe extern "C" fn()>,
 }
@@ -316,6 +318,13 @@ pub extern "C" fn mini_browser_close(tab: MiniTabId) {
         let host = host(&browser);
         host.close_dev_tools();
         host.close_browser(1);
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn mini_download_cancel(download: u32) {
+    if let Some(callback) = with_core(|core| core.download_callbacks.remove(&download)) {
+        callback.cancel();
     }
 }
 

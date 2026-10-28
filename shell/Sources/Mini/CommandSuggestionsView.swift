@@ -8,6 +8,15 @@ struct CommandSuggestionsView: View {
         if !model.suggestions.isEmpty {
             VStack(spacing: 0) {
                 ForEach(Array(model.suggestions.enumerated()), id: \.element.id) { index, suggestion in
+                    if suggestion.isArchived, index == 0 || !model.suggestions[index - 1].isArchived {
+                        Text("Archived")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(.tertiary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 12)
+                            .padding(.top, 8)
+                            .padding(.bottom, 4)
+                    }
                     CommandSuggestionRow(suggestion: suggestion, isSelected: index == model.selectedIndex)
                         .contentShape(Rectangle())
                         .onHover { isHovering in
@@ -65,6 +74,8 @@ private struct CommandSuggestionRow: View {
             Image(systemName: "globe").foregroundStyle(.secondary)
         case .open(.search):
             Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+        case .archived:
+            Image(systemName: "archivebox").foregroundStyle(.secondary)
         }
     }
 
@@ -73,6 +84,7 @@ private struct CommandSuggestionRow: View {
         case .switchToTab(let tab): tab.displayTitle
         case .open(.address(let address)): address
         case .open(.search(let query)): query
+        case .archived(let entry): entry.title
         }
     }
 
@@ -81,6 +93,7 @@ private struct CommandSuggestionRow: View {
         case .switchToTab(let tab): URLInput.host(of: tab.url)
         case .open(.address): nil
         case .open(.search): "Search Google"
+        case .archived(let entry): URLInput.host(of: entry.url)
         }
     }
 
@@ -89,6 +102,7 @@ private struct CommandSuggestionRow: View {
         case .switchToTab: "Switch to Tab"
         case .open(.address): "Open"
         case .open(.search): "Search"
+        case .archived: "Reopen"
         }
     }
 }

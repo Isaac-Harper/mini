@@ -1,7 +1,7 @@
-use cef::Browser;
+use cef::{Browser, DownloadItemCallback};
 use std::{
     cell::RefCell,
-    collections::{HashMap, HashSet},
+    collections::HashMap,
     ffi::{CString, c_char, c_void},
     sync::atomic::{AtomicU64, Ordering},
 };
@@ -19,11 +19,12 @@ pub struct Callbacks {
     pub pre_key_event: unsafe extern "C" fn(MiniTabId, *mut c_void) -> bool,
     pub focus_requested: unsafe extern "C" fn(MiniTabId) -> bool,
     pub web_got_focus: unsafe extern "C" fn(MiniTabId),
-    pub download_finished: unsafe extern "C" fn(*const c_char),
+    pub download_updated: unsafe extern "C" fn(u32, *const c_char, *const c_char, i64, i64, bool, bool),
     pub permission_requested: unsafe extern "C" fn(MiniTabId, u64, *const c_char, u32),
     pub permission_dismissed: unsafe extern "C" fn(u64),
     pub auth_requested: unsafe extern "C" fn(MiniTabId, u64, *const c_char, *const c_char, bool),
     pub login_field_focused: unsafe extern "C" fn(MiniTabId, *const c_char, *const c_char),
+    pub render_process_terminated: unsafe extern "C" fn(MiniTabId, i32),
     pub browser_closed: unsafe extern "C" fn(MiniTabId),
     pub all_browsers_closed: unsafe extern "C" fn(),
 }
@@ -58,9 +59,9 @@ impl Callbacks {
             web_got_focus: table
                 .web_got_focus
                 .expect("MiniCallbacks.web_got_focus is null"),
-            download_finished: table
-                .download_finished
-                .expect("MiniCallbacks.download_finished is null"),
+            download_updated: table
+                .download_updated
+                .expect("MiniCallbacks.download_updated is null"),
             permission_requested: table
                 .permission_requested
                 .expect("MiniCallbacks.permission_requested is null"),
@@ -73,6 +74,9 @@ impl Callbacks {
             login_field_focused: table
                 .login_field_focused
                 .expect("MiniCallbacks.login_field_focused is null"),
+            render_process_terminated: table
+                .render_process_terminated
+                .expect("MiniCallbacks.render_process_terminated is null"),
             browser_closed: table
                 .browser_closed
                 .expect("MiniCallbacks.browser_closed is null"),
@@ -97,7 +101,7 @@ pub struct CoreState {
     pub callbacks: Callbacks,
     pub tabs: HashMap<MiniTabId, TabState>,
     pub pending_popups: HashMap<i32, MiniTabId>,
-    pub reported_downloads: HashSet<u32>,
+    pub download_callbacks: HashMap<u32, DownloadItemCallback>,
     pub closing_all: bool,
 }
 
@@ -114,7 +118,7 @@ pub fn install(callbacks: Callbacks) {
             callbacks,
             tabs: HashMap::new(),
             pending_popups: HashMap::new(),
-            reported_downloads: HashSet::new(),
+            download_callbacks: HashMap::new(),
             closing_all: false,
         });
     });

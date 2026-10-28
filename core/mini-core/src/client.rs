@@ -336,6 +336,17 @@ wrap_request_handler! {
             ad_blocking::is_active().then(MiniResourceRequestHandler::new)
         }
 
+        fn on_render_process_terminated(
+            &self,
+            _browser: Option<&mut Browser>,
+            status: TerminationStatus,
+            _error_code: ::std::os::raw::c_int,
+            _error_string: Option<&CefString>,
+        ) {
+            let reason = *status.as_ref() as i32;
+            unsafe { (callbacks().render_process_terminated)(self.tab, reason) };
+        }
+
         fn auth_credentials(
             &self,
             _browser: Option<&mut Browser>,
@@ -433,18 +444,38 @@ wrap_download_handler! {
             &self,
             _browser: Option<&mut Browser>,
             download_item: Option<&mut DownloadItem>,
-            _callback: Option<&mut DownloadItemCallback>,
+            callback: Option<&mut DownloadItemCallback>,
         ) {
             let item = download_item.expect("download update without an item");
-            if item.is_complete() != 1 {
-                return;
-            }
-            let first_report = with_core(|core| core.reported_downloads.insert(item.id()));
-            if !first_report {
-                return;
-            }
-            let path = c_string(&CefString::from(&item.full_path()).to_string());
-            unsafe { (callbacks().download_finished)(path.as_ptr()) };
+            let download = item.id();
+            let is_complete = item.is_complete() == 1;
+            let is_canceled = item.is_canceled() == 1 || item.is_interrupted() == 1;
+            with_core(|core| {
+                if is_complete || is_canceled {
+                    core.download_callbacks.remove(&download);
+                } else if let Some(callback) = callback {
+                    core.download_callbacks.insert(download, callback.clone());
+                }
+            });
+            let full_path = CefString::from(&item.full_path()).to_string();
+            let file_name = std::path::Path::new(&full_path)
+                .file_name()
+                .and_then(|name| name.to_str())
+                .map(str::to_owned)
+                .unwrap_or_else(|| CefString::from(&item.suggested_file_name()).to_string());
+            let file_name = c_string(&file_name);
+            let path = c_string(&full_path);
+            unsafe {
+                (callbacks().download_updated)(
+                    download,
+                    file_name.as_ptr(),
+                    path.as_ptr(),
+                    item.received_bytes(),
+                    item.total_bytes(),
+                    is_complete,
+                    is_canceled,
+                )
+            };
         }
     }
 }

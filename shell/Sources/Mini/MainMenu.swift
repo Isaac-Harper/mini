@@ -55,6 +55,7 @@ enum MainMenu {
         menu.addItem(item("Paste and Match Style", #selector(NSTextView.pasteAsPlainText(_:)), "v", [.command, .option, .shift]))
         menu.addItem(item("Delete", #selector(NSText.delete(_:)), ""))
         menu.addItem(item("Select All", #selector(NSText.selectAll(_:)), "a"))
+        menu.addItem(item("Copy URL", #selector(ShellController.copyTabAddress(_:)), "c", [.command, .shift], target: commands))
         menu.addItem(.separator())
         menu.addItem(item("Find", #selector(ShellController.showFindBar(_:)), "f", target: commands))
         menu.addItem(item("Find Next", #selector(ShellController.findNextMatch(_:)), "g", target: commands))

@@ -10,12 +10,19 @@ enum CommandBarMode {
 enum CommandSuggestion: Identifiable {
     case switchToTab(Tab)
     case open(URLInput.Interpretation)
+    case archived(ArchivedTab)
 
     var id: String {
         switch self {
         case .switchToTab(let tab): "tab-\(tab.id)"
         case .open(let interpretation): "open-\(interpretation.url)"
+        case .archived(let entry): "archived-\(entry.url)-\(entry.archivedAt.timeIntervalSince1970)"
         }
+    }
+
+    var isArchived: Bool {
+        if case .archived = self { return true }
+        return false
     }
 }
 
@@ -30,8 +37,8 @@ final class CommandBarModel {
 
     func showRecentTabs(from tabs: [Tab], excluding selectedTab: Tab?) {
         suggestions = tabs
-            .filter { $0 !== selectedTab && $0.lastSelectedAt != nil }
-            .sorted { ($0.lastSelectedAt ?? .distantPast) > ($1.lastSelectedAt ?? .distantPast) }
+            .filter { $0 !== selectedTab }
+            .sorted { $0.lastSelectedAt > $1.lastSelectedAt }
             .prefix(Self.recentTabCount)
             .map(CommandSuggestion.switchToTab)
         selectedIndex = 0
@@ -42,7 +49,7 @@ final class CommandBarModel {
         selectedIndex = 0
     }
 
-    func update(query: String, tabs: [Tab], selectedTab: Tab?) {
+    func update(query: String, tabs: [Tab], selectedTab: Tab?, archived: [ArchivedTab]) {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             showRecentTabs(from: tabs, excluding: selectedTab)
@@ -57,7 +64,14 @@ final class CommandBarModel {
             }
             .prefix(Self.maximumRows - 1)
             .map(CommandSuggestion.switchToTab)
-        suggestions = [.open(URLInput.interpret(trimmed))] + matchingTabs
+        let matchingArchived = archived
+            .filter { entry in
+                let haystack = "\(entry.title) \(URLInput.host(of: entry.url) ?? entry.url)".lowercased()
+                return tokens.allSatisfy { haystack.contains($0) }
+            }
+            .prefix(Self.maximumRows - 1 - matchingTabs.count)
+            .map(CommandSuggestion.archived)
+        suggestions = [.open(URLInput.interpret(trimmed))] + matchingTabs + matchingArchived
         selectedIndex = 0
     }
 

@@ -6,6 +6,7 @@ struct SavedSession: Codable {
         let title: String
         let isCollapsed: Bool
         let children: [SavedTab]
+        let lastSelectedAt: Date?
     }
 
     struct SavedPinnedTab: Codable {
@@ -106,6 +107,7 @@ final class SessionStore {
             restore(child, parent: tab, into: store)
         }
         tab.isCollapsed = savedTab.isCollapsed && !tab.children.isEmpty
+        tab.lastSelectedAt = savedTab.lastSelectedAt ?? Date()
     }
 
     private static func savedTab(_ tab: Tab) -> SavedSession.SavedTab {
@@ -113,7 +115,8 @@ final class SessionStore {
             url: tab.url,
             title: tab.title,
             isCollapsed: tab.isCollapsed,
-            children: tab.children.map(savedTab)
+            children: tab.children.map(savedTab),
+            lastSelectedAt: tab.lastSelectedAt
         )
     }
 

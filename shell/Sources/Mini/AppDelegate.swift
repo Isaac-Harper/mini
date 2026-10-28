@@ -16,7 +16,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSWindow.allowsAutomaticWindowTabbing = false
         let shell = ShellController(
             sessionStore: SessionStore(directory: Self.supportDirectory),
-            sitePreferences: SitePreferences(directory: Self.supportDirectory)
+            sitePreferences: SitePreferences(directory: Self.supportDirectory),
+            archive: ArchiveStore(directory: Self.supportDirectory)
         )
         self.shell = shell
         BrowserEngine.shared.shell = shell

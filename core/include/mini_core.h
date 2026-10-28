@@ -32,6 +32,15 @@ typedef enum MiniPermission {
   MINI_PERMISSION_OTHER = 1u << 31,
 } MiniPermission;
 
+typedef enum MiniRenderTermination {
+  MINI_RENDER_ABNORMAL = 0,
+  MINI_RENDER_KILLED = 1,
+  MINI_RENDER_CRASHED = 2,
+  MINI_RENDER_OUT_OF_MEMORY = 3,
+  MINI_RENDER_LAUNCH_FAILED = 4,
+  MINI_RENDER_INTEGRITY_FAILURE = 5,
+} MiniRenderTermination;
+
 // Every callback is invoked on the main thread. Strings are UTF-8 and only
 // valid for the duration of the call.
 typedef struct MiniCallbacks {
@@ -51,7 +60,10 @@ typedef struct MiniCallbacks {
   // The page or navigation wants keyboard focus. Return false to refuse.
   bool (*focus_requested)(MiniTabId tab);
   void (*web_got_focus)(MiniTabId tab);
-  void (*download_finished)(const char *path);
+  // Download progress, fired on every update. total_bytes is -1 when unknown.
+  // The last report for a download has is_complete or is_canceled set.
+  void (*download_updated)(uint32_t download, const char *file_name, const char *path, int64_t received_bytes,
+                           int64_t total_bytes, bool is_complete, bool is_canceled);
   // A site asks for one or more MiniPermission bits. Answer later with
   // mini_permission_respond(request, granted bits). permission_dismissed
   // means the request went away (navigation, tab closed) unanswered.
@@ -64,6 +76,9 @@ typedef struct MiniCallbacks {
   // (never from mere focus). frame_origin comes from the browser side (the
   // frame's committed URL), never from page script.
   void (*login_field_focused)(MiniTabId tab, const char *frame_id, const char *frame_origin);
+  // The tab's renderer process is gone (crash, kill, out of memory).
+  // reason is a MiniRenderTermination.
+  void (*render_process_terminated)(MiniTabId tab, int32_t reason);
   void (*browser_closed)(MiniTabId tab);
   void (*all_browsers_closed)(void);
 } MiniCallbacks;
@@ -96,6 +111,10 @@ void mini_browser_close(MiniTabId tab);
 // Force-closes every browser. all_browsers_closed fires when none remain
 // (immediately if none exist).
 void mini_close_all_browsers(void);
+
+// Cancels an in-progress download reported by download_updated. No-op once
+// it has completed or been canceled.
+void mini_download_cancel(uint32_t download);
 
 // granted is a MiniPermission bitmask; 0 denies everything requested.
 void mini_permission_respond(uint64_t request, uint32_t granted);

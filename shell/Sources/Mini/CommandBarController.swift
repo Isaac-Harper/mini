@@ -139,6 +139,7 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
             glassView.centerXAnchor.constraint(equalTo: webAreaView.centerXAnchor),
             glassView.widthAnchor.constraint(equalToConstant: Self.width).withPriority(.init(999)),
             glassView.widthAnchor.constraint(lessThanOrEqualTo: rootView.window!.contentView!.widthAnchor, constant: -80),
+            glassView.widthAnchor.constraint(lessThanOrEqualTo: webAreaView.widthAnchor, constant: -32),
         ])
     }
 
@@ -175,6 +176,8 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
             shell.store.select(tab)
         case .open(let interpretation):
             shell.open(interpretation.url, from: mode)
+        case .archived(let entry):
+            shell.reopenArchived(entry)
         }
         shell.focusSelectedWebContent()
     }
@@ -188,7 +191,7 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
 
     func controlTextDidChange(_ notification: Notification) {
         let store = shell.store
-        model.update(query: field.stringValue, tabs: store.allTabs, selectedTab: store.selectedTab)
+        model.update(query: field.stringValue, tabs: store.allTabs, selectedTab: store.selectedTab, archived: shell.archive.entries)
         updateIcon()
         animateResize()
     }

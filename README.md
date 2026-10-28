@@ -8,6 +8,9 @@ A small, quiet macOS browser for one person. Chromium renders the pages; everyth
 - Fill logins from Apple Passwords through a native card with Touch ID
 - Native permission prompts for camera, microphone, location and the rest
 - Session restore with lazy tabs, so launch stays fast
+- Tabs left unselected for 12 hours archive themselves; find them again in the command bar
+- Downloads progress in the sidebar; click to cancel, or to show the file in Finder
+- A crashed page shows a Reload button instead of a blank tab
 - No extensions, sync, accounts or settings window
 
 ## Requirements
@@ -52,6 +55,7 @@ To use Mini as your default browser, copy `build/Mini.app` to `/Applications` an
 | ⌃⌘P | Pin or unpin tab |
 | ⌃⌘S | Show or hide the sidebar |
 | ⌘\ | Fill password |
+| ⇧⌘C | Copy the page address |
 | ⌘[, ⌘] | Back and forward |
 | ⌘R, ⌘. | Reload and stop |
 | ⌘F, ⌘G, ⇧⌘G | Find, next, previous |
@@ -70,6 +74,7 @@ macOS does not know which website Mini is showing, so it lists all your logins i
 
 - `~/Library/Application Support/Mini/Profile`: cookies, cache and site data
 - `~/Library/Application Support/Mini/session.json`: open tabs
+- `~/Library/Application Support/Mini/archive.json`: archived tabs (newest 200)
 - `~/Library/Application Support/Mini/permissions.json`: per-site permission decisions
 - `~/Library/Application Support/Mini/Filters`: ad block lists, refreshed weekly
 - `~/Downloads`: downloads, saved without asking

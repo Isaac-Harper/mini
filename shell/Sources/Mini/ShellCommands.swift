@@ -157,6 +157,13 @@ extension ShellController: NSMenuItemValidation {
         }
     }
 
+    @objc func copyTabAddress(_ sender: Any?) {
+        guard let url = store.selectedTab?.url, !url.isEmpty else { return }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(url, forType: .string)
+        toast.show("Copied")
+    }
+
     @objc func fillPassword(_ sender: Any?) {
         if let tab = selectedBrowserTab { loginFill.requestFill(for: tab) }
     }
@@ -219,6 +226,8 @@ extension ShellController: NSMenuItemValidation {
             return true
         case #selector(selectTabAtIndex(_:)):
             return !store.selectableTabs.isEmpty
+        case #selector(copyTabAddress(_:)):
+            return !(selected?.url.isEmpty ?? true)
         case #selector(togglePinnedTab(_:)):
             menuItem.title = selected?.isPinned == true ? "Unpin Tab" : "Pin Tab"
             return selected.map { $0.isPinned || !$0.url.isEmpty } ?? false
