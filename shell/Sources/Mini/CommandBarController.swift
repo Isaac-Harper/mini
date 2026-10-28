@@ -74,6 +74,15 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
         glassView.cornerRadius = 20
         glassView.style = .regular
         glassView.tintColor = NSColor.windowBackgroundColor.withAlphaComponent(0.55)
+        let backing = CommandBarBackingView()
+        backing.translatesAutoresizingMaskIntoConstraints = false
+        content.addSubview(backing, positioned: .below, relativeTo: nil)
+        NSLayoutConstraint.activate([
+            backing.leadingAnchor.constraint(equalTo: content.leadingAnchor),
+            backing.trailingAnchor.constraint(equalTo: content.trailingAnchor),
+            backing.topAnchor.constraint(equalTo: content.topAnchor),
+            backing.bottomAnchor.constraint(equalTo: content.bottomAnchor),
+        ])
         glassView.contentView = content
         glassView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
@@ -308,4 +317,18 @@ extension NSLayoutConstraint {
         self.priority = priority
         return self
     }
+}
+
+private final class CommandBarBackingView: NSView {
+    private static let opacity: CGFloat = 0.72
+
+    override var wantsUpdateLayer: Bool { true }
+
+    override func updateLayer() {
+        layer?.cornerRadius = 20
+        layer?.cornerCurve = .continuous
+        layer?.backgroundColor = NSColor.windowBackgroundColor.withAlphaComponent(Self.opacity).cgColor
+    }
+
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
 }
