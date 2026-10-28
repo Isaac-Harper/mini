@@ -10,13 +10,15 @@ enum CommandBarMode {
 enum CommandSuggestion: Identifiable {
     case switchToTab(Tab)
     case open(URLInput.Interpretation)
+    case searchSuggestion(String)
     case archived(ArchivedTab)
 
     var id: String {
         switch self {
         case .switchToTab(let tab): "tab-\(tab.id)"
-        case .open(let interpretation): "open-\(interpretation.url)"
-        case .archived(let entry): "archived-\(entry.url)-\(entry.archivedAt.timeIntervalSince1970)"
+        case .open: "open"
+        case .searchSuggestion(let text): "suggestion-\(text)"
+        case .archived(let entry): "archived-\(entry.url)"
         }
     }
 
@@ -32,10 +34,22 @@ final class CommandBarModel {
     private(set) var suggestions: [CommandSuggestion] = []
     var selectedIndex = 0
 
-    private static let maximumRows = 7
+    @ObservationIgnored private var query = ""
+    @ObservationIgnored private var tabs: [Tab] = []
+    @ObservationIgnored private weak var selectedTab: Tab?
+    @ObservationIgnored private var archived: [ArchivedTab] = []
+    @ObservationIgnored private var searchSuggestions: [String] = []
+    @ObservationIgnored private var searchSuggestionsQuery = ""
+
+    private static let maximumSearchSuggestions = 4
+    private static let maximumOtherRows = 5
     private static let recentTabCount = 5
 
+    var trimmedQuery: String { query.trimmingCharacters(in: .whitespacesAndNewlines) }
+
     func showRecentTabs(from tabs: [Tab], excluding selectedTab: Tab?) {
+        query = ""
+        searchSuggestions = []
         suggestions = tabs
             .filter { $0 !== selectedTab }
             .sorted { $0.lastSelectedAt > $1.lastSelectedAt }
@@ -45,16 +59,34 @@ final class CommandBarModel {
     }
 
     func clear() {
+        query = ""
+        searchSuggestions = []
         suggestions = []
         selectedIndex = 0
     }
 
     func update(query: String, tabs: [Tab], selectedTab: Tab?, archived: [ArchivedTab]) {
-        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
+        self.query = query
+        self.tabs = tabs
+        self.selectedTab = selectedTab
+        self.archived = archived
+        guard !trimmedQuery.isEmpty else {
             showRecentTabs(from: tabs, excluding: selectedTab)
             return
         }
+        rebuild()
+    }
+
+    func setSearchSuggestions(_ texts: [String], for suggestionQuery: String) {
+        guard suggestionQuery == trimmedQuery else { return }
+        searchSuggestions = texts
+        searchSuggestionsQuery = suggestionQuery
+        rebuild()
+    }
+
+    private func rebuild() {
+        let trimmed = trimmedQuery
+        let previouslySelectedIdentifier = selectedSuggestion?.id
         let tokens = trimmed.lowercased().split(whereSeparator: \.isWhitespace)
         let matchingTabs = tabs
             .filter { tab in
@@ -62,17 +94,26 @@ final class CommandBarModel {
                 let haystack = "\(tab.title) \(URLInput.host(of: tab.url) ?? tab.url)".lowercased()
                 return tokens.allSatisfy { haystack.contains($0) }
             }
-            .prefix(Self.maximumRows - 1)
+            .prefix(Self.maximumOtherRows)
             .map(CommandSuggestion.switchToTab)
         let matchingArchived = archived
             .filter { entry in
                 let haystack = "\(entry.title) \(URLInput.host(of: entry.url) ?? entry.url)".lowercased()
                 return tokens.allSatisfy { haystack.contains($0) }
             }
-            .prefix(Self.maximumRows - 1 - matchingTabs.count)
+            .prefix(Self.maximumOtherRows - matchingTabs.count)
             .map(CommandSuggestion.archived)
-        suggestions = [.open(URLInput.interpret(trimmed))] + matchingTabs + matchingArchived
-        selectedIndex = 0
+        let lowercasedQuery = trimmed.lowercased()
+        let searchRows = searchSuggestions
+            .filter { $0.lowercased() != lowercasedQuery }
+            .prefix(Self.maximumSearchSuggestions)
+            .map(CommandSuggestion.searchSuggestion)
+        suggestions = [.open(URLInput.interpret(trimmed))] + searchRows + matchingTabs + matchingArchived
+        if let previouslySelectedIdentifier, let index = suggestions.firstIndex(where: { $0.id == previouslySelectedIdentifier }) {
+            selectedIndex = index
+        } else {
+            selectedIndex = 0
+        }
     }
 
     func moveSelection(by offset: Int) {

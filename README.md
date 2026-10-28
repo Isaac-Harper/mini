@@ -3,7 +3,7 @@
 A small, quiet macOS browser for one person. Chromium renders the pages; everything you touch is native: an AppKit window, a SwiftUI sidebar, Liquid Glass materials, and keyboard focus that behaves like a Mac app.
 
 - Vertical sidebar with nested tabs (a tree), pinned tabs as favicon tiles
-- Command bar for URLs, search and switching tabs
+- Command bar for URLs, search (with Google suggestions) and switching tabs
 - Built-in ad and tracker blocking (uBlock Origin, EasyList and EasyPrivacy lists)
 - Fill logins from Apple Passwords through a native card with Touch ID
 - Native permission prompts for camera, microphone, location and the rest
@@ -32,12 +32,13 @@ The first build downloads the Chromium Embedded Framework (about 300 MB) into `~
 | --- | --- |
 | `make` | Builds the Rust core, the Swift shell, and assembles `build/Mini.app` |
 | `make run` | Builds, then opens the app |
+| `make install` | Builds, quits a running Mini, copies it to `/Applications`, registers it with Launch Services and relaunches it |
 | `make CONFIG=debug run` | Debug build |
 | `make clean` | Removes all build output |
 
 The build signs with the first Developer ID Application or Apple Development identity in your keychain, so the Keychain grant for Mini's cookie key survives rebuilds. Set `MINI_SIGN_IDENTITY` to pick another identity. Without one it signs ad hoc, and every rebuild asks for Keychain access again; until that prompt is answered, pages never load.
 
-To use Mini as your default browser, copy `build/Mini.app` to `/Applications` and choose Mini > Set as Default Browser.
+To use Mini as your default browser, run `make install` and choose Mini > Set as Default Browser.
 
 ## Keyboard
 

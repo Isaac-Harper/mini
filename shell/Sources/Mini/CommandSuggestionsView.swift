@@ -74,6 +74,8 @@ private struct CommandSuggestionRow: View {
             Image(systemName: "globe").foregroundStyle(.secondary)
         case .open(.search):
             Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+        case .searchSuggestion:
+            Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
         case .archived:
             Image(systemName: "archivebox").foregroundStyle(.secondary)
         }
@@ -84,6 +86,7 @@ private struct CommandSuggestionRow: View {
         case .switchToTab(let tab): tab.displayTitle
         case .open(.address(let address)): address
         case .open(.search(let query)): query
+        case .searchSuggestion(let text): text
         case .archived(let entry): entry.title
         }
     }
@@ -93,6 +96,7 @@ private struct CommandSuggestionRow: View {
         case .switchToTab(let tab): URLInput.host(of: tab.url)
         case .open(.address): nil
         case .open(.search): "Search Google"
+        case .searchSuggestion: nil
         case .archived(let entry): URLInput.host(of: entry.url)
         }
     }
@@ -102,6 +106,7 @@ private struct CommandSuggestionRow: View {
         case .switchToTab: "Switch to Tab"
         case .open(.address): "Open"
         case .open(.search): "Search"
+        case .searchSuggestion: "Search"
         case .archived: "Reopen"
         }
     }

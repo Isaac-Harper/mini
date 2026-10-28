@@ -11,6 +11,7 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
     private let iconView = NSImageView()
     private var suggestionsView: OverlayHostingView<CommandSuggestionsView>!
     private let offsetGuide = NSLayoutGuide()
+    private let searchSuggestionFetcher = SearchSuggestionFetcher()
     private var mode: CommandBarMode = .newTab
     private(set) var isOpen = false
 
@@ -107,6 +108,7 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
     func close(restoringWebFocus: Bool) {
         guard isOpen else { return }
         isOpen = false
+        searchSuggestionFetcher.cancel()
         OverlayAnimation.disappear(glassView) { [weak self] in
             self?.dismissView.removeFromSuperview()
         }
@@ -156,20 +158,6 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
         iconView.image = NSImage(systemSymbolName: symbolName, accessibilityDescription: nil)
     }
 
-    private func animateResize() {
-        guard isOpen, let rootView = dismissView.superview else { return }
-        guard !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else {
-            rootView.layoutSubtreeIfNeeded()
-            return
-        }
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.18
-            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
-            context.allowsImplicitAnimation = true
-            rootView.layoutSubtreeIfNeeded()
-        }
-    }
-
     private func activate(_ suggestion: CommandSuggestion) {
         let mode = self.mode
         close(restoringWebFocus: false)
@@ -178,6 +166,8 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
             shell.store.select(tab)
         case .open(let interpretation):
             shell.open(interpretation.url, from: mode)
+        case .searchSuggestion(let text):
+            shell.open(URLInput.Interpretation.search(text).url, from: mode)
         case .archived(let entry):
             shell.reopenArchived(entry)
         }
@@ -193,9 +183,19 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
 
     func controlTextDidChange(_ notification: Notification) {
         let store = shell.store
-        model.update(query: field.stringValue, tabs: store.allTabs, selectedTab: store.selectedTab, archived: shell.archive.entries)
+        withoutAnimation {
+            model.update(query: field.stringValue, tabs: store.allTabs, selectedTab: store.selectedTab, archived: shell.archive.entries)
+        }
         updateIcon()
-        animateResize()
+        searchSuggestionFetcher.fetch(model.trimmedQuery) { [weak self] texts, query in
+            self?.withoutAnimation { self?.model.setSearchSuggestions(texts, for: query) }
+        }
+    }
+
+    private func withoutAnimation(_ change: () -> Void) {
+        var transaction = Transaction(animation: nil)
+        transaction.disablesAnimations = true
+        withTransaction(transaction, change)
     }
 
     func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
