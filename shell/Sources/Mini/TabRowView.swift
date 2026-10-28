@@ -47,6 +47,8 @@ struct TabRowView: View {
         .contextMenu {
             Button("Open in Split View") { shell.openInSplitView(tab) }
                 .disabled(!canOpenInSplitView)
+            Button("Duplicate Tab") { shell.duplicate(tab) }
+                .disabled(tab.url.isEmpty)
             Button("Pin Tab") { shell.store.pin(tab) }
                 .disabled(tab.url.isEmpty)
             Button("Close Tab") { shell.store.close(tab) }

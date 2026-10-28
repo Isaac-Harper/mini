@@ -344,6 +344,13 @@ final class ShellController: NSObject {
         }
     }
 
+    func duplicate(_ tab: Tab) {
+        guard !tab.url.isEmpty else { return }
+        let copy = store.newTab(url: tab.url, title: tab.title, parent: tab.isPinned ? nil : tab.parent, after: tab)
+        copy.favicon = tab.favicon
+        store.select(copy)
+    }
+
     func openInSplitView(_ tab: Tab) {
         guard let selected = store.selectedTab, selected !== tab, !selected.isPinned, !tab.isPinned else { return }
         store.makeSplit(leading: selected, trailing: tab)

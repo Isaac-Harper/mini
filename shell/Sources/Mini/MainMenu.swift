@@ -113,6 +113,7 @@ enum MainMenu {
         menu.addItem(item("Indent Tab", #selector(ShellController.indentTab(_:)), rightArrow, [.command, .option], target: commands))
         menu.addItem(item("Outdent Tab", #selector(ShellController.outdentTab(_:)), leftArrow, [.command, .option], target: commands))
         menu.addItem(item("Pin Tab", #selector(ShellController.togglePinnedTab(_:)), "p", [.command, .control], target: commands))
+        menu.addItem(item("Duplicate Tab", #selector(ShellController.duplicateSelectedTab(_:)), "d", [.command, .option], target: commands))
         menu.addItem(item("Collapse Group", #selector(ShellController.toggleTabGroup(_:)), "\\", [.command, .option], target: commands))
         menu.addItem(.separator())
         for index in 1...9 {

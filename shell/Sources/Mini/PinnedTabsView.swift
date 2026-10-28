@@ -35,6 +35,7 @@ private struct PinnedTabTile: View {
             .help(tab.displayTitle)
             .onTapGesture { shell.store.select(tab) }
             .contextMenu {
+                Button("Duplicate Tab") { shell.duplicate(tab) }
                 Button("Unpin Tab") { shell.store.unpin(tab) }
                 Button("Close Tab") { shell.store.close(tab) }
             }

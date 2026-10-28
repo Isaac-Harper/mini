@@ -183,6 +183,10 @@ extension ShellController: NSMenuItemValidation {
         store.toggleCollapse(group)
     }
 
+    @objc func duplicateSelectedTab(_ sender: Any?) {
+        if let tab = store.selectedTab { duplicate(tab) }
+    }
+
     @objc func togglePinnedTab(_ sender: Any?) {
         guard let tab = store.selectedTab else { return }
         if tab.isPinned {
@@ -281,6 +285,8 @@ extension ShellController: NSMenuItemValidation {
             return commandBrowserTab != nil
         case #selector(copyTabAddress(_:)):
             return !((keyLittleWindow?.tab ?? selected)?.url.isEmpty ?? true)
+        case #selector(duplicateSelectedTab(_:)):
+            return !(selected?.url.isEmpty ?? true)
         case #selector(togglePinnedTab(_:)):
             menuItem.title = selected?.isPinned == true ? "Unpin Tab" : "Pin Tab"
             return selected.map { $0.isPinned || !$0.url.isEmpty } ?? false
