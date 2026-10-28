@@ -4,6 +4,7 @@ mod client;
 mod downloads;
 mod favicon;
 mod login;
+mod media;
 mod notifications;
 mod permissions;
 mod resource_requests;
@@ -52,6 +53,7 @@ pub struct MiniCallbacks {
         unsafe extern "C" fn(MiniTabId, *const c_char, u32, *const c_char, *const c_char, *const c_char, *const c_char, bool),
     >,
     pub notification_close: Option<unsafe extern "C" fn(MiniTabId, *const c_char, u32)>,
+    pub audio_state_changed: Option<unsafe extern "C" fn(MiniTabId, bool, *const c_char)>,
     pub browser_closed: Option<unsafe extern "C" fn(MiniTabId)>,
     pub all_browsers_closed: Option<unsafe extern "C" fn()>,
 }
@@ -367,6 +369,20 @@ pub extern "C" fn mini_close_all_browsers() {
         let host = host(&browser);
         host.close_dev_tools();
         host.close_browser(1);
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn mini_browser_set_muted(tab: MiniTabId, muted: bool) {
+    if let Some(browser) = created_browser(tab) {
+        host(&browser).set_audio_muted(muted.into());
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn mini_browser_control_media(tab: MiniTabId, play: bool) {
+    if let Some(browser) = created_browser(tab) {
+        media::control(&browser, login::token(), play);
     }
 }
 

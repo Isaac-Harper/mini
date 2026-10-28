@@ -88,6 +88,9 @@ typedef struct MiniCallbacks {
   void (*notification_show)(MiniTabId tab, const char *frame_id, uint32_t notification, const char *origin,
                             const char *title, const char *body, const char *tag, bool silent);
   void (*notification_close)(MiniTabId tab, const char *frame_id, uint32_t notification);
+  // Whether any media element in the tab is audibly playing, with the page's
+  // mediaSession title (and artist) when it sets one, else "". Fires on changes.
+  void (*audio_state_changed)(MiniTabId tab, bool is_playing, const char *media_title);
   void (*browser_closed)(MiniTabId tab);
   void (*all_browsers_closed)(void);
 } MiniCallbacks;
@@ -135,6 +138,11 @@ typedef enum MiniNotificationPermission {
   MINI_NOTIFICATION_GRANTED = 1,
   MINI_NOTIFICATION_DENIED = 2,
 } MiniNotificationPermission;
+void mini_browser_set_muted(MiniTabId tab, bool muted);
+// Pauses audible media elements in every frame (play = false) or resumes the
+// ones it paused, else the last paused element (play = true).
+void mini_browser_control_media(MiniTabId tab, bool play);
+
 void mini_set_notification_permission(const char *origin, int32_t state);
 // Fires the page's click event for a notification the user clicked.
 void mini_notification_clicked(MiniTabId tab, const char *frame_id, uint32_t notification);

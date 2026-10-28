@@ -136,7 +136,8 @@ pub fn is_signal(message: &str) -> bool {
 
 pub fn handle_signal(tab: MiniTabId, browser: &Browser, message: &str) {
     if let Some(rest) = message.strip_prefix(token())
-        && crate::notifications::handle_signal(tab, browser, token(), rest)
+        && (crate::notifications::handle_signal(tab, browser, token(), rest)
+            || crate::media::handle_signal(tab, rest))
     {
         return;
     }

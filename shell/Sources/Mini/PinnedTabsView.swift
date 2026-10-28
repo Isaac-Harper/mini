@@ -28,6 +28,9 @@ private struct PinnedTabTile: View {
             .frame(maxWidth: .infinity)
             .frame(height: 40)
             .glassEffect(isSelected ? .regular.tint(.primary.opacity(0.12)).interactive() : .regular.interactive(), in: shape)
+            .overlay(alignment: .topTrailing) {
+                AudioToggleButton(shell: shell, tab: tab).offset(x: 4, y: -4)
+            }
             .contentShape(shape)
             .help(tab.displayTitle)
             .onTapGesture { shell.store.select(tab) }

@@ -21,6 +21,7 @@ struct TabRowView: View {
                 .truncationMode(.tail)
                 .foregroundStyle(isSelected ? .primary : .secondary)
             Spacer(minLength: 0)
+            AudioToggleButton(shell: shell, tab: tab)
             if isHovered {
                 Button {
                     shell.store.close(tab)

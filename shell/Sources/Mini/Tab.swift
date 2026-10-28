@@ -16,6 +16,10 @@ final class Tab: Identifiable {
     var children: [Tab] = []
     var isCollapsed = false
     var hasLoginForm = false
+    var isPlayingAudio = false
+    var isAudioMuted = false
+    var mediaTitle = ""
+    var isPausedFromNowPlaying = false
 
     @ObservationIgnored weak var parent: Tab?
     @ObservationIgnored let hostView = BrowserHostView()

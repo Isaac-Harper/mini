@@ -2,7 +2,7 @@ use cef::*;
 use std::ffi::c_void;
 
 use crate::{
-    MiniTabId, ad_blocking, authentication, downloads, favicon, login, notifications, permissions, webauthn,
+    MiniTabId, ad_blocking, authentication, downloads, favicon, login, media, notifications, permissions, webauthn,
     resource_requests::MiniResourceRequestHandler,
     state::{TabState, c_string, callbacks, with_core},
 };
@@ -225,6 +225,15 @@ wrap_load_handler! {
             }
             frame.execute_java_script(
                 Some(&CefString::from(webauthn::SUPPRESSION_SCRIPT)),
+                Some(&CefString::from(frame_url.as_str())),
+                0,
+            );
+            if frame.is_main() == 1 {
+                media::reset(self.tab);
+            }
+            let media_script = media::script(frame, login::token());
+            frame.execute_java_script(
+                Some(&CefString::from(media_script.as_str())),
                 Some(&CefString::from(frame_url.as_str())),
                 0,
             );

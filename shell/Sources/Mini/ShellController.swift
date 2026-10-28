@@ -8,6 +8,7 @@ final class ShellController: NSObject {
     let store = TabStore()
     let downloads = DownloadsModel()
     let weather = WeatherService()
+    private(set) var nowPlayingTab: Tab?
 
     @ObservationIgnored let sitePreferences: SitePreferences
     @ObservationIgnored let archive: ArchiveStore
@@ -78,7 +79,7 @@ final class ShellController: NSObject {
             ArchivePolicy.Candidate(
                 identifier: tab.id,
                 lastSelectedAt: tab.lastSelectedAt,
-                isSelected: tab === selected,
+                isSelected: tab === selected || tab.isPlayingAudio,
                 children: tab.children.map(candidate)
             )
         }
@@ -98,6 +99,35 @@ final class ShellController: NSObject {
         for tab in store.allTabs where tab.favicon == nil {
             tab.favicon = faviconCache.image(forPageAt: tab.pinnedURL ?? tab.url)
         }
+    }
+
+    func setMuted(_ muted: Bool, for tab: Tab) {
+        guard tab.hasBrowser else { return }
+        tab.isAudioMuted = muted
+        mini_browser_set_muted(tab.id, muted)
+    }
+
+    func togglePlayback(of tab: Tab) {
+        guard tab.hasBrowser else { return }
+        let play = !tab.isPlayingAudio
+        tab.isPausedFromNowPlaying = !play
+        mini_browser_control_media(tab.id, play)
+    }
+
+    func audioStateChanged(_ tab: Tab, isPlaying: Bool, mediaTitle: String) {
+        tab.isPlayingAudio = isPlaying
+        if !mediaTitle.isEmpty { tab.mediaTitle = mediaTitle }
+        if isPlaying {
+            tab.isPausedFromNowPlaying = false
+            nowPlayingTab = tab
+        } else if nowPlayingTab === tab, !tab.isPausedFromNowPlaying {
+            nowPlayingTab = store.allTabs.first { $0.isPlayingAudio }
+        }
+    }
+
+    func forgetNowPlaying(_ tabs: [Tab]) {
+        guard let current = nowPlayingTab, tabs.contains(where: { $0 === current }) else { return }
+        nowPlayingTab = store.allTabs.first { $0.isPlayingAudio }
     }
 
     func openWeatherSearch() {
@@ -220,6 +250,7 @@ extension ShellController: TabStoreObserver {
             }
         }
         sitePrompts.discardPrompts(for: tabs)
+        forgetNowPlaying(tabs)
         for tab in tabs {
             loginFill.close(forTab: tab.id)
         }

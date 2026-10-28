@@ -29,6 +29,7 @@ pub struct Callbacks {
     pub notification_show:
         unsafe extern "C" fn(MiniTabId, *const c_char, u32, *const c_char, *const c_char, *const c_char, *const c_char, bool),
     pub notification_close: unsafe extern "C" fn(MiniTabId, *const c_char, u32),
+    pub audio_state_changed: unsafe extern "C" fn(MiniTabId, bool, *const c_char),
     pub browser_closed: unsafe extern "C" fn(MiniTabId),
     pub all_browsers_closed: unsafe extern "C" fn(),
 }
@@ -90,6 +91,9 @@ impl Callbacks {
             notification_close: table
                 .notification_close
                 .expect("MiniCallbacks.notification_close is null"),
+            audio_state_changed: table
+                .audio_state_changed
+                .expect("MiniCallbacks.audio_state_changed is null"),
             browser_closed: table
                 .browser_closed
                 .expect("MiniCallbacks.browser_closed is null"),
@@ -109,6 +113,7 @@ pub struct TabState {
     pub pending_close: bool,
     pub favicon_generation: u64,
     pub login_form_frames: HashSet<String>,
+    pub playing_frames: std::collections::BTreeMap<String, String>,
 }
 
 pub struct CoreState {

@@ -47,6 +47,9 @@ struct SidebarView: View {
 
     private var footer: some View {
         VStack(alignment: .leading, spacing: 0) {
+            if let tab = shell.nowPlayingTab {
+                NowPlayingRowView(shell: shell, tab: tab)
+            }
             if let reading = shell.weather.reading {
                 WeatherRowView(reading: reading) { shell.openWeatherSearch() }
             }
