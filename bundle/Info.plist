@@ -73,6 +73,10 @@
 	<string>A website in Mini wants to use Bluetooth.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>A website in Mini wants to use the camera.</string>
+	<key>NSLocationUsageDescription</key>
+	<string>Mini shows the local weather in the sidebar.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Mini shows the local weather in the sidebar.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>A website in Mini wants to use the microphone.</string>
 	<key>NSWebBrowserPublicKeyCredentialUsageDescription</key>

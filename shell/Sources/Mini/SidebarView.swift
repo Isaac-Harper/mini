@@ -47,6 +47,9 @@ struct SidebarView: View {
 
     private var footer: some View {
         VStack(alignment: .leading, spacing: 0) {
+            if let reading = shell.weather.reading {
+                WeatherRowView(reading: reading) { shell.openWeatherSearch() }
+            }
             ForEach(shell.downloads.visibleDownloads) { download in
                 DownloadRowView(download: download) { shell.downloads.activate(download) }
                     .transition(.opacity)

@@ -7,6 +7,7 @@ import Observation
 final class ShellController: NSObject {
     let store = TabStore()
     let downloads = DownloadsModel()
+    let weather = WeatherService()
 
     @ObservationIgnored let sitePreferences: SitePreferences
     @ObservationIgnored let archive: ArchiveStore
@@ -59,6 +60,7 @@ final class ShellController: NSObject {
             openExternalURL(url)
         }
         archiveIdleTabs()
+        weather.start()
         applyCachedFavicons()
         faviconCache.prune(keepingPagesAt: store.allTabs.flatMap { [$0.url, $0.pinnedURL ?? ""] } + archive.entries.map(\.url))
         archiveTimer = Timer.scheduledTimer(withTimeInterval: Self.archiveInterval, repeats: true) { [weak self] _ in
@@ -92,6 +94,10 @@ final class ShellController: NSObject {
         for tab in store.allTabs where tab.favicon == nil {
             tab.favicon = faviconCache.image(forPageAt: tab.pinnedURL ?? tab.url)
         }
+    }
+
+    func openWeatherSearch() {
+        open(URLInput.Interpretation.search("weather").url, from: .newTab)
     }
 
     func reopenArchived(_ entry: ArchivedTab) {
