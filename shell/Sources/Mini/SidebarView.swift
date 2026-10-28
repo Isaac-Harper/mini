@@ -27,7 +27,11 @@ struct SidebarView: View {
             ScrollView {
                 LazyVStack(spacing: 0) {
                     ForEach(store.visibleTabs) { visibleTab in
-                        TabRowView(shell: shell, tab: visibleTab.tab, depth: visibleTab.depth)
+                        if let split = visibleTab.split {
+                            SplitTabRowView(shell: shell, split: split, depth: visibleTab.depth)
+                        } else {
+                            TabRowView(shell: shell, tab: visibleTab.tab, depth: visibleTab.depth)
+                        }
                     }
                 }
                 .padding(.horizontal, SidebarMetrics.edgeInset)

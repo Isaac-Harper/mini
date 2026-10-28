@@ -95,6 +95,10 @@ extension ShellController: NSMenuItemValidation {
         windowController.toggleSidebar()
     }
 
+    @objc func toggleSplitViewCommand(_ sender: Any?) {
+        toggleSplitView()
+    }
+
     @objc func reloadPage(_ sender: Any?) {
         reloadSelected()
     }
@@ -280,6 +284,11 @@ extension ShellController: NSMenuItemValidation {
         case #selector(toggleTabSidebar(_:)):
             menuItem.title = windowController.isSidebarVisible ? "Hide Sidebar" : "Show Sidebar"
             return true
+        case #selector(toggleSplitViewCommand(_:)):
+            guard let selected else { return false }
+            let isSplit = store.split(containing: selected) != nil
+            menuItem.title = isSplit ? "Close Split View" : "Split View"
+            return isSplit || store.splitCandidate(for: selected) != nil
         default:
             return true
         }

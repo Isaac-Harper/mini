@@ -16,7 +16,8 @@ Mini.app/Contents/Frameworks/
 - Rust owns: CEF init/shutdown, the tab-id -> Browser map, every CEF handler (display, load, life span, request, keyboard, focus, download). It never draws UI.
 - The boundary is the C ABI in `core/include/mini_core.h`, nothing else. Rust calls back through the `MiniCallbacks` function-pointer table; Swift calls `mini_*` functions.
 - Each tab has a `BrowserHostView` (NSView). CEF creates the windowed (non-OSR) browser NSView as its subview; the host view sizes subviews to its bounds. Switching tabs swaps which host view is visible and calls `mini_browser_set_hidden`.
-- Browsers are created lazily: restored tabs have no browser until first selected.
+- Browsers are created lazily: restored tabs have no browser until first selected (or shown as the other side of a split).
+- Split view: `TabStore.splits` holds `TabSplit` pairs (leading, trailing, fraction) of unpinned tabs; `selectedTab` is always the focused side. `ShellController.refreshDisplayedTabs` is the only code that shows or hides host views: it shows the selected tab plus its split partner, hides everything else it showed before, and hands `WebAreaView` a `SplitArrangement`.
 
 ## Invariants
 
@@ -30,6 +31,8 @@ Mini.app/Contents/Frameworks/
 - Notification titles, bodies and tags are never logged.
 - The C header is the contract: change it, then both sides, in the same commit.
 - Auto-archive never closes the selected tab or pinned tabs, and only closes a parent after all its children qualify; it is the only code path that closes tabs without user action besides `browser_closed`.
+- A tab is in at most one split. Closing or pinning either side removes the split (`tabStoreDidChangeSplits` then re-arranges); the partner of the selected tab counts as selected for auto-archive.
+- Split focus follows clicks through a local mouse-down monitor (hit-testing into the partner's host view), not CEF focus callbacks: `focus_requested` refuses focus for every tab but the selected one, so the partner page never focuses itself.
 - Style: no comments unless a genuine trap, full-word names, no em/en dashes, no AI attribution anywhere.
 
 ## File map
@@ -64,8 +67,8 @@ Mini.app/Contents/Frameworks/
 - `shell/Sources/Mini/MainMenu.swift`: the main menu, built in code.
 - `shell/Sources/Mini/Tab.swift`: tab node (observable) with favicon image, pinned URL, host view, browser state, `lastSelectedAt` (persisted) and `hasCrashed`.
 - `shell/Sources/Mini/BrowserHostView.swift`: NSView that CEF embeds the browser view into; sizes subviews to bounds.
-- `shell/Sources/Mini/TabStore.swift`: pinned tabs (flat) plus the tab tree, selection and tree operations; id minting. Closing a pinned tab swaps in a fresh unloaded Tab (new id) at its pinned URL.
-- `shell/Sources/Mini/SessionStore.swift`: session.json encode/restore and debounced saves; `pinnedTabs`, `selectedPinnedIndex` and per-tab `lastSelectedAt` are optional so older files still load (a tab without `lastSelectedAt` counts as just selected).
+- `shell/Sources/Mini/TabStore.swift`: pinned tabs (flat) plus the tab tree, selection and tree operations; id minting; `TabSplit` and the split list (`makeSplit`, `unsplit`, `splitCandidate` = the most recently selected other unpinned tab). `visibleTabs` emits one row per split (carrying `split`) at whichever side comes first; the other side's row is skipped but its children still show. Closing a pinned tab swaps in a fresh unloaded Tab (new id) at its pinned URL.
+- `shell/Sources/Mini/SessionStore.swift`: session.json encode/restore and debounced saves; splits are saved as tree index paths plus fraction (`splits`); `pinnedTabs`, `selectedPinnedIndex`, `splits` and per-tab `lastSelectedAt` are optional so older files still load (a tab without `lastSelectedAt` counts as just selected).
 - `shell/Sources/Mini/TabArchive.swift`: `ArchivePolicy.tabsToArchive` (pure: unpinned, unselected, idle 12 h, leaves before parents, a parent only when every child goes too) and `ArchiveStore` (archive.json, newest first, one entry per URL, cap 200). ShellController runs it at launch and every 10 min; the command bar lists matches under "Archived" and reopens them as new tabs. Audio-playing tabs are not detected.
 - `shell/Sources/Mini/Downloads.swift`: `DownloadsModel` (active downloads plus ones finished in the last 10 s) and the sidebar `DownloadRowView` (click cancels while active, reveals in Finder when complete).
 - `shell/Sources/Mini/CrashOverlayController.swift`: "This page crashed" overlay over the web area for the selected tab when `render_process_terminated` marked it; Reload calls `mini_browser_reload`, the next loading start clears it, and a crashed background tab reloads when selected.
@@ -74,10 +77,10 @@ Mini.app/Contents/Frameworks/
 - `shell/Sources/Mini/NotificationsController.swift`: UNUserNotificationCenter delivery (title, host as subtitle, body, favicon-cache attachment, no sound when `silent`, a `tag` replaces the same-origin notification with that tag), `close()` removes the delivered one, clicks activate Mini, select the tab only if it still shows the same origin, and call `mini_notification_clicked`. macOS authorization (alert, sound, badge) is requested the first time a site is granted; if macOS denies it, nothing is shown and one content-free line is logged. SitePreferences pushes each origin's notification state to Rust at launch and on every decision; View > Allow Notifications from This Site toggles it.
 - `shell/Sources/Mini/NowPlaying.swift`: `AudioToggleButton` (speaker on playing or muted rows and pinned tiles, toggles mute) and `NowPlayingRowView` above the weather row for `ShellController.nowPlayingTab` (the tab that most recently started playing; kept while paused from the row), with play/pause and click-to-select. Playing tabs are passed to `ArchivePolicy` as selected, so they are never archived.
 - `shell/Sources/Mini/ToastController.swift`: transient glass toast at the bottom of the web area (Copy URL shows "Copied").
-- `shell/Sources/Mini/MainWindowController.swift`: window built on NSSplitViewController (native floating glass sidebar item, autosaved as `MainSplitView`), web content item with `automaticallyAdjustsSafeAreaInsets` and an NSBackgroundExtensionView around `webAreaView` (host views live there).
+- `shell/Sources/Mini/MainWindowController.swift`: window built on NSSplitViewController (native floating glass sidebar item, autosaved as `MainSplitView`), web content item with `automaticallyAdjustsSafeAreaInsets` and an NSBackgroundExtensionView around `webAreaView` (host views live there). `WebAreaView` sizes every host view to its bounds on each layout, or, with a `splitArrangement`, places the two split host views either side of a 6pt `SplitDividerView` (min 320pt per side, dragged with a `trackEvents` loop, accepts first mouse) and puts the hit-test-transparent `SplitFocusBorderView` (2pt accent at 70%) over the focused side.
 - `shell/Sources/Mini/WindowToolbar.swift`: NSToolbar whose only items (sidebar toggle, back, forward) sit before `.sidebarTrackingSeparator`, so they render inside the sidebar next to the traffic lights.
 - `shell/Sources/Mini/OverlayAnimation.swift`: shared appear (fade plus spring scale, fade only with Reduce Motion) and disappear for overlays.
-- `shell/Sources/Mini/SidebarView.swift`, `TabRowView.swift`, `PinnedTabsView.swift`: SwiftUI sidebar content (glass address pill with reload/stop, `SidebarMetrics` row sizes, pinned glass tiles).
+- `shell/Sources/Mini/SidebarView.swift`, `TabRowView.swift`, `PinnedTabsView.swift`: SwiftUI sidebar content (glass address pill with reload/stop, `SidebarMetrics` row sizes, pinned glass tiles; `SplitTabRowView` is the joined split row with a half per tab, the focused half highlighted; row context menu "Open in Split View").
 - `shell/Sources/Mini/SitePreferences.swift`: per-origin permission decisions (permissions.json), ad block exempt hosts (adblock-exempt.json) and per-host zoom levels (zoom-levels.json, CEF zoom units, factor 1.2^level). `mini_browser_zoom` returns the new level; the shell stores it for the host, applies it to other open tabs on that host, and re-applies it through `mini_browser_set_zoom_level` whenever a tab's host changes (address_changed). Cmd-0 removes the entry. A toast shows the percentage.
 - `shell/Sources/Mini/SitePromptController.swift`, `SitePromptViews.swift`: per-tab queued permission and HTTP auth cards over the web card; `FaviconView`.
 - `shell/Sources/Mini/LoginFillController.swift`, `LoginFillCardView.swift`: password fill card, shown only on Cmd-\ (Fill Password) or the address pill's key button (visible while `Tab.hasLoginForm`) via `mini_request_login_fill`, never automatically (AppKit NSTextField/NSSecureTextField with username/password content types so macOS Passwords AutoFill attaches); values are never stored and are cleared on every close.
@@ -125,6 +128,7 @@ Mini.app/Contents/Frameworks/
 - NSBackgroundExtensionView's internal `_NSCoreHostingView<BackgroundExtensionContainer>` sits above its content view and swallows every click; `PassthroughBackgroundExtensionView` overrides `hitTest` to route into the content view.
 - An NSHostingView whose content can be empty (command bar suggestions) must drop `.maxSize` from `sizingOptions`, or its required max-width constraint collapses fixed-width containers.
 - Overlays live in the content item's view (`rootView`), never in the NSSplitView itself (its subviews are panes).
+- In an inactive window AppKit delivers the activating click only to views whose `acceptsFirstMouse` returns true (CEF's browser views do); the split divider overrides it so it drags on the first click.
 - zsh here has `noclobber`: overwrite files with `>|` or an editor, not `>`.
 - `swift build` in this toolchain uses the swiftbuild backend: products live in `shell/.build/out/Products/<Config>/`, so `bundle.sh` asks `swift build --show-bin-path` instead of assuming `.build/<config>/`.
 

@@ -25,6 +25,8 @@ final class ShellController: NSObject {
     @ObservationIgnored private(set) var notifications: NotificationsController!
     @ObservationIgnored private(set) var isTerminating = false
     @ObservationIgnored var closingTabs: [MiniTabId: Tab] = [:]
+    @ObservationIgnored private var displayedTabs: [Tab] = []
+    @ObservationIgnored private var splitFocusMonitor: Any?
 
     private static let archiveInterval: TimeInterval = 10 * 60
 
@@ -54,6 +56,15 @@ final class ShellController: NSObject {
         crashOverlay = CrashOverlayController(shell: self, windowController: windowController)
         toast = ToastController(windowController: windowController)
         store.observer = self
+        windowController.webAreaView.onSplitFractionChanged = { [weak self] fraction, finished in
+            guard let self, let selected = self.store.selectedTab, let split = self.store.split(containing: selected) else { return }
+            split.fraction = fraction
+            if finished { self.scheduleSessionSave() }
+        }
+        splitFocusMonitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]) { [weak self] event in
+            MainActor.assumeIsolated { self?.focusSplitSide(under: event) }
+            return event
+        }
         showWindow()
         if let session = sessionStore.load(), !session.isEmpty {
             sessionStore.restore(session, into: store)
@@ -75,11 +86,12 @@ final class ShellController: NSObject {
 
     func archiveIdleTabs(now: Date = Date()) {
         let selected = store.selectedTab
+        let splitPartner = selected.flatMap { store.split(containing: $0)?.partner(of: $0) }
         func candidate(_ tab: Tab) -> ArchivePolicy.Candidate {
             ArchivePolicy.Candidate(
                 identifier: tab.id,
                 lastSelectedAt: tab.lastSelectedAt,
-                isSelected: tab === selected || tab.isPlayingAudio,
+                isSelected: tab === selected || tab === splitPartner || tab.isPlayingAudio,
                 children: tab.children.map(candidate)
             )
         }
@@ -196,6 +208,61 @@ final class ShellController: NSObject {
         tab.url.withCString { mini_browser_create(tab.id, hostViewPointer, $0) }
     }
 
+    func toggleSplitView() {
+        guard let selected = store.selectedTab else { return }
+        if let split = store.split(containing: selected) {
+            store.unsplit(split)
+        } else if let candidate = store.splitCandidate(for: selected) {
+            store.makeSplit(leading: selected, trailing: candidate)
+        }
+    }
+
+    func openInSplitView(_ tab: Tab) {
+        guard let selected = store.selectedTab, selected !== tab, !selected.isPinned, !tab.isPinned else { return }
+        store.makeSplit(leading: selected, trailing: tab)
+    }
+
+    private func focusSplitSide(under event: NSEvent) {
+        guard event.window === windowController.window,
+              let selected = store.selectedTab,
+              let partner = store.split(containing: selected)?.partner(of: selected),
+              let contentView = window.contentView,
+              let hitView = contentView.hitTest(contentView.convert(event.locationInWindow, from: nil)),
+              hitView.isDescendant(of: partner.hostView)
+        else { return }
+        store.select(partner)
+    }
+
+    private func refreshDisplayedTabs() {
+        let selected = store.selectedTab
+        let split = selected.flatMap(store.split(containing:))
+        let shownTabs = split.map { [$0.leading, $0.trailing] } ?? selected.map { [$0] } ?? []
+        for tab in displayedTabs where !shownTabs.contains(where: { $0 === tab }) {
+            tab.hostView.isHidden = true
+            if tab.hasBrowser, store.tab(withIdentifier: tab.id) === tab {
+                mini_browser_set_focus(tab.id, false)
+                mini_browser_set_hidden(tab.id, true)
+            }
+        }
+        let arrangement = split.flatMap { split in
+            selected.map { focused in
+                WebAreaView.SplitArrangement(leading: split.leading.hostView, trailing: split.trailing.hostView, fraction: split.fraction, focused: focused.hostView)
+            }
+        }
+        windowController.display(shownTabs.map(\.hostView), split: arrangement)
+        for tab in shownTabs where !displayedTabs.contains(where: { $0 === tab }) {
+            if tab.hasBrowser {
+                mini_browser_set_hidden(tab.id, false)
+                if tab.hasCrashed {
+                    mini_browser_reload(tab.id)
+                }
+            } else {
+                createBrowser(for: tab)
+            }
+        }
+        displayedTabs = shownTabs
+    }
+
     func focusIfAwaitingInitialFocus(_ tab: Tab) {
         guard tab.needsInitialFocus, tab === store.selectedTab, tab.hostView.webView != nil else { return }
         focusSelectedWebContent()
@@ -212,23 +279,11 @@ extension ShellController: TabStoreObserver {
                 guard let self, let tab else { return }
                 self.focusIfAwaitingInitialFocus(tab)
             }
-            windowController.display(tab.hostView)
-            if tab.hasBrowser {
-                mini_browser_set_hidden(tab.id, false)
-                if tab.hasCrashed {
-                    mini_browser_reload(tab.id)
-                }
-            } else {
-                createBrowser(for: tab)
-            }
         }
-        if let previous {
-            previous.hostView.isHidden = true
-            if previous.hasBrowser {
-                mini_browser_set_focus(previous.id, false)
-                mini_browser_set_hidden(previous.id, true)
-            }
+        if let previous, previous.hasBrowser, store.tab(withIdentifier: previous.id) === previous {
+            mini_browser_set_focus(previous.id, false)
         }
+        refreshDisplayedTabs()
         sitePrompts.refresh()
         crashOverlay.refresh()
         if tab != nil {
@@ -239,6 +294,7 @@ extension ShellController: TabStoreObserver {
     }
 
     func tabStore(_ store: TabStore, didRemove tabs: [Tab]) {
+        displayedTabs.removeAll { displayed in tabs.contains { $0 === displayed } }
         for tab in tabs {
             tab.hostView.isHidden = true
             tab.hostView.onWebViewAttached = nil
@@ -254,6 +310,10 @@ extension ShellController: TabStoreObserver {
         for tab in tabs {
             loginFill.close(forTab: tab.id)
         }
+    }
+
+    func tabStoreDidChangeSplits(_ store: TabStore) {
+        refreshDisplayedTabs()
     }
 
     func tabStoreDidChangeStructure(_ store: TabStore) {

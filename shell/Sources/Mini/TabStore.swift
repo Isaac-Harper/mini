@@ -7,12 +7,38 @@ protocol TabStoreObserver: AnyObject {
     func tabStore(_ store: TabStore, didSelect tab: Tab?, previous: Tab?)
     func tabStore(_ store: TabStore, didRemove tabs: [Tab])
     func tabStoreDidChangeStructure(_ store: TabStore)
+    func tabStoreDidChangeSplits(_ store: TabStore)
 }
 
 struct VisibleTab: Identifiable {
     let tab: Tab
     let depth: Int
+    let split: TabSplit?
     var id: MiniTabId { tab.id }
+}
+
+@MainActor
+@Observable
+final class TabSplit {
+    let leading: Tab
+    let trailing: Tab
+    var fraction: Double
+
+    init(leading: Tab, trailing: Tab, fraction: Double) {
+        self.leading = leading
+        self.trailing = trailing
+        self.fraction = fraction
+    }
+
+    func contains(_ tab: Tab) -> Bool {
+        leading === tab || trailing === tab
+    }
+
+    func partner(of tab: Tab) -> Tab? {
+        if leading === tab { return trailing }
+        if trailing === tab { return leading }
+        return nil
+    }
 }
 
 @MainActor
@@ -21,6 +47,7 @@ final class TabStore {
     private(set) var pinnedTabs: [Tab] = []
     private(set) var rootTabs: [Tab] = []
     private(set) var selectedTab: Tab?
+    private(set) var splits: [TabSplit] = []
 
     @ObservationIgnored weak var observer: TabStoreObserver?
     @ObservationIgnored private var nextIdentifier: MiniTabId = 1
@@ -33,11 +60,16 @@ final class TabStore {
     }
 
     var visibleTabs: [VisibleTab] {
-        rootTabs.flatMap { visibleSubtree(of: $0, depth: 0) }
+        var rows: [VisibleTab] = []
+        var emittedSplits: Set<ObjectIdentifier> = []
+        for tab in rootTabs {
+            appendVisibleSubtree(of: tab, depth: 0, to: &rows, emittedSplits: &emittedSplits)
+        }
+        return rows
     }
 
     var selectableTabs: [Tab] {
-        pinnedTabs + visibleTabs.map(\.tab)
+        pinnedTabs + visibleTabs.flatMap { row in row.split.map { [$0.leading, $0.trailing] } ?? [row.tab] }
     }
 
     var allTabs: [Tab] {
@@ -48,6 +80,33 @@ final class TabStore {
 
     func tab(withIdentifier identifier: MiniTabId) -> Tab? {
         tabsByIdentifier[identifier]
+    }
+
+    func split(containing tab: Tab) -> TabSplit? {
+        splits.first { $0.contains(tab) }
+    }
+
+    func splitCandidate(for tab: Tab) -> Tab? {
+        guard !tab.isPinned else { return nil }
+        return rootTabs.flatMap(\.subtree)
+            .filter { $0 !== tab }
+            .max { $0.lastSelectedAt < $1.lastSelectedAt }
+    }
+
+    func makeSplit(leading: Tab, trailing: Tab, fraction: Double = 0.5) {
+        precondition(leading !== trailing, "A split needs two different tabs")
+        precondition(tabsByIdentifier[leading.id] === leading && tabsByIdentifier[trailing.id] === trailing, "Splitting a tab that is not in the store")
+        precondition(!leading.isPinned && !trailing.isPinned, "Pinned tabs cannot be split")
+        splits.removeAll { $0.contains(leading) || $0.contains(trailing) }
+        splits.append(TabSplit(leading: leading, trailing: trailing, fraction: fraction))
+        observer?.tabStoreDidChangeSplits(self)
+        observer?.tabStoreDidChangeStructure(self)
+    }
+
+    func unsplit(_ split: TabSplit) {
+        splits.removeAll { $0 === split }
+        observer?.tabStoreDidChangeSplits(self)
+        observer?.tabStoreDidChangeStructure(self)
     }
 
     func rootAncestor(of tab: Tab) -> Tab {
@@ -83,6 +142,9 @@ final class TabStore {
 
     func pin(_ tab: Tab) {
         guard !tab.isPinned, !tab.url.isEmpty else { return }
+        if let split = split(containing: tab) {
+            unsplit(split)
+        }
         let parent = tab.parent
         let index = position(of: tab, in: children(of: parent))
         detach(tab)
@@ -148,9 +210,14 @@ final class TabStore {
         for removedTab in removedTabs {
             tabsByIdentifier[removedTab.id] = nil
         }
+        let splitCount = splits.count
+        splits.removeAll { split in removedTabs.contains { split.contains($0) } }
         observer?.tabStore(self, didRemove: removedTabs)
         if closesSelection {
             select(replacement)
+        }
+        if splits.count != splitCount {
+            observer?.tabStoreDidChangeSplits(self)
         }
         observer?.tabStoreDidChangeStructure(self)
     }
@@ -251,10 +318,18 @@ final class TabStore {
         return tab
     }
 
-    private func visibleSubtree(of tab: Tab, depth: Int) -> [VisibleTab] {
-        let row = VisibleTab(tab: tab, depth: depth)
-        guard !tab.isCollapsed else { return [row] }
-        return [row] + tab.children.flatMap { visibleSubtree(of: $0, depth: depth + 1) }
+    private func appendVisibleSubtree(of tab: Tab, depth: Int, to rows: inout [VisibleTab], emittedSplits: inout Set<ObjectIdentifier>) {
+        if let split = split(containing: tab) {
+            if emittedSplits.insert(ObjectIdentifier(split)).inserted {
+                rows.append(VisibleTab(tab: tab, depth: depth, split: split))
+            }
+        } else {
+            rows.append(VisibleTab(tab: tab, depth: depth, split: nil))
+        }
+        guard !tab.isCollapsed else { return }
+        for child in tab.children {
+            appendVisibleSubtree(of: child, depth: depth + 1, to: &rows, emittedSplits: &emittedSplits)
+        }
     }
 
     private func children(of parent: Tab?) -> [Tab] {

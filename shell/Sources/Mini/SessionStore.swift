@@ -15,10 +15,17 @@ struct SavedSession: Codable {
         let title: String
     }
 
+    struct SavedSplit: Codable {
+        let leadingPath: [Int]
+        let trailingPath: [Int]
+        let fraction: Double
+    }
+
     let tabs: [SavedTab]
     let selectedPath: [Int]?
     let pinnedTabs: [SavedPinnedTab]?
     let selectedPinnedIndex: Int?
+    let splits: [SavedSplit]?
 
     var isEmpty: Bool { tabs.isEmpty && (pinnedTabs ?? []).isEmpty }
 }
@@ -65,7 +72,14 @@ final class SessionStore {
                 guard let pinnedURL = tab.pinnedURL else { preconditionFailure("Pinned list holds an unpinned tab") }
                 return SavedSession.SavedPinnedTab(pinnedURL: pinnedURL, url: tab.url, title: tab.title)
             },
-            selectedPinnedIndex: selected.flatMap { selectedTab in store.pinnedTabs.firstIndex { $0 === selectedTab } }
+            selectedPinnedIndex: selected.flatMap { selectedTab in store.pinnedTabs.firstIndex { $0 === selectedTab } },
+            splits: store.splits.map { split in
+                SavedSession.SavedSplit(
+                    leadingPath: Self.path(of: split.leading, in: store),
+                    trailingPath: Self.path(of: split.trailing, in: store),
+                    fraction: split.fraction
+                )
+            }
         )
         do {
             let encoder = JSONEncoder()
@@ -83,6 +97,13 @@ final class SessionStore {
         for savedTab in session.tabs {
             restore(savedTab, parent: nil, into: store)
         }
+        for savedSplit in session.splits ?? [] {
+            guard let leading = Self.tab(at: savedSplit.leadingPath, in: store),
+                  let trailing = Self.tab(at: savedSplit.trailingPath, in: store),
+                  leading !== trailing
+            else { continue }
+            store.makeSplit(leading: leading, trailing: trailing, fraction: savedSplit.fraction)
+        }
         if let selectedPinnedIndex = session.selectedPinnedIndex, store.pinnedTabs.indices.contains(selectedPinnedIndex) {
             store.select(store.pinnedTabs[selectedPinnedIndex])
             return
@@ -91,14 +112,18 @@ final class SessionStore {
             store.select(store.selectableTabs.first)
             return
         }
+        store.select(Self.tab(at: selectedPath, in: store, stoppingAtMissingIndex: true) ?? store.rootTabs.first)
+    }
+
+    private static func tab(at path: [Int], in store: TabStore, stoppingAtMissingIndex: Bool = false) -> Tab? {
         var siblings = store.rootTabs
-        var selected: Tab?
-        for index in selectedPath {
-            guard siblings.indices.contains(index) else { break }
-            selected = siblings[index]
+        var found: Tab?
+        for index in path {
+            guard siblings.indices.contains(index) else { return stoppingAtMissingIndex ? found : nil }
+            found = siblings[index]
             siblings = siblings[index].children
         }
-        store.select(selected ?? store.rootTabs.first)
+        return found
     }
 
     private func restore(_ savedTab: SavedSession.SavedTab, parent: Tab?, into store: TabStore) {

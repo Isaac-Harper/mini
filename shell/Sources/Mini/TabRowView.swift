@@ -45,10 +45,17 @@ struct TabRowView: View {
         .onHover { isHovered = $0 }
         .onTapGesture { shell.store.select(tab) }
         .contextMenu {
+            Button("Open in Split View") { shell.openInSplitView(tab) }
+                .disabled(!canOpenInSplitView)
             Button("Pin Tab") { shell.store.pin(tab) }
                 .disabled(tab.url.isEmpty)
             Button("Close Tab") { shell.store.close(tab) }
         }
+    }
+
+    private var canOpenInSplitView: Bool {
+        guard let selected = shell.store.selectedTab else { return false }
+        return selected !== tab && !selected.isPinned
     }
 
     @ViewBuilder
@@ -75,5 +82,96 @@ struct TabRowView: View {
                 .contentShape(Rectangle())
                 .onTapGesture { shell.store.toggleCollapse(tab) }
         }
+    }
+}
+
+struct SplitTabRowView: View {
+    let shell: ShellController
+    let split: TabSplit
+    let depth: Int
+
+    @State private var isHovered = false
+
+    private var isSelected: Bool {
+        shell.store.selectedTab.map(split.contains) ?? false
+    }
+
+    var body: some View {
+        HStack(spacing: 2) {
+            Color.clear.frame(width: 12, height: 12)
+            SplitTabHalfView(shell: shell, tab: split.leading, isPairSelected: isSelected)
+            Rectangle()
+                .fill(.separator)
+                .frame(width: 1, height: 14)
+            SplitTabHalfView(shell: shell, tab: split.trailing, isPairSelected: isSelected)
+        }
+        .padding(.leading, 4 + CGFloat(depth) * SidebarMetrics.indentation)
+        .padding(.trailing, 2)
+        .frame(height: SidebarMetrics.rowHeight)
+        .background {
+            let shape = RoundedRectangle(cornerRadius: SidebarMetrics.rowCornerRadius, style: .continuous)
+            if isSelected {
+                shape.fill(.fill.secondary)
+            } else if isHovered {
+                shape.fill(.fill.quaternary)
+            }
+        }
+        .contentShape(Rectangle())
+        .onHover { isHovered = $0 }
+        .contextMenu {
+            Button("Separate Tabs") { shell.store.unsplit(split) }
+            Button("Close \(split.leading.displayTitle)") { shell.store.close(split.leading) }
+            Button("Close \(split.trailing.displayTitle)") { shell.store.close(split.trailing) }
+        }
+    }
+}
+
+private struct SplitTabHalfView: View {
+    let shell: ShellController
+    let tab: Tab
+    let isPairSelected: Bool
+
+    @State private var isHovered = false
+
+    private var isFocused: Bool { shell.store.selectedTab === tab }
+
+    var body: some View {
+        HStack(spacing: 4) {
+            FaviconView(image: tab.favicon, size: 16)
+                .opacity(tab.isLoading ? 0.4 : 1)
+                .animation(.easeInOut(duration: 0.3), value: tab.isLoading)
+            Text(tab.displayTitle)
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .foregroundStyle(isFocused ? .primary : .secondary)
+            Spacer(minLength: 0)
+            AudioToggleButton(shell: shell, tab: tab)
+            if isHovered {
+                Button {
+                    shell.store.close(tab)
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 16, height: 16)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .focusable(false)
+                .help("Close Tab")
+            }
+        }
+        .padding(.horizontal, 4)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background {
+            if isPairSelected && isFocused {
+                RoundedRectangle(cornerRadius: SidebarMetrics.rowCornerRadius - 2, style: .continuous)
+                    .fill(.fill.tertiary)
+                    .padding(.vertical, 3)
+            }
+        }
+        .contentShape(Rectangle())
+        .onHover { isHovered = $0 }
+        .onTapGesture { shell.store.select(tab) }
     }
 }

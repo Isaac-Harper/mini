@@ -9,7 +9,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
     private let windowToolbar: WindowToolbar
 
     var rootView: NSView { webContentController.view }
-    var webAreaView: NSView { webContentController.webAreaView }
+    var webAreaView: WebAreaView { webContentController.webAreaView }
     var isSidebarVisible: Bool { !sidebarItem.isCollapsed }
 
     init(shell: ShellController) {
@@ -53,8 +53,8 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
         fatalError("init(coder:) is not supported")
     }
 
-    func display(_ hostView: BrowserHostView) {
-        webContentController.display(hostView)
+    func display(_ hostViews: [BrowserHostView], split: WebAreaView.SplitArrangement?) {
+        webContentController.display(hostViews, split: split)
     }
 
     func toggleSidebar() {
@@ -109,14 +109,17 @@ final class WebContentViewController: NSViewController {
         extensionView.topAnchor.constraint(equalTo: contentLayoutGuide.topAnchor).isActive = true
     }
 
-    func display(_ hostView: BrowserHostView) {
+    func display(_ hostViews: [BrowserHostView], split: WebAreaView.SplitArrangement?) {
         view.layoutSubtreeIfNeeded()
-        if hostView.superview !== webAreaView {
+        for hostView in hostViews where hostView.superview !== webAreaView {
             hostView.frame = webAreaView.bounds
-            hostView.autoresizingMask = [.width, .height]
-            webAreaView.addSubview(hostView)
+            webAreaView.addSubview(hostView, positioned: .below, relativeTo: nil)
         }
-        hostView.isHidden = false
+        webAreaView.splitArrangement = split
+        webAreaView.layoutSubtreeIfNeeded()
+        for hostView in hostViews {
+            hostView.isHidden = false
+        }
     }
 }
 
@@ -128,16 +131,146 @@ final class PassthroughBackgroundExtensionView: NSBackgroundExtensionView {
 }
 
 final class WebAreaView: NSView {
+    struct SplitArrangement {
+        let leading: NSView
+        let trailing: NSView
+        let fraction: Double
+        let focused: NSView
+    }
+
+    static let minimumSplitSideWidth: CGFloat = 320
+    static let dividerWidth: CGFloat = 6
+
+    var splitArrangement: SplitArrangement? {
+        didSet {
+            divider.isHidden = splitArrangement == nil
+            focusBorder.isHidden = splitArrangement == nil
+            if splitArrangement != nil {
+                addSubview(divider, positioned: .above, relativeTo: nil)
+                addSubview(focusBorder, positioned: .above, relativeTo: nil)
+            }
+            needsLayout = true
+        }
+    }
+
+    var onSplitFractionChanged: ((Double, Bool) -> Void)?
+
+    private let divider = SplitDividerView()
+    private let focusBorder = SplitFocusBorderView()
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        divider.isHidden = true
+        focusBorder.isHidden = true
+        divider.onDrag = { [weak self] locationInWindow, finished in
+            self?.dragDivider(to: locationInWindow, finished: finished)
+        }
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) is not supported")
+    }
+
     override func layout() {
         super.layout()
-        for subview in subviews where subview.frame != bounds {
-            subview.frame = bounds
+        guard let splitArrangement else {
+            for subview in subviews where subview !== divider && subview !== focusBorder && subview.frame != bounds {
+                subview.frame = bounds
+            }
+            return
         }
+        let leadingWidth = clampedLeadingWidth(fraction: splitArrangement.fraction)
+        let leadingFrame = NSRect(x: 0, y: 0, width: leadingWidth, height: bounds.height)
+        let trailingX = leadingWidth + Self.dividerWidth
+        let trailingFrame = NSRect(x: trailingX, y: 0, width: max(0, bounds.width - trailingX), height: bounds.height)
+        for subview in subviews where subview !== divider && subview !== focusBorder {
+            let frame = subview === splitArrangement.leading ? leadingFrame : subview === splitArrangement.trailing ? trailingFrame : bounds
+            if subview.frame != frame {
+                subview.frame = frame
+            }
+        }
+        divider.frame = NSRect(x: leadingWidth, y: 0, width: Self.dividerWidth, height: bounds.height)
+        focusBorder.frame = splitArrangement.focused === splitArrangement.leading ? leadingFrame : trailingFrame
+    }
+
+    private var splitContentWidth: CGFloat { max(0, bounds.width - Self.dividerWidth) }
+
+    private func clampedLeadingWidth(fraction: Double) -> CGFloat {
+        let minimum = min(Self.minimumSplitSideWidth, splitContentWidth / 2)
+        return (splitContentWidth * fraction).clamped(to: minimum...(splitContentWidth - minimum)).rounded()
+    }
+
+    private func dragDivider(to locationInWindow: NSPoint, finished: Bool) {
+        guard let splitArrangement, splitContentWidth > 0 else { return }
+        let x = convert(locationInWindow, from: nil).x - Self.dividerWidth / 2
+        let fraction = Double(clampedLeadingWidth(fraction: Double(x / splitContentWidth)) / splitContentWidth)
+        self.splitArrangement = SplitArrangement(
+            leading: splitArrangement.leading,
+            trailing: splitArrangement.trailing,
+            fraction: fraction,
+            focused: splitArrangement.focused
+        )
+        layoutSubtreeIfNeeded()
+        onSplitFractionChanged?(fraction, finished)
     }
 
     override var wantsUpdateLayer: Bool { true }
 
     override func updateLayer() {
         layer?.backgroundColor = NSColor.textBackgroundColor.cgColor
+    }
+}
+
+final class SplitDividerView: NSView {
+    var onDrag: ((NSPoint, Bool) -> Void)?
+
+    override var wantsUpdateLayer: Bool { true }
+
+    override func updateLayer() {
+        layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
+    }
+
+    override func resetCursorRects() {
+        addCursorRect(bounds, cursor: .resizeLeftRight)
+    }
+
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
+    override func mouseDown(with event: NSEvent) {
+        guard let window else { return }
+        window.trackEvents(matching: [.leftMouseDragged, .leftMouseUp], timeout: NSEvent.foreverDuration, mode: .eventTracking) { trackedEvent, stop in
+            guard let trackedEvent else { return }
+            let finished = trackedEvent.type == .leftMouseUp
+            onDrag?(trackedEvent.locationInWindow, finished)
+            if finished { stop.pointee = true }
+        }
+    }
+}
+
+final class SplitFocusBorderView: NSView {
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        wantsLayer = true
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) is not supported")
+    }
+
+    override var wantsUpdateLayer: Bool { true }
+
+    override func updateLayer() {
+        layer?.borderWidth = 2
+        layer?.borderColor = NSColor.controlAccentColor.withAlphaComponent(0.7).cgColor
+    }
+
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
+}
+
+private extension Comparable {
+    func clamped(to range: ClosedRange<Self>) -> Self {
+        min(max(self, range.lowerBound), range.upperBound)
     }
 }
