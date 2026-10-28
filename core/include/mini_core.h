@@ -144,6 +144,11 @@ typedef struct MiniCallbacks {
   // Main-frame loading progress from 0 to 1 (CefDisplayHandler
   // OnLoadingProgressChange). Reaches 1 when the load finishes.
   void (*loading_progress_changed)(MiniTabId tab, double progress);
+  // The main frame's <meta name="theme-color"> (the first one whose media
+  // query matches) as 0xRRGGBBAA, or 0 when the page has none. Sent once the
+  // document is parsed and again whenever the meta tags or the color scheme
+  // change.
+  void (*theme_color_changed)(MiniTabId tab, uint32_t rgba);
   // The page wants a context menu. CEF's own menu is always cancelled; the
   // shell shows a native one and performs its items through mini_browser_*.
   void (*context_menu_requested)(MiniTabId tab, const MiniContextMenu *menu);

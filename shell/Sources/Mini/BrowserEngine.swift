@@ -145,6 +145,9 @@ final class BrowserEngine {
             loading_progress_changed: { identifier, progress in
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.loadingProgressChanged(identifier, progress: progress) }
             },
+            theme_color_changed: { identifier, rgba in
+                MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.themeColorChanged(identifier, rgba: rgba) }
+            },
             context_menu_requested: { identifier, menu in
                 guard let menu else { preconditionFailure("context_menu_requested without a menu") }
                 let request = PageContextRequest(menu.pointee)

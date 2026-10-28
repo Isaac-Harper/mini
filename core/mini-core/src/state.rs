@@ -33,6 +33,7 @@ pub struct Callbacks {
     pub status_message_changed: unsafe extern "C" fn(MiniTabId, *const c_char),
     pub fullscreen_mode_changed: unsafe extern "C" fn(MiniTabId, bool),
     pub loading_progress_changed: unsafe extern "C" fn(MiniTabId, f64),
+    pub theme_color_changed: unsafe extern "C" fn(MiniTabId, u32),
     pub context_menu_requested: unsafe extern "C" fn(MiniTabId, *const crate::context_menu::MiniContextMenu),
     pub image_copied: unsafe extern "C" fn(MiniTabId, *const u8, usize),
     pub browser_closed: unsafe extern "C" fn(MiniTabId),
@@ -109,6 +110,9 @@ impl Callbacks {
             loading_progress_changed: table
                 .loading_progress_changed
                 .expect("MiniCallbacks.loading_progress_changed is null"),
+            theme_color_changed: table
+                .theme_color_changed
+                .expect("MiniCallbacks.theme_color_changed is null"),
             context_menu_requested: table
                 .context_menu_requested
                 .expect("MiniCallbacks.context_menu_requested is null"),

@@ -57,6 +57,7 @@ struct SidebarView: View {
                 .contentShape(Rectangle())
                 .gesture(WindowDragGesture())
         }
+        .background { SiteTintView(color: store.selectedTab?.themeColor) }
     }
 
     private var footer: some View {

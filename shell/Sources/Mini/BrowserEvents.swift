@@ -190,6 +190,13 @@ extension ShellController {
         }
     }
 
+    func themeColorChanged(_ identifier: MiniTabId, rgba: UInt32) {
+        guard let tab = liveTab(identifier) else { return }
+        let alpha = CGFloat(rgba & 0xff) / 255
+        let color = alpha > 0 ? NSColor(srgbRed: CGFloat(rgba >> 24) / 255, green: CGFloat((rgba >> 16) & 0xff) / 255, blue: CGFloat((rgba >> 8) & 0xff) / 255, alpha: alpha) : nil
+        if tab.themeColor != color { tab.themeColor = color }
+    }
+
     func statusMessageChanged(_ identifier: MiniTabId, text: String) {
         guard let tab = liveTab(identifier) else { return }
         statusBubble.statusChanged(for: tab, text: text)

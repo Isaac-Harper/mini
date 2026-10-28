@@ -21,6 +21,7 @@ final class Tab: Identifiable {
     var isAudioMuted = false
     var mediaTitle = ""
     var isPausedFromNowPlaying = false
+    var themeColor: NSColor?
 
     @ObservationIgnored weak var parent: Tab?
     @ObservationIgnored let hostView = BrowserHostView()

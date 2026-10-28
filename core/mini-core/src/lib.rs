@@ -13,6 +13,7 @@ mod permissions;
 mod resource_requests;
 mod site_data;
 mod state;
+mod theme_color;
 mod webauthn;
 
 use cef::{library_loader::LibraryLoader, *};
@@ -61,6 +62,7 @@ pub struct MiniCallbacks {
     pub status_message_changed: Option<unsafe extern "C" fn(MiniTabId, *const c_char)>,
     pub fullscreen_mode_changed: Option<unsafe extern "C" fn(MiniTabId, bool)>,
     pub loading_progress_changed: Option<unsafe extern "C" fn(MiniTabId, f64)>,
+    pub theme_color_changed: Option<unsafe extern "C" fn(MiniTabId, u32)>,
     pub context_menu_requested: Option<unsafe extern "C" fn(MiniTabId, *const context_menu::MiniContextMenu)>,
     pub image_copied: Option<unsafe extern "C" fn(MiniTabId, *const u8, usize)>,
     pub browser_closed: Option<unsafe extern "C" fn(MiniTabId)>,
