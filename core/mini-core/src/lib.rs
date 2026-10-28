@@ -361,6 +361,13 @@ pub extern "C" fn mini_browser_show_dev_tools(tab: MiniTabId) {
 }
 
 #[unsafe(no_mangle)]
+pub extern "C" fn mini_browser_print(tab: MiniTabId) {
+    if let Some(browser) = created_browser(tab) {
+        host(&browser).print();
+    }
+}
+
+#[unsafe(no_mangle)]
 pub extern "C" fn mini_browser_close(tab: MiniTabId) {
     let browser = with_tab(tab, |state| {
         if state.browser.is_none() {

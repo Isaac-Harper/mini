@@ -130,6 +130,8 @@ void mini_browser_set_zoom_level(MiniTabId tab, double level);
 void mini_browser_find(MiniTabId tab, const char *text, bool forward, bool find_next);
 void mini_browser_stop_finding(MiniTabId tab);
 void mini_browser_show_dev_tools(MiniTabId tab);
+// Opens the native print panel for the page.
+void mini_browser_print(MiniTabId tab);
 void mini_browser_close(MiniTabId tab);
 // Force-closes every browser. all_browsers_closed fires when none remain
 // (immediately if none exist).

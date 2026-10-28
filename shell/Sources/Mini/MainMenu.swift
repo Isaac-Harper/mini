@@ -42,6 +42,8 @@ enum MainMenu {
         menu.addItem(item("Open Location", #selector(ShellController.openLocation(_:)), "l", target: commands))
         menu.addItem(item("Open in Mini", #selector(ShellController.openLittleWindowInMini(_:)), "o", target: commands))
         menu.addItem(.separator())
+        menu.addItem(item("Print\u{2026}", #selector(ShellController.printPage(_:)), "p", target: commands))
+        menu.addItem(.separator())
         menu.addItem(item("Close Tab", #selector(ShellController.closeTab(_:)), "w", target: commands))
         return menu
     }

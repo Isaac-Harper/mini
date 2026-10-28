@@ -154,6 +154,10 @@ extension ShellController: NSMenuItemValidation {
         if let tab = commandBrowserTab { mini_browser_show_dev_tools(tab.id) }
     }
 
+    @objc func printPage(_ sender: Any?) {
+        if let tab = commandBrowserTab { mini_browser_print(tab.id) }
+    }
+
     @objc func goBackInHistory(_ sender: Any?) {
         goBack()
     }
@@ -261,7 +265,7 @@ extension ShellController: NSMenuItemValidation {
         case #selector(fillPassword(_:)), #selector(showFindBar(_:)), #selector(findNextMatch(_:)), #selector(findPreviousMatch(_:)):
             return mainWindowBrowserTab != nil
         case #selector(reloadPage(_:)), #selector(zoomInPage(_:)), #selector(zoomOutPage(_:)),
-             #selector(actualSizePage(_:)), #selector(showDeveloperTools(_:)):
+             #selector(actualSizePage(_:)), #selector(showDeveloperTools(_:)), #selector(printPage(_:)):
             return commandBrowserTab != nil
         case #selector(stopLoading(_:)):
             return commandBrowserTab?.isLoading ?? false
