@@ -163,6 +163,10 @@ final class BrowserEngine {
                         mini_quit_message_loop()
                     }
                 }
+            },
+            app_relaunched: { arguments, count in
+                let arguments = (0..<count).map { index in requiredString(arguments?[index]) }
+                MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.appRelaunched(arguments: arguments) }
             }
         )
     }

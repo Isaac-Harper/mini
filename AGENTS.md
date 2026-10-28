@@ -40,6 +40,7 @@ Mini.app/Contents/Frameworks/
 - session.json is `{spaces: [{id, name, symbol, usesDefaultProfile, contents: {tabs, selectedPath, pinnedTabs, selectedPinnedIndex, splits}}], currentSpace}`. A file in the pre-spaces shape (top-level `tabs`) is migrated once at load into Personal (person.fill, default profile) plus an empty Work (briefcase.fill), and launch immediately saves the new shape; the old shape is never written.
 - A tab is in at most one split. Closing or pinning either side removes the split (`tabStoreDidChangeSplits` then re-arranges); the partner of the selected tab counts as selected for auto-archive.
 - Split focus follows clicks through a local mouse-down monitor (hit-testing into the partner's host view), not CEF focus callbacks: `focus_requested` refuses focus for every tab but the selected one, so the partner page never focuses itself.
+- CEF never creates a top-level window of its own: popups are always parented into a tab or little window (or blocked), a second launch on the same profile goes through `app_relaunched` (http(s) arguments open little windows through `openExternalURL`, none shows the main window) and the second process exits 0 when `mini_initialize` returns false. Without the relaunch handler Chromium answered a second launch with its own "New Tab - Chromium" and "Restore pages?" windows that then blocked quit. DevTools windows and Chromium's Picture in Picture window are the only intended exceptions.
 - Style: no comments unless a genuine trap, full-word names, no em/en dashes, no AI attribution anywhere.
 
 ## File map
@@ -48,6 +49,7 @@ Mini.app/Contents/Frameworks/
 - `core/Cargo.toml`: workspace (edition 2024, `cef = "=156.2.0"`, release `panic = "abort"`). `core/.cargo/config.toml` pins `MACOSX_DEPLOYMENT_TARGET=26.0` so C deps (ring) do not target the SDK version.
 - `core/mini-core/`: Rust staticlib (`libmini_core.a`) implementing the ABI.
   - `src/lib.rs`: the `#[unsafe(no_mangle)]` ABI functions and the `#[repr(C)]` mirrors of the header types; library loader static.
+  - `src/application.rs`: `MiniApp` (passed to `cef_initialize`) whose `BrowserProcessHandler::on_already_running_app_relaunch` hands the relaunched process's non-switch arguments to `app_relaunched` and returns 1, so CEF never opens its own window for a second launch.
   - `src/state.rs`: main-thread `thread_local` state (callbacks table, space id -> `RequestContext` map filled by `mini_space_create` and used by `mini_browser_create`, tab id -> `TabState` with `Option<Browser>` + pending url/focus/hidden/close + favicon generation, pending popup ids, reported download ids, closing-all flag); the global request-id counter shared by permissions and auth.
   - `src/client.rs`: `MiniClient` (one per tab, carries the tab id) and the display, load (cosmetic injection at `on_load_start`), life span, request (open-url, auth, resource handler), keyboard, focus and download handlers; `DevToolsClient` (no handlers) for devtools windows. Tab close dismisses pending permissions and cancels pending auth.
   - `src/favicon.rs`: `download_image` of the first favicon URL, PNG at scale 2 via `Image::as_png`; per-tab generation drops stale or closed-tab results.
@@ -162,6 +164,7 @@ Mini.app/Contents/Frameworks/
 - AeroSpace (the tiling window manager on this Mac) tiles every new standard window, so a little window shows at 960x680 only until AeroSpace resizes it; its own frame code is correct (logged 960x681 before tiling).
 - A `CATransition` added to `webAreaView`'s layer leaves CEF browser views blank when they are unhidden in the same transaction (tab switch back to an existing browser showed an empty web area). Animate `alphaValue` instead.
 - Popups get their opener's request context from CEF (`on_before_popup` does not set one), so popups stay in the opener's space.
+- A second Mini process started on a profile that is in use prints "Opening in existing browser session.", `cef_initialize` returns 0 with `get_exit_code()` = `CEF_RESULT_CODE_NORMAL_EXIT_PROCESS_NOTIFIED` (24), and the running process gets `on_already_running_app_relaunch` with the new command line (verified with a URL argument and with none).
 - zsh here has `noclobber`: overwrite files with `>|` or an editor, not `>`.
 - `swift build` in this toolchain uses the swiftbuild backend: products live in `shell/.build/out/Products/<Config>/`, so `bundle.sh` asks `swift build --show-bin-path` instead of assuming `.build/<config>/`.
 

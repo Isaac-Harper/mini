@@ -195,6 +195,16 @@ extension ShellController {
         statusBubble.statusChanged(for: tab, text: text)
     }
 
+    func appRelaunched(arguments: [String]) {
+        let urls = arguments.compactMap(URL.init(string:)).filter { ["http", "https"].contains($0.scheme?.lowercased()) }
+        guard !urls.isEmpty else {
+            showWindow()
+            NSApp.activate()
+            return
+        }
+        urls.forEach(openExternalURL)
+    }
+
     func browserClosed(_ identifier: MiniTabId) {
         if let tab = closingTabs.removeValue(forKey: identifier) {
             tab.hostView.removeFromSuperview()

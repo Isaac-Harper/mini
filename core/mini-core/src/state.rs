@@ -37,6 +37,7 @@ pub struct Callbacks {
     pub image_copied: unsafe extern "C" fn(MiniTabId, *const u8, usize),
     pub browser_closed: unsafe extern "C" fn(MiniTabId),
     pub all_browsers_closed: unsafe extern "C" fn(),
+    pub app_relaunched: unsafe extern "C" fn(*const *const c_char, usize),
 }
 
 impl Callbacks {
@@ -120,6 +121,9 @@ impl Callbacks {
             all_browsers_closed: table
                 .all_browsers_closed
                 .expect("MiniCallbacks.all_browsers_closed is null"),
+            app_relaunched: table
+                .app_relaunched
+                .expect("MiniCallbacks.app_relaunched is null"),
         }
     }
 }

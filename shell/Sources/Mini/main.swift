@@ -21,7 +21,7 @@ let initialized = profileDirectory.path.withCString { rootCachePath in
     }
 }
 guard initialized else {
-    fatalError("mini_initialize failed")
+    exit(0)
 }
 
 mini_run_message_loop()

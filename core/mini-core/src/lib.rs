@@ -1,4 +1,5 @@
 mod ad_blocking;
+mod application;
 mod authentication;
 mod client;
 mod context_menu;
@@ -64,6 +65,7 @@ pub struct MiniCallbacks {
     pub image_copied: Option<unsafe extern "C" fn(MiniTabId, *const u8, usize)>,
     pub browser_closed: Option<unsafe extern "C" fn(MiniTabId)>,
     pub all_browsers_closed: Option<unsafe extern "C" fn()>,
+    pub app_relaunched: Option<unsafe extern "C" fn(*const *const c_char, usize)>,
 }
 
 static LIBRARY: Mutex<Option<LibraryLoader>> = Mutex::new(None);
@@ -130,16 +132,24 @@ pub extern "C" fn mini_initialize(
         log_severity: LogSeverity::WARNING,
         ..Default::default()
     };
+    let mut application = application::MiniApp::new();
     let initialized = initialize(
         Some(&main_arguments),
         Some(&settings),
-        None,
+        Some(&mut application),
         std::ptr::null_mut(),
     ) == 1;
-    if initialized {
-        ad_blocking::start(std::path::PathBuf::from(filter_lists_path));
+    if !initialized {
+        let exit_code = get_exit_code();
+        assert_eq!(
+            exit_code,
+            sys::cef_resultcode_t::CEF_RESULT_CODE_NORMAL_EXIT_PROCESS_NOTIFIED as c_int,
+            "cef_initialize failed (exit code {exit_code})"
+        );
+        return false;
     }
-    initialized
+    ad_blocking::start(std::path::PathBuf::from(filter_lists_path));
+    true
 }
 
 #[unsafe(no_mangle)]

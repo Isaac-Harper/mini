@@ -152,11 +152,18 @@ typedef struct MiniCallbacks {
   void (*image_copied)(MiniTabId tab, const uint8_t *png, size_t length);
   void (*browser_closed)(MiniTabId tab);
   void (*all_browsers_closed)(void);
+  // Mini was launched again on this profile (CEF's already-running relaunch).
+  // arguments are the new process's non-switch command line arguments; CEF
+  // opens no window of its own for it.
+  void (*app_relaunched)(const char *const *arguments, size_t argument_count);
 } MiniCallbacks;
 
 // Browser process lifecycle. NSApp must already be an NSApplication subclass
 // implementing CefAppProtocol before mini_initialize is called.
 // filter_lists_path: directory where ad block lists are cached and refreshed.
+// Returns false when another Mini already runs on root_cache_path and was
+// handed this command line through app_relaunched; the process must then
+// exit without calling anything else. Any other failure panics.
 bool mini_initialize(int argc, char **argv, const char *root_cache_path, const char *filter_lists_path,
                      MiniCallbacks callbacks);
 void mini_run_message_loop(void);
