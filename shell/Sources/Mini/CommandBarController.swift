@@ -13,6 +13,8 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
     private let offsetGuide = NSLayoutGuide()
     private let searchSuggestionFetcher = SearchSuggestionFetcher()
     private var mode: CommandBarMode = .newTab
+    private var pastedText: String?
+    private var pastedSummary: String?
     private(set) var isOpen = false
 
     private static let width: CGFloat = 760
@@ -40,6 +42,10 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
         field.cell?.isScrollable = true
         field.delegate = self
         field.onCommandReturn = { [weak self] in self?.openTypedInputInBackground() }
+        field.onPaste = { [weak self] in
+            guard let self, let text = NSPasteboard.general.string(forType: .string) else { return false }
+            return self.pasteLinks(text)
+        }
 
         iconView.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 17, weight: .regular)
         iconView.contentTintColor = .secondaryLabelColor
@@ -86,6 +92,8 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
 
     func open(mode: CommandBarMode) {
         self.mode = mode
+        pastedText = nil
+        pastedSummary = nil
         if !shell.window.isVisible {
             shell.showWindow()
         }
@@ -174,18 +182,50 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
             shell.reopenArchived(entry)
         case .history(let entry):
             shell.open(entry.url, from: mode)
+        case .openLinks(let links):
+            shell.openLinks(links, inBackground: false, nested: NSApp.currentEvent?.modifierFlags.contains(.option) == true)
         }
         shell.focusSelectedWebContent()
     }
 
     private func openTypedInputInBackground() {
+        if case .openLinks(let links) = model.selectedSuggestion {
+            close(restoringWebFocus: true)
+            shell.openLinks(links, inBackground: true, nested: false)
+            return
+        }
         let query = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !query.isEmpty else { return }
         close(restoringWebFocus: true)
         shell.openInBackground(URLInput.interpret(query).url)
     }
 
+    func pasteLinks(_ text: String) -> Bool {
+        let links = PastedLinks.parse(text)
+        guard links.count >= 2 else { return false }
+        let summary = "\(links.count) links pasted"
+        pastedText = text
+        pastedSummary = summary
+        field.stringValue = summary
+        field.currentEditor()?.selectedRange = NSRange(location: (summary as NSString).length, length: 0)
+        searchSuggestionFetcher.cancel()
+        withoutAnimation { model.showLinks(links) }
+        iconView.image = NSImage(systemSymbolName: "square.stack", accessibilityDescription: nil)
+        return true
+    }
+
     func controlTextDidChange(_ notification: Notification) {
+        if let pastedSummary, field.stringValue != pastedSummary {
+            pastedText = nil
+            self.pastedSummary = nil
+        }
+        let links = PastedLinks.parse(pastedText ?? field.stringValue)
+        if links.count >= 2 {
+            searchSuggestionFetcher.cancel()
+            withoutAnimation { model.showLinks(links) }
+            iconView.image = NSImage(systemSymbolName: "square.stack", accessibilityDescription: nil)
+            return
+        }
         let store = shell.store
         withoutAnimation {
             let historyMatches = shell.history.store(forSpace: shell.currentSpace.id).search(field.stringValue, limit: 60)
@@ -218,6 +258,11 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
             } else {
                 close(restoringWebFocus: true)
             }
+        case #selector(NSResponder.insertNewlineIgnoringFieldEditor(_:)):
+            guard case .openLinks(let links) = model.selectedSuggestion else { return false }
+            close(restoringWebFocus: false)
+            shell.openLinks(links, inBackground: false, nested: true)
+            shell.focusSelectedWebContent()
         case #selector(NSResponder.cancelOperation(_:)):
             close(restoringWebFocus: true)
         default:
@@ -229,6 +274,7 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
 
 final class CommandField: NSTextField {
     var onCommandReturn: (() -> Void)?
+    var onPaste: (() -> Bool)?
 
     private static let returnKeyCodes: Set<UInt16> = [36, 76]
 
@@ -236,6 +282,9 @@ final class CommandField: NSTextField {
         let modifiers = event.modifierFlags.intersection([.command, .control, .option, .shift])
         if modifiers == .command, Self.returnKeyCodes.contains(event.keyCode), currentEditor() != nil {
             onCommandReturn?()
+            return true
+        }
+        if modifiers == .command, event.charactersIgnoringModifiers == "v", currentEditor() != nil, onPaste?() == true {
             return true
         }
         return super.performKeyEquivalent(with: event)

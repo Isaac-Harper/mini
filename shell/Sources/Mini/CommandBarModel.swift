@@ -13,6 +13,7 @@ enum CommandSuggestion: Identifiable {
     case searchSuggestion(String)
     case archived(ArchivedTab)
     case history(HistoryEntry)
+    case openLinks([PastedLink])
 
     var id: String {
         switch self {
@@ -21,6 +22,7 @@ enum CommandSuggestion: Identifiable {
         case .searchSuggestion(let text): "suggestion-\(text)"
         case .archived(let entry): "archived-\(entry.url)"
         case .history(let entry): "history-\(entry.url)"
+        case .openLinks: "open-links"
         }
     }
 
@@ -71,6 +73,13 @@ final class CommandBarModel {
         query = ""
         searchSuggestions = []
         suggestions = []
+        selectedIndex = 0
+    }
+
+    func showLinks(_ links: [PastedLink]) {
+        query = ""
+        searchSuggestions = []
+        suggestions = [.openLinks(links)]
         selectedIndex = 0
     }
 

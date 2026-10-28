@@ -21,6 +21,9 @@ struct CommandSuggestionsView: View {
                             if isHovering { model.selectedIndex = index }
                         }
                         .onTapGesture { activate(suggestion) }
+                    if case .openLinks(let links) = suggestion {
+                        PastedLinkPreviews(links: links, faviconLookup: faviconLookup)
+                    }
                 }
             }
             .padding(.horizontal, 8)
@@ -101,6 +104,8 @@ private struct CommandSuggestionRow: View {
             } else {
                 Image(systemName: "archivebox").foregroundStyle(.secondary)
             }
+        case .openLinks:
+            Image(systemName: "square.stack").foregroundStyle(.secondary)
         }
     }
 
@@ -112,6 +117,7 @@ private struct CommandSuggestionRow: View {
         case .searchSuggestion(let text): text
         case .archived(let entry): entry.title
         case .history(let entry): entry.displayTitle
+        case .openLinks(let links): "Open \(links.count) Links"
         }
     }
 
@@ -123,6 +129,7 @@ private struct CommandSuggestionRow: View {
         case .searchSuggestion: nil
         case .archived(let entry): URLInput.host(of: entry.url)
         case .history(let entry): URLInput.host(of: entry.url)
+        case .openLinks: "Return opens them here, \u{2318}Return in the background, \u{2325}Return nested"
         }
     }
 
@@ -134,6 +141,44 @@ private struct CommandSuggestionRow: View {
         case .searchSuggestion: "Search"
         case .archived: "Reopen"
         case .history: "Open"
+        case .openLinks: "Open All"
         }
+    }
+}
+
+private struct PastedLinkPreviews: View {
+    let links: [PastedLink]
+    let faviconLookup: (String) -> NSImage?
+
+    private static let maximumRows = 6
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(links.prefix(Self.maximumRows)) { link in
+                HStack(spacing: 10) {
+                    FaviconView(image: faviconLookup(link.url), size: 14)
+                    Text(link.title ?? URLInput.host(of: link.url) ?? link.url)
+                        .font(.system(size: 12))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                    Spacer(minLength: 8)
+                    Text(URLInput.host(of: link.url) ?? "")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                .frame(height: 24)
+            }
+            if links.count > Self.maximumRows {
+                Text("+\(links.count - Self.maximumRows) more")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.tertiary)
+                    .frame(height: 22)
+            }
+        }
+        .padding(.leading, 42)
+        .padding(.trailing, 12)
+        .padding(.bottom, 4)
+        .allowsHitTesting(false)
     }
 }

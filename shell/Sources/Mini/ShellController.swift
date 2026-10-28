@@ -364,7 +364,26 @@ final class ShellController: NSObject {
         store.select(copy)
     }
 
-    func openInSplitView(_ tab: Tab) {
+    func openLinks(_ links: [PastedLink], inBackground: Bool, nested: Bool) {
+        precondition(links.count >= 2, "Opening pasted links needs at least two")
+        let anchor = store.selectedTab
+        let parent = anchor?.isPinned == false ? anchor?.parent : nil
+        var opened: [Tab] = []
+        for link in links {
+            let tab: Tab
+            if nested, let group = opened.first {
+                tab = store.newTab(url: link.url, title: link.title ?? "", parent: group, after: opened.count > 1 ? opened.last : nil)
+            } else {
+                tab = store.newTab(url: link.url, title: link.title ?? "", parent: parent, after: opened.last ?? anchor)
+            }
+            opened.append(tab)
+        }
+        if !inBackground {
+            store.select(opened[0])
+        }
+    }
+
+        func openInSplitView(_ tab: Tab) {
         guard let selected = store.selectedTab, selected !== tab, !selected.isPinned, !tab.isPinned else { return }
         store.makeSplit(leading: selected, trailing: tab)
     }

@@ -11,6 +11,7 @@ Mini is an open source exploration project: a personal, minimal browser built to
 - Spaces (Personal and Work to start), each with its own tabs, pins and its own cookies and logins; switch with the buttons at the bottom of the sidebar or ⌃1 to ⌃9
 - Split view: two tabs side by side with a draggable divider, shown as one joined row in the sidebar
 - Command bar for URLs, search (with Google suggestions) and switching tabs
+- Paste a list of links (like Safari's Copy Links) into the command bar to open them all as tabs that load when you select them; ⌘Return opens them in the background, ⌥Return nests them under the first
 - Built-in ad and tracker blocking (uBlock Origin, EasyList and EasyPrivacy lists)
 - Fill logins from Apple Passwords through a native card with Touch ID
 - Native permission prompts for camera, microphone, location and the rest
