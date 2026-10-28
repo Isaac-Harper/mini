@@ -43,12 +43,21 @@ extension ShellController: NSMenuItemValidation {
         return tab
     }
 
+    fileprivate var commandBrowserTab: Tab? {
+        guard let littleWindow = keyLittleWindow else { return selectedBrowserTab }
+        return littleWindow.tab.hasBrowser ? littleWindow.tab : nil
+    }
+
+    fileprivate var mainWindowBrowserTab: Tab? {
+        keyLittleWindow == nil ? selectedBrowserTab : nil
+    }
+
     func goBack() {
-        if let tab = selectedBrowserTab { mini_browser_go_back(tab.id) }
+        if let tab = commandBrowserTab { mini_browser_go_back(tab.id) }
     }
 
     func goForward() {
-        if let tab = selectedBrowserTab { mini_browser_go_forward(tab.id) }
+        if let tab = commandBrowserTab { mini_browser_go_forward(tab.id) }
     }
 
     func reloadSelected() {
@@ -68,11 +77,21 @@ extension ShellController: NSMenuItemValidation {
     }
 
     @objc func openLocation(_ sender: Any?) {
+        if let littleWindow = keyLittleWindow {
+            littleWindow.editAddress()
+            return
+        }
         commandBar.open(mode: .editCurrent)
     }
 
+    @objc func openLittleWindowInMini(_ sender: Any?) {
+        if let littleWindow = keyLittleWindow { promoteLittleWindow(littleWindow) }
+    }
+
     @objc func closeTab(_ sender: Any?) {
-        if commandBar.isOpen {
+        if let littleWindow = keyLittleWindow {
+            littleWindow.close()
+        } else if commandBar.isOpen {
             commandBar.close(restoringWebFocus: true)
         } else if let tab = store.selectedTab {
             store.close(tab)
@@ -100,11 +119,11 @@ extension ShellController: NSMenuItemValidation {
     }
 
     @objc func reloadPage(_ sender: Any?) {
-        reloadSelected()
+        if let tab = commandBrowserTab { mini_browser_reload(tab.id) }
     }
 
     @objc func stopLoading(_ sender: Any?) {
-        if let tab = selectedBrowserTab { mini_browser_stop(tab.id) }
+        if let tab = commandBrowserTab { mini_browser_stop(tab.id) }
     }
 
     @objc func zoomInPage(_ sender: Any?) {
@@ -120,11 +139,11 @@ extension ShellController: NSMenuItemValidation {
     }
 
     private func zoomSelected(direction: Int32) {
-        guard let tab = selectedBrowserTab else { return }
+        guard let tab = commandBrowserTab else { return }
         let level = mini_browser_zoom(tab.id, direction)
         if let host = SitePreferences.host(of: tab.url) {
             sitePreferences.setZoomLevel(direction == 0 ? nil : level, host: host)
-            for other in store.allTabs where other !== tab && other.hasBrowser && SitePreferences.host(of: other.url) == host {
+            for other in store.allTabs + littleWindows.values.map(\.tab) where other !== tab && other.hasBrowser && SitePreferences.host(of: other.url) == host {
                 mini_browser_set_zoom_level(other.id, level)
             }
         }
@@ -132,7 +151,7 @@ extension ShellController: NSMenuItemValidation {
     }
 
     @objc func showDeveloperTools(_ sender: Any?) {
-        if let tab = selectedBrowserTab { mini_browser_show_dev_tools(tab.id) }
+        if let tab = commandBrowserTab { mini_browser_show_dev_tools(tab.id) }
     }
 
     @objc func goBackInHistory(_ sender: Any?) {
@@ -176,19 +195,19 @@ extension ShellController: NSMenuItemValidation {
     private static let pictureInPictureScript = "javascript:void((function(){if(document.pictureInPictureElement){document.exitPictureInPicture().catch(function(){});return;}var documents=[document];Array.prototype.forEach.call(document.querySelectorAll('iframe'),function(frame){try{if(frame.contentDocument)documents.push(frame.contentDocument);}catch(error){}});var videos=[];documents.forEach(function(candidate){videos=videos.concat(Array.prototype.slice.call(candidate.querySelectorAll('video')));});var playing=videos.filter(function(video){return !video.paused&&!video.ended&&video.readyState>2;});var pool=playing.length?playing:videos;var largest=pool.sort(function(first,second){return second.clientWidth*second.clientHeight-first.clientWidth*first.clientHeight;})[0];if(largest)largest.requestPictureInPicture().catch(function(){});})())"
 
     @objc func togglePictureInPicture(_ sender: Any?) {
-        guard let tab = selectedBrowserTab else { return }
+        guard let tab = commandBrowserTab else { return }
         Self.pictureInPictureScript.withCString { mini_browser_load_url(tab.id, $0) }
     }
 
     @objc func copyTabAddress(_ sender: Any?) {
-        guard let url = store.selectedTab?.url, !url.isEmpty else { return }
+        guard let url = keyLittleWindow?.tab.url ?? store.selectedTab?.url, !url.isEmpty else { return }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(url, forType: .string)
         toast.show("Copied")
     }
 
     @objc func fillPassword(_ sender: Any?) {
-        if let tab = selectedBrowserTab { loginFill.requestFill(for: tab) }
+        if let tab = mainWindowBrowserTab { loginFill.requestFill(for: tab) }
     }
 
     @objc func setAsDefaultBrowser(_ sender: Any?) {
@@ -230,19 +249,22 @@ extension ShellController: NSMenuItemValidation {
         case #selector(reopenClosedTab(_:)):
             return store.canReopenClosedTab
         case #selector(closeTab(_:)):
-            return commandBar.isOpen || selected != nil
+            return keyLittleWindow != nil || commandBar.isOpen || selected != nil
+        case #selector(openLittleWindowInMini(_:)):
+            return keyLittleWindow != nil
         case #selector(newChildTab(_:)):
             return selected != nil
-        case #selector(fillPassword(_:)), #selector(showFindBar(_:)), #selector(findNextMatch(_:)), #selector(findPreviousMatch(_:)),
-             #selector(reloadPage(_:)), #selector(zoomInPage(_:)), #selector(zoomOutPage(_:)),
+        case #selector(fillPassword(_:)), #selector(showFindBar(_:)), #selector(findNextMatch(_:)), #selector(findPreviousMatch(_:)):
+            return mainWindowBrowserTab != nil
+        case #selector(reloadPage(_:)), #selector(zoomInPage(_:)), #selector(zoomOutPage(_:)),
              #selector(actualSizePage(_:)), #selector(showDeveloperTools(_:)):
-            return selectedBrowserTab != nil
+            return commandBrowserTab != nil
         case #selector(stopLoading(_:)):
-            return selectedBrowserTab?.isLoading ?? false
+            return commandBrowserTab?.isLoading ?? false
         case #selector(goBackInHistory(_:)):
-            return selectedBrowserTab?.canGoBack ?? false
+            return commandBrowserTab?.canGoBack ?? false
         case #selector(goForwardInHistory(_:)):
-            return selectedBrowserTab?.canGoForward ?? false
+            return commandBrowserTab?.canGoForward ?? false
         case #selector(selectNextTab(_:)), #selector(selectPreviousTab(_:)):
             return store.selectableTabs.count > 1
         case #selector(indentTab(_:)):
@@ -256,9 +278,9 @@ extension ShellController: NSMenuItemValidation {
         case #selector(selectTabAtIndex(_:)):
             return !store.selectableTabs.isEmpty
         case #selector(togglePictureInPicture(_:)):
-            return selectedBrowserTab != nil
+            return commandBrowserTab != nil
         case #selector(copyTabAddress(_:)):
-            return !(selected?.url.isEmpty ?? true)
+            return !((keyLittleWindow?.tab ?? selected)?.url.isEmpty ?? true)
         case #selector(togglePinnedTab(_:)):
             menuItem.title = selected?.isPinned == true ? "Unpin Tab" : "Pin Tab"
             return selected.map { $0.isPinned || !$0.url.isEmpty } ?? false

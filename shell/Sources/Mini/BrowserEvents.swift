@@ -3,7 +3,7 @@ import CMiniCore
 
 extension ShellController {
     private func liveTab(_ identifier: MiniTabId) -> Tab? {
-        store.tab(withIdentifier: identifier)
+        store.tab(withIdentifier: identifier) ?? littleWindow(containing: identifier)?.tab
     }
 
     func addressChanged(_ identifier: MiniTabId, url: String) {
@@ -17,6 +17,7 @@ extension ShellController {
             tab.zoomedHost = host
             mini_browser_set_zoom_level(tab.id, host.map(sitePreferences.zoomLevel(host:)) ?? 0)
         }
+        littleWindow(containing: identifier)?.updateAddress()
         focusIfAwaitingInitialFocus(tab)
         scheduleSessionSave()
     }
@@ -24,6 +25,7 @@ extension ShellController {
     func titleChanged(_ identifier: MiniTabId, title: String) {
         guard let tab = liveTab(identifier) else { return }
         tab.title = title
+        littleWindow(containing: identifier)?.updateAddress()
         scheduleSessionSave()
     }
 
@@ -46,10 +48,19 @@ extension ShellController {
         tab.isLoading = isLoading
         tab.canGoBack = canGoBack
         tab.canGoForward = canGoForward
+        littleWindow(containing: identifier)?.updateAddress()
         focusIfAwaitingInitialFocus(tab)
     }
 
     func openTabRequested(_ opener: MiniTabId, url: String, foreground: Bool) {
+        if littleWindow(containing: opener) != nil {
+            let tab = store.newTab(url: url, parent: nil, after: store.selectedTab.map(store.rootAncestor))
+            if foreground {
+                store.select(tab)
+                showWindow()
+            }
+            return
+        }
         let tab = store.newTab(url: url, parent: liveTab(opener))
         if foreground {
             store.select(tab)
@@ -57,7 +68,19 @@ extension ShellController {
     }
 
     func popupRequested(_ opener: MiniTabId, url: String) -> (tab: MiniTabId, hostView: BrowserHostView?) {
-        guard !isTerminating, let openerTab = liveTab(opener) else { return (0, nil) }
+        guard !isTerminating else { return (0, nil) }
+        if littleWindow(containing: opener) != nil {
+            let tab = openLittleWindow(url: url, createsBrowser: false).tab
+            tab.browserState = .pendingPopup
+            DispatchQueue.main.async { [weak tab] in
+                MainActor.assumeIsolated {
+                    guard let tab, tab.browserState == .pendingPopup else { return }
+                    tab.browserState = .created
+                }
+            }
+            return (tab.id, tab.hostView)
+        }
+        guard let openerTab = store.tab(withIdentifier: opener) else { return (0, nil) }
         let tab = store.newTab(url: url, parent: openerTab)
         tab.browserState = .pendingPopup
         tab.needsInitialFocus = true
@@ -75,6 +98,9 @@ extension ShellController {
     }
 
     func focusRequested(_ identifier: MiniTabId) -> Bool {
+        if let littleWindow = littleWindow(containing: identifier) {
+            return littleWindow.window?.isKeyWindow ?? false
+        }
         guard let tab = liveTab(identifier) else { return false }
         return tab === store.selectedTab && !isOverlayActive
     }
@@ -132,6 +158,10 @@ extension ShellController {
     }
 
     func audioStateChanged(_ identifier: MiniTabId, isPlaying: Bool, mediaTitle: String) {
+        if let littleWindow = littleWindow(containing: identifier) {
+            littleWindow.tab.isPlayingAudio = isPlaying
+            return
+        }
         guard let tab = liveTab(identifier) else { return }
         audioStateChanged(tab, isPlaying: isPlaying, mediaTitle: mediaTitle)
     }
@@ -141,7 +171,13 @@ extension ShellController {
             tab.hostView.removeFromSuperview()
             return
         }
-        guard !isTerminating, let tab = liveTab(identifier) else { return }
+        guard !isTerminating else { return }
+        if let littleWindow = littleWindow(containing: identifier) {
+            littleWindow.tab.browserState = .none
+            littleWindow.close()
+            return
+        }
+        guard let tab = liveTab(identifier) else { return }
         tab.browserState = .none
         store.close(tab)
     }

@@ -131,6 +131,20 @@ final class TabStore {
         return tab
     }
 
+    func makeDetachedTab(url: String) -> Tab {
+        let tab = Tab(id: nextIdentifier, url: url, title: "")
+        nextIdentifier += 1
+        return tab
+    }
+
+    func adopt(_ tab: Tab, after sibling: Tab?) {
+        precondition(tabsByIdentifier[tab.id] == nil && tab.id < nextIdentifier, "Adopting a tab the store already holds or did not mint")
+        tabsByIdentifier[tab.id] = tab
+        let index = sibling.map { $0.isPinned ? 0 : position(of: $0, in: rootTabs) + 1 } ?? rootTabs.count
+        insert(tab, into: nil, at: index)
+        observer?.tabStoreDidChangeStructure(self)
+    }
+
     @discardableResult
     func newPinnedTab(pinnedURL: String, url: String, title: String) -> Tab {
         let tab = makeTab(url: url, title: title)

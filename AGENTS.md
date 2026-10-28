@@ -31,6 +31,9 @@ Mini.app/Contents/Frameworks/
 - Notification titles, bodies and tags are never logged.
 - The C header is the contract: change it, then both sides, in the same commit.
 - Auto-archive never closes the selected tab or pinned tabs, and only closes a parent after all its children qualify; it is the only code path that closes tabs without user action besides `browser_closed`.
+- Little windows: `ShellController.littleWindows` (tab id -> controller) is the registry; `BrowserEvents.liveTab` looks there after the store, so every engine callback reaches little-window tabs. They are never in `TabStore`, session.json, the archive or Now Playing. Links stay in the window; `open_tab_requested` (Cmd-click) from one creates a main-window root tab; a popup with an opener gets its own little window. Permission and auth requests from little tabs are answered by remembered decisions or denied (the prompt cards only exist in the main window).
+- Promote (Open in Mini, Cmd-O) reparents the live browser: the tab's host view (with CEF's NSView inside) moves from the little window into `webAreaView` and the same `Tab` object is `TabStore.adopt`ed as a root tab after the selected root, then selected. Verified: page JS state survives (a random number written at load and a running timer continue unchanged after the move, no reload). The little window then closes without `mini_browser_close`.
+- Menu commands resolve their target from the key window: with a little window key, Cmd-W closes it, Cmd-L edits its address, and back/forward/reload/stop/zoom/devtools/PiP/Copy URL act on its tab (`commandBrowserTab`); find and Fill Password stay main-window only.
 - A tab is in at most one split. Closing or pinning either side removes the split (`tabStoreDidChangeSplits` then re-arranges); the partner of the selected tab counts as selected for auto-archive.
 - Split focus follows clicks through a local mouse-down monitor (hit-testing into the partner's host view), not CEF focus callbacks: `focus_requested` refuses focus for every tab but the selected one, so the partner page never focuses itself.
 - Style: no comments unless a genuine trap, full-word names, no em/en dashes, no AI attribution anywhere.
@@ -58,7 +61,8 @@ Mini.app/Contents/Frameworks/
 - `shell/Sources/CMiniCore/module.modulemap`: system-library module pointing at `core/include/mini_core.h` (no header copy).
 - `shell/Sources/Mini/main.swift`: creates `MiniApplication.shared` first, creates Profile/ and Filters/, then `mini_initialize` / run loop / shutdown.
 - `shell/Sources/Mini/MiniApplication.swift`: NSApplication subclass with the CrApp/CefApp protocols; `terminate` starts the quit flow.
-- `shell/Sources/Mini/AppDelegate.swift`: builds the shell, menu and window at launch; dock reopen; URLs from other apps (queued until launch).
+- `shell/Sources/Mini/AppDelegate.swift`: builds the shell, menu and window at launch; dock reopen; URLs from other apps (queued until launch) go to `openExternalURL`, which opens a little window.
+- `shell/Sources/Mini/LittleWindowController.swift`: little window for outside links: 960x680 (clamped to the visible frame) centered on the screen holding the mouse, cascaded 24pt per open little window, standard titlebar with a unified compact NSToolbar (back, forward, centered host field that turns into an editable URL field on Cmd-L, Open in Mini). Its `Tab` is minted by `TabStore.makeDetachedTab` (shared id counter, not registered in the store) and its host view fills the window below `contentLayoutGuide`.
 - `shell/Sources/Mini/BrowserEngine.swift`: the `MiniCallbacks` table; C trampolines hop to the main-actor shell.
 - `shell/Sources/Mini/ShellController.swift`: central coordinator: launch, tab store observer, browser lifecycle, focus model.
 - `shell/Sources/Mini/BrowserEvents.swift`: ShellController extension handling every engine callback.
@@ -129,6 +133,7 @@ Mini.app/Contents/Frameworks/
 - An NSHostingView whose content can be empty (command bar suggestions) must drop `.maxSize` from `sizingOptions`, or its required max-width constraint collapses fixed-width containers.
 - Overlays live in the content item's view (`rootView`), never in the NSSplitView itself (its subviews are panes).
 - In an inactive window AppKit delivers the activating click only to views whose `acceptsFirstMouse` returns true (CEF's browser views do); the split divider overrides it so it drags on the first click.
+- AeroSpace (the tiling window manager on this Mac) tiles every new standard window, so a little window shows at 960x680 only until AeroSpace resizes it; its own frame code is correct (logged 960x681 before tiling).
 - zsh here has `noclobber`: overwrite files with `>|` or an editor, not `>`.
 - `swift build` in this toolchain uses the swiftbuild backend: products live in `shell/.build/out/Products/<Config>/`, so `bundle.sh` asks `swift build --show-bin-path` instead of assuming `.build/<config>/`.
 

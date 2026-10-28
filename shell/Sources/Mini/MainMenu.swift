@@ -39,6 +39,7 @@ enum MainMenu {
         menu.addItem(item("New Child Tab", #selector(ShellController.newChildTab(_:)), "t", [.command, .option], target: commands))
         menu.addItem(item("Reopen Closed Tab", #selector(ShellController.reopenClosedTab(_:)), "t", [.command, .shift], target: commands))
         menu.addItem(item("Open Location", #selector(ShellController.openLocation(_:)), "l", target: commands))
+        menu.addItem(item("Open in Mini", #selector(ShellController.openLittleWindowInMini(_:)), "o", target: commands))
         menu.addItem(.separator())
         menu.addItem(item("Close Tab", #selector(ShellController.closeTab(_:)), "w", target: commands))
         return menu

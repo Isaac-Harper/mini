@@ -27,6 +27,7 @@ final class ShellController: NSObject {
     @ObservationIgnored var closingTabs: [MiniTabId: Tab] = [:]
     @ObservationIgnored private var displayedTabs: [Tab] = []
     @ObservationIgnored private var splitFocusMonitor: Any?
+    @ObservationIgnored private(set) var littleWindows: [MiniTabId: LittleWindowController] = [:]
 
     private static let archiveInterval: TimeInterval = 10 * 60
 
@@ -158,15 +159,78 @@ final class ShellController: NSObject {
     }
 
     func openExternalURL(_ url: URL) {
-        commandBar.close(restoringWebFocus: false)
-        let selectedRoot = store.selectedTab.map(store.rootAncestor)
-        store.select(store.newTab(url: url.absoluteString, parent: nil, after: selectedRoot))
+        openLittleWindow(url: url.absoluteString)
+        NSApp.activate()
+    }
+
+    @discardableResult
+    func openLittleWindow(url: String, createsBrowser: Bool = true) -> LittleWindowController {
+        let tab = store.makeDetachedTab(url: url)
+        let littleWindow = LittleWindowController(tab: tab, shell: self, cascadeIndex: littleWindows.count)
+        littleWindows[tab.id] = littleWindow
+        tab.hostView.onWebViewAttached = { [weak littleWindow] in
+            guard let littleWindow, littleWindow.window?.isKeyWindow == true else { return }
+            littleWindow.focusWebContent()
+        }
+        littleWindow.showWindow(nil)
+        littleWindow.window?.makeKeyAndOrderFront(nil)
+        if createsBrowser, !url.isEmpty {
+            tab.browserState = .created
+            let hostViewPointer = Unmanaged.passUnretained(tab.hostView).toOpaque()
+            url.withCString { mini_browser_create(tab.id, hostViewPointer, $0) }
+        }
+        return littleWindow
+    }
+
+    var keyLittleWindow: LittleWindowController? {
+        guard let keyWindow = NSApp.keyWindow else { return nil }
+        return littleWindows.values.first { $0.window === keyWindow }
+    }
+
+    func littleWindow(containing identifier: MiniTabId) -> LittleWindowController? {
+        littleWindows[identifier]
+    }
+
+    func navigateLittleWindow(_ littleWindow: LittleWindowController, to url: String) {
+        let tab = littleWindow.tab
+        tab.url = url
+        littleWindow.updateAddress()
+        if tab.hasBrowser {
+            url.withCString { mini_browser_load_url(tab.id, $0) }
+        }
+    }
+
+    func promoteLittleWindow(_ littleWindow: LittleWindowController) {
+        let tab = littleWindow.tab
+        guard littleWindows[tab.id] === littleWindow else { return }
+        littleWindows[tab.id] = nil
+        tab.hostView.onWebViewAttached = nil
+        littleWindow.detachHostViewForPromotion()
+        store.adopt(tab, after: store.selectedTab.map(store.rootAncestor))
+        store.select(tab)
         showWindow()
         NSApp.activate()
     }
 
+    func littleWindowWillClose(_ littleWindow: LittleWindowController, promoting: Bool) {
+        guard !promoting else { return }
+        let tab = littleWindow.tab
+        guard littleWindows[tab.id] === littleWindow else { return }
+        littleWindows[tab.id] = nil
+        tab.hostView.onWebViewAttached = nil
+        if tab.hasBrowser {
+            closingTabs[tab.id] = tab
+            mini_browser_close(tab.id)
+        }
+        sitePrompts.discardPrompts(for: [tab])
+        loginFill.close(forTab: tab.id)
+    }
+
     func prepareForTermination() {
         isTerminating = true
+        for littleWindow in littleWindows.values {
+            littleWindow.window?.orderOut(nil)
+        }
         sessionStore.save(store)
     }
 

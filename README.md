@@ -5,6 +5,7 @@ A small, quiet macOS browser for one person. Chromium renders the pages; everyth
 Mini is an open source exploration project: a personal, minimal browser built to explore a native Swift shell over Chromium (CEF).
 
 - Vertical sidebar with nested tabs (a tree), pinned tabs as favicon tiles
+- Links opened from other apps open in a little floating window with back, forward and an Open in Mini button (⌘O) that moves the live page into a tab
 - Split view: two tabs side by side with a draggable divider, shown as one joined row in the sidebar
 - Command bar for URLs, search (with Google suggestions) and switching tabs
 - Built-in ad and tracker blocking (uBlock Origin, EasyList and EasyPrivacy lists)
@@ -58,6 +59,7 @@ To use Mini as your default browser, run `make install` and choose Mini > Set as
 | ⌘T | New tab (command bar) |
 | ⌥⌘T | New child tab |
 | ⌘L | Edit the current address |
+| ⌘O | Move the page in a little window into a tab |
 | ⌘W | Close tab (pinned tabs reset instead) |
 | ⇧⌘T | Reopen closed tab |
 | ⌃Tab, ⌃⇧Tab, ⌥⌘↓, ⌥⌘↑ | Next and previous tab |
@@ -112,7 +114,7 @@ Swift owns everything you see and every focus decision. Rust owns Chromium. They
 
 ## Known limits
 
-- One window and one profile.
+- One main window and one profile. Little windows for outside links deny permission and HTTP sign-in prompts unless the site was already allowed; open the page in Mini to answer them.
 - Web notifications only work while the page is open: Mini replaces the page's `Notification` API and `showNotification` with native macOS notifications, but a service worker cannot show notifications on its own, so push notifications for closed tabs never arrive.
 - Google sometimes refuses sign-in from embedded Chromium with "This browser or app may not be secure".
 
