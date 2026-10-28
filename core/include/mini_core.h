@@ -41,6 +41,50 @@ typedef enum MiniRenderTermination {
   MINI_RENDER_INTEGRITY_FAILURE = 5,
 } MiniRenderTermination;
 
+typedef enum MiniContextMenuFlag {
+  MINI_CONTEXT_LINK = 1 << 0,
+  MINI_CONTEXT_IMAGE = 1 << 1,
+  MINI_CONTEXT_SELECTION = 1 << 2,
+  MINI_CONTEXT_EDITABLE = 1 << 3,
+} MiniContextMenuFlag;
+
+typedef enum MiniEditCapability {
+  MINI_EDIT_CAN_UNDO = 1 << 0,
+  MINI_EDIT_CAN_REDO = 1 << 1,
+  MINI_EDIT_CAN_CUT = 1 << 2,
+  MINI_EDIT_CAN_COPY = 1 << 3,
+  MINI_EDIT_CAN_PASTE = 1 << 4,
+  MINI_EDIT_CAN_DELETE = 1 << 5,
+  MINI_EDIT_CAN_SELECT_ALL = 1 << 6,
+} MiniEditCapability;
+
+// What was right-clicked. x/y are browser view coordinates (top-left origin).
+// Strings are "" when they do not apply; image_url is set only with
+// MINI_CONTEXT_IMAGE. suggestions holds up to five spelling suggestions for
+// misspelled_word.
+typedef struct MiniContextMenu {
+  uint32_t flags;
+  uint32_t edit_capabilities;
+  int32_t x;
+  int32_t y;
+  const char *link_url;
+  const char *image_url;
+  const char *selection_text;
+  const char *misspelled_word;
+  const char *const *suggestions;
+  size_t suggestion_count;
+} MiniContextMenu;
+
+typedef enum MiniEditCommand {
+  MINI_EDIT_UNDO = 0,
+  MINI_EDIT_REDO = 1,
+  MINI_EDIT_CUT = 2,
+  MINI_EDIT_COPY = 3,
+  MINI_EDIT_PASTE = 4,
+  MINI_EDIT_DELETE = 5,
+  MINI_EDIT_SELECT_ALL = 6,
+} MiniEditCommand;
+
 // Every callback is invoked on the main thread. Strings are UTF-8 and only
 // valid for the duration of the call.
 typedef struct MiniCallbacks {
@@ -97,6 +141,12 @@ typedef struct MiniCallbacks {
   // The page entered or left element fullscreen (a video's fullscreen
   // button, requestFullscreen). Leave it with mini_browser_exit_fullscreen.
   void (*fullscreen_mode_changed)(MiniTabId tab, bool fullscreen);
+  // The page wants a context menu. CEF's own menu is always cancelled; the
+  // shell shows a native one and performs its items through mini_browser_*.
+  void (*context_menu_requested)(MiniTabId tab, const MiniContextMenu *menu);
+  // Result of mini_browser_copy_image: PNG bytes, length 0 when the image
+  // could not be loaded.
+  void (*image_copied)(MiniTabId tab, const uint8_t *png, size_t length);
   void (*browser_closed)(MiniTabId tab);
   void (*all_browsers_closed)(void);
 } MiniCallbacks;
@@ -144,6 +194,16 @@ void mini_browser_set_zoom_level(MiniTabId tab, double level);
 void mini_browser_find(MiniTabId tab, const char *text, bool forward, bool find_next);
 void mini_browser_stop_finding(MiniTabId tab);
 void mini_browser_show_dev_tools(MiniTabId tab);
+// Opens devtools with the element at x/y (browser view coordinates) selected.
+void mini_browser_inspect_element(MiniTabId tab, int32_t x, int32_t y);
+// command is a MiniEditCommand, run in the focused frame.
+void mini_browser_edit(MiniTabId tab, int32_t command);
+void mini_browser_replace_misspelling(MiniTabId tab, const char *word);
+void mini_browser_add_word_to_dictionary(MiniTabId tab, const char *word);
+// Loads the image in the tab's space; image_copied delivers it.
+void mini_browser_copy_image(MiniTabId tab, const char *url);
+// Downloads url (in the tab's space) to path, reported by download_updated.
+void mini_browser_save_url(MiniTabId tab, const char *url, const char *path);
 // Makes the page leave element fullscreen; fullscreen_mode_changed follows.
 void mini_browser_exit_fullscreen(MiniTabId tab);
 // Deletes cookies and all storage (local and session storage, IndexedDB,

@@ -52,11 +52,47 @@ pub fn favicon_urls_changed(tab: MiniTabId, browser: &Browser, first_url: Option
     );
 }
 
-fn png_bytes(image: &Image) -> Vec<u8> {
+pub fn copy_image(tab: MiniTabId, browser: &Browser, url: &str) {
+    let mut callback = CopiedImageDownload::new(tab);
+    browser.host().expect("browser has no host").download_image(
+        Some(&CefString::from(url)),
+        0,
+        0,
+        0,
+        Some(&mut callback),
+    );
+}
+
+wrap_download_image_callback! {
+    struct CopiedImageDownload {
+        tab: MiniTabId,
+    }
+
+    impl DownloadImageCallback {
+        fn on_download_image_finished(
+            &self,
+            _image_url: Option<&CefString>,
+            _http_status_code: ::std::os::raw::c_int,
+            image: Option<&mut Image>,
+        ) {
+            if !crate::state::tab_is_live(self.tab) {
+                return;
+            }
+            let png = image
+                .filter(|image| image.is_empty() == 0)
+                .map(|image| png_bytes(image, 1.0))
+                .unwrap_or_default();
+            let pointer = if png.is_empty() { std::ptr::null() } else { png.as_ptr() };
+            unsafe { (callbacks().image_copied)(self.tab, pointer, png.len()) };
+        }
+    }
+}
+
+fn png_bytes(image: &Image, scale_factor: f32) -> Vec<u8> {
     let mut pixel_width = 0;
     let mut pixel_height = 0;
     let Some(png) = image.as_png(
-        SCALE_FACTOR,
+        scale_factor,
         1,
         Some(&mut pixel_width),
         Some(&mut pixel_height),
@@ -89,7 +125,7 @@ wrap_download_image_callback! {
             }
             let png = image
                 .filter(|image| image.is_empty() == 0)
-                .map(|image| png_bytes(image))
+                .map(|image| png_bytes(image, SCALE_FACTOR))
                 .unwrap_or_default();
             report(self.tab, &png);
         }

@@ -32,6 +32,8 @@ pub struct Callbacks {
     pub audio_state_changed: unsafe extern "C" fn(MiniTabId, bool, *const c_char),
     pub status_message_changed: unsafe extern "C" fn(MiniTabId, *const c_char),
     pub fullscreen_mode_changed: unsafe extern "C" fn(MiniTabId, bool),
+    pub context_menu_requested: unsafe extern "C" fn(MiniTabId, *const crate::context_menu::MiniContextMenu),
+    pub image_copied: unsafe extern "C" fn(MiniTabId, *const u8, usize),
     pub browser_closed: unsafe extern "C" fn(MiniTabId),
     pub all_browsers_closed: unsafe extern "C" fn(),
 }
@@ -102,6 +104,12 @@ impl Callbacks {
             fullscreen_mode_changed: table
                 .fullscreen_mode_changed
                 .expect("MiniCallbacks.fullscreen_mode_changed is null"),
+            context_menu_requested: table
+                .context_menu_requested
+                .expect("MiniCallbacks.context_menu_requested is null"),
+            image_copied: table
+                .image_copied
+                .expect("MiniCallbacks.image_copied is null"),
             browser_closed: table
                 .browser_closed
                 .expect("MiniCallbacks.browser_closed is null"),
@@ -131,6 +139,7 @@ pub struct CoreState {
     pub pending_popups: HashMap<i32, MiniTabId>,
     pub download_callbacks: HashMap<u32, DownloadItemCallback>,
     pub request_contexts: HashMap<String, RequestContext>,
+    pub pending_save_paths: HashMap<String, String>,
     pub closing_all: bool,
 }
 
@@ -149,6 +158,7 @@ pub fn install(callbacks: Callbacks) {
             pending_popups: HashMap::new(),
             download_callbacks: HashMap::new(),
             request_contexts: HashMap::new(),
+            pending_save_paths: HashMap::new(),
             closing_all: false,
         });
     });

@@ -2,7 +2,7 @@ use cef::*;
 use std::ffi::c_void;
 
 use crate::{
-    MiniTabId, ad_blocking, authentication, downloads, favicon, login, media, notifications, permissions, webauthn,
+    MiniTabId, ad_blocking, authentication, context_menu, downloads, favicon, login, media, notifications, permissions, webauthn,
     resource_requests::MiniResourceRequestHandler,
     state::{TabState, c_string, callbacks, with_core},
 };
@@ -122,6 +122,10 @@ wrap_client! {
 
         fn download_handler(&self) -> Option<DownloadHandler> {
             Some(MiniDownloadHandler::new())
+        }
+
+        fn context_menu_handler(&self) -> Option<ContextMenuHandler> {
+            Some(context_menu::MiniContextMenuHandler::new(self.tab))
         }
 
         fn permission_handler(&self) -> Option<PermissionHandler> {
@@ -460,11 +464,16 @@ wrap_download_handler! {
         fn on_before_download(
             &self,
             _browser: Option<&mut Browser>,
-            _download_item: Option<&mut DownloadItem>,
+            download_item: Option<&mut DownloadItem>,
             suggested_name: Option<&CefString>,
             callback: Option<&mut BeforeDownloadCallback>,
         ) -> ::std::os::raw::c_int {
-            let destination = downloads::unique_destination(&downloads::downloads_directory(), &text(suggested_name));
+            let item = download_item.expect("before download without an item");
+            let item_urls = [CefString::from(&item.url()).to_string(), CefString::from(&item.original_url()).to_string()];
+            let chosen_path = with_core(|core| item_urls.iter().find_map(|url| core.pending_save_paths.remove(url)));
+            let destination = chosen_path
+                .map(std::path::PathBuf::from)
+                .unwrap_or_else(|| downloads::unique_destination(&downloads::downloads_directory(), &text(suggested_name)));
             let destination = destination.to_str().expect("download path is not UTF-8");
             callback
                 .expect("before download without a callback")

@@ -2,7 +2,7 @@ import AppKit
 import CMiniCore
 
 extension ShellController {
-    private func liveTab(_ identifier: MiniTabId) -> Tab? {
+    func liveTab(_ identifier: MiniTabId) -> Tab? {
         space(containing: identifier)?.store.tab(withIdentifier: identifier) ?? littleWindow(containing: identifier)?.tab
     }
 

@@ -1,6 +1,7 @@
 mod ad_blocking;
 mod authentication;
 mod client;
+mod context_menu;
 mod downloads;
 mod favicon;
 mod login;
@@ -58,6 +59,8 @@ pub struct MiniCallbacks {
     pub audio_state_changed: Option<unsafe extern "C" fn(MiniTabId, bool, *const c_char)>,
     pub status_message_changed: Option<unsafe extern "C" fn(MiniTabId, *const c_char)>,
     pub fullscreen_mode_changed: Option<unsafe extern "C" fn(MiniTabId, bool)>,
+    pub context_menu_requested: Option<unsafe extern "C" fn(MiniTabId, *const context_menu::MiniContextMenu)>,
+    pub image_copied: Option<unsafe extern "C" fn(MiniTabId, *const u8, usize)>,
     pub browser_closed: Option<unsafe extern "C" fn(MiniTabId)>,
     pub all_browsers_closed: Option<unsafe extern "C" fn()>,
 }
@@ -367,19 +370,70 @@ pub extern "C" fn mini_browser_stop_finding(tab: MiniTabId) {
 
 #[unsafe(no_mangle)]
 pub extern "C" fn mini_browser_show_dev_tools(tab: MiniTabId) {
-    let Some(browser) = created_browser(tab) else {
-        return;
-    };
+    if let Some(browser) = created_browser(tab) {
+        show_dev_tools(&browser, None);
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn mini_browser_inspect_element(tab: MiniTabId, x: c_int, y: c_int) {
+    if let Some(browser) = created_browser(tab) {
+        show_dev_tools(&browser, Some(Point { x, y }));
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn mini_browser_edit(tab: MiniTabId, command: c_int) {
+    if let Some(browser) = created_browser(tab) {
+        context_menu::perform_edit(&browser, command);
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn mini_browser_replace_misspelling(tab: MiniTabId, word: *const c_char) {
+    let word = borrowed_text(word, "word");
+    if let Some(browser) = created_browser(tab) {
+        host(&browser).replace_misspelling(Some(&CefString::from(word)));
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn mini_browser_add_word_to_dictionary(tab: MiniTabId, word: *const c_char) {
+    let word = borrowed_text(word, "word");
+    if let Some(browser) = created_browser(tab) {
+        host(&browser).add_word_to_dictionary(Some(&CefString::from(word)));
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn mini_browser_copy_image(tab: MiniTabId, url: *const c_char) {
+    let url = borrowed_text(url, "url");
+    if let Some(browser) = created_browser(tab) {
+        favicon::copy_image(tab, &browser, url);
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn mini_browser_save_url(tab: MiniTabId, url: *const c_char, path: *const c_char) {
+    let url = borrowed_text(url, "url");
+    let path = borrowed_text(path, "path");
+    if let Some(browser) = created_browser(tab) {
+        with_core(|core| core.pending_save_paths.insert(url.to_owned(), path.to_owned()));
+        host(&browser).start_download(Some(&CefString::from(url)));
+    }
+}
+
+fn show_dev_tools(browser: &Browser, inspect_element_at: Option<Point>) {
     let window_info = WindowInfo {
         runtime_style: RuntimeStyle::ALLOY,
         ..Default::default()
     };
     let mut client = DevToolsClient::new();
-    host(&browser).show_dev_tools(
+    host(browser).show_dev_tools(
         Some(&window_info),
         Some(&mut client),
         Some(&BrowserSettings::default()),
-        None,
+        inspect_element_at.as_ref(),
     );
 }
 

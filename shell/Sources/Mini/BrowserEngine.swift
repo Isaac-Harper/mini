@@ -142,6 +142,15 @@ final class BrowserEngine {
             fullscreen_mode_changed: { identifier, fullscreen in
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.fullscreenModeChanged(identifier, fullscreen: fullscreen) }
             },
+            context_menu_requested: { identifier, menu in
+                guard let menu else { preconditionFailure("context_menu_requested without a menu") }
+                let request = PageContextRequest(menu.pointee)
+                MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.contextMenuRequested(identifier, request: request) }
+            },
+            image_copied: { identifier, png, length in
+                let pngData = length > 0 && png != nil ? Data(bytes: png!, count: length) : Data()
+                MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.imageCopied(identifier, pngData: pngData) }
+            },
             browser_closed: { identifier in
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.browserClosed(identifier) }
             },
