@@ -1,4 +1,5 @@
 import CMiniCore
+import MiniRules
 import SwiftUI
 
 extension EnvironmentValues {
@@ -210,6 +211,9 @@ private struct AddressPill: View {
     let shell: ShellController
 
     @State private var isHovered = false
+    @State private var isEditing = false
+    @State private var draft = ""
+    @FocusState private var isFieldFocused: Bool
 
     var body: some View {
         let selected = shell.store.selectedTab
@@ -227,20 +231,46 @@ private struct AddressPill: View {
                         .help("Not Secure: this page is not using HTTPS")
                         .accessibilityLabel("Not Secure")
                 }
-                Button {
-                    shell.commandBar.open(mode: .editCurrent)
-                } label: {
-                    Text(showsFullAddress ? selected?.url ?? "" : host ?? "Search or enter address")
-                        .fadingTruncation()
-                        .foregroundStyle(host == nil ? .tertiary : .secondary)
-                        .padding(.leading, isInsecure ? SidebarMetrics.accessorySpacing : SidebarMetrics.addressPillTextInset)
-                        .frame(height: SidebarMetrics.addressPillHeight)
-                        .contentShape(Rectangle())
+                ZStack(alignment: .leading) {
+                    if isEditing {
+                        TextField("Search or enter address", text: $draft)
+                            .textFieldStyle(.plain)
+                            .padding(.leading, SidebarMetrics.accessorySpacing)
+                            .focused($isFieldFocused)
+                            .onSubmit(commitEditing)
+                            .onKeyPress(.escape) {
+                                cancelEditing()
+                                return .handled
+                            }
+                            .transition(.opacity)
+                    } else {
+                        Button {
+                            if let selected, host != nil {
+                                beginEditing(selected.url)
+                            } else {
+                                shell.commandBar.open(mode: .editCurrent)
+                            }
+                        } label: {
+                            address(selected: selected, host: host, showsFullAddress: showsFullAddress)
+                                .fadingTruncation()
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .focusable(false)
+                        .help(selected?.url ?? "")
+                        .onHover { self.isHovered = $0 }
+                        .transition(.opacity)
+                    }
                 }
-                .buttonStyle(.plain)
-                .focusable(false)
-                .help(selected?.url ?? "")
-                .onHover { self.isHovered = $0 }
+                .padding(.leading, isInsecure ? SidebarMetrics.accessorySpacing : SidebarMetrics.addressPillTextInset)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(height: SidebarMetrics.addressPillHeight)
+                .onChange(of: isFieldFocused) { _, focused in
+                    if !focused, isEditing { endEditing() }
+                }
+                .onChange(of: selected?.id) { _, _ in
+                    if isEditing { endEditing() }
+                }
                 if let selected, selected.hasLoginForm, selected.hasBrowser {
                     Button {
                         shell.fillPassword(nil)
@@ -276,6 +306,43 @@ private struct AddressPill: View {
             }
             .glassEffect(.regular.interactive(), in: Capsule())
         }
+    }
+
+    private func address(selected: Tab?, host: String?, showsFullAddress: Bool) -> Text {
+        guard let selected, host != nil else {
+            return Text("Search or enter address").foregroundStyle(.tertiary)
+        }
+        let emphasis = showsFullAddress ? AddressEmphasis.of(url: selected.url) : AddressEmphasis.of(host: host ?? "")
+        let leading = Text(emphasis.leading).foregroundStyle(.secondary)
+        let domain = Text(emphasis.domain).foregroundStyle(.primary)
+        let trailing = Text(emphasis.trailing).foregroundStyle(.secondary)
+        return Text("\(leading)\(domain)\(trailing)")
+    }
+
+    private func beginEditing(_ url: String) {
+        draft = url
+        withAnimation(.easeOut(duration: 0.15)) { isEditing = true }
+        DispatchQueue.main.async { isFieldFocused = true }
+    }
+
+    private func endEditing() {
+        withAnimation(.easeOut(duration: 0.15)) { isEditing = false }
+    }
+
+    private func cancelEditing() {
+        shell.window.makeFirstResponder(nil)
+        shell.focusSelectedWebContent()
+        endEditing()
+    }
+
+    private func commitEditing() {
+        let query = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+        shell.window.makeFirstResponder(nil)
+        if !query.isEmpty {
+            shell.open(URLInput.interpret(query).url, from: .editCurrent)
+        }
+        shell.focusSelectedWebContent()
+        endEditing()
     }
 }
 

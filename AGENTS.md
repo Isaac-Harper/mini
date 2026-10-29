@@ -113,6 +113,7 @@ Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 - `FadingTruncation.swift`: faded title ends for SwiftUI text and the little window field. (shell-ui)
 - `InterfaceMetrics.swift`: every sidebar and command bar metric on the 4pt grid, and the shared fonts. (shell-ui)
 - `SiteTintView.swift`: sidebar tint from space color, page theme color and the evening tint. (shell-ui)
+- `Sources/MiniRules/AddressEmphasis.swift`: registrable domain split for the address pill, unit tested. (shell-ui)
 - `Sources/MiniRules/EveningTint.swift`: pure evening tint strength curve, in its own target so `Tests/MiniRulesTests` can test it without linking the app. (shell-ui)
 - `SidebarKeyboard.swift`: sidebar keyboard focus. (shell-ui)
 - `SidebarSelection.swift`, `Sources/MiniRules/RowSelection.swift`: multi-select rows (pure range and toggle rules, unit tested) and the group actions. (tabs-and-undo)
