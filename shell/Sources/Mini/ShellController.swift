@@ -32,13 +32,16 @@ final class ShellController: NSObject {
     @ObservationIgnored private var swipeNavigation: SwipeNavigationController?
     @ObservationIgnored private var spaceSwipeController: SpaceSwipeController?
     @ObservationIgnored let spaceSwipe = SpaceSwipeModel()
+    @ObservationIgnored var transferringTabs: Set<MiniTabId> = []
+    @ObservationIgnored var tearOff: TabTearOffTracker!
+    @ObservationIgnored var dockTracker: LittleWindowDockTracker!
     @ObservationIgnored private(set) var notifications: NotificationsController!
     @ObservationIgnored private(set) var isTerminating = false
     @ObservationIgnored var closingTabs: [MiniTabId: Tab] = [:]
     @ObservationIgnored private(set) var displayedTabs: [Tab] = []
     @ObservationIgnored private var splitFocusMonitor: Any?
     @ObservationIgnored private var sidebarTabKeyMonitor: Any?
-    @ObservationIgnored private(set) var littleWindows: [MiniTabId: LittleWindowController] = [:]
+    @ObservationIgnored var littleWindows: [MiniTabId: LittleWindowController] = [:]
     @ObservationIgnored let tabIdentifiers = TabIdentifierMint()
     @ObservationIgnored let rootCacheDirectory: URL
     @ObservationIgnored private let savedSession: SavedSession
@@ -109,6 +112,17 @@ final class ShellController: NSObject {
         statusBubble = StatusBubbleController(shell: self, windowController: windowController)
         swipeNavigation = SwipeNavigationController(shell: self, windowController: windowController)
         spaceSwipeController = SpaceSwipeController(shell: self, sidebarView: windowController.sidebarHostingView)
+        tearOff = TabTearOffTracker(shell: self)
+        dockTracker = LittleWindowDockTracker(shell: self)
+        sidebarDrag.onPointerMoved = { [weak self] tab, point, isReleased in
+            guard let self else { return }
+            if isReleased {
+                self.tearOff.release(tab, at: point)
+            } else {
+                self.tearOff.update(tab, at: point)
+            }
+        }
+        sidebarDrag.onEnd = { [weak self] in self?.tearOff.reset() }
         registerSpacesWithEngine()
         applySpaceAccent()
         for space in spaces {
@@ -293,11 +307,7 @@ final class ShellController: NSObject {
     func promoteLittleWindow(_ littleWindow: LittleWindowController) {
         let tab = littleWindow.tab
         guard littleWindows[tab.id] === littleWindow else { return }
-        littleWindows[tab.id] = nil
-        tab.hostView.onWebViewAttached = nil
-        littleWindow.detachHostViewForPromotion()
-        switchToSpace(littleWindow.space)
-        store.adopt(tab, after: store.selectedTab.map(store.rootAncestor))
+        moveIntoMainWindow(littleWindow)
         store.select(tab)
         showWindow()
         NSApp.activate()
@@ -499,7 +509,7 @@ extension ShellController: TabStoreObserver {
             endPageFullscreen()
         }
         displayedTabs.removeAll { displayed in tabs.contains { $0 === displayed } }
-        for tab in tabs {
+        for tab in tabs where !transferringTabs.contains(tab.id) {
             tab.hostView.isHidden = true
             tab.hostView.onWebViewAttached = nil
             if tab.hasBrowser {

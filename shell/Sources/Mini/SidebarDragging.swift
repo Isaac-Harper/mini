@@ -16,7 +16,11 @@ final class SidebarDragModel {
 
     private(set) var draggedTab: Tab?
     var target: Target?
+    var isDockingWindow = false
 
+    @ObservationIgnored var rowFrames: [MiniTabId: CGRect] = [:]
+    @ObservationIgnored var onPointerMoved: ((Tab, NSPoint, Bool) -> Void)?
+    @ObservationIgnored var onEnd: (() -> Void)?
     @ObservationIgnored private var releaseTimer: Timer?
 
     static let acceptedTypes: [UTType] = [.text]
@@ -25,10 +29,14 @@ final class SidebarDragModel {
         draggedTab = tab
         target = nil
         releaseTimer?.invalidate()
-        let timer = Timer(timeInterval: 0.2, repeats: true) { [weak self] _ in
+        let timer = Timer(timeInterval: 1.0 / 60, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated {
-                guard NSEvent.pressedMouseButtons & 1 == 0 else { return }
-                self?.end()
+                guard let self, let tab = self.draggedTab else { return }
+                let isReleased = NSEvent.pressedMouseButtons & 1 == 0
+                self.onPointerMoved?(tab, NSEvent.mouseLocation, isReleased)
+                if isReleased {
+                    self.end()
+                }
             }
         }
         RunLoop.main.add(timer, forMode: .common)
@@ -41,6 +49,7 @@ final class SidebarDragModel {
         releaseTimer = nil
         draggedTab = nil
         target = nil
+        onEnd?()
     }
 
     var isDraggingUnpinnedTab: Bool {
@@ -178,5 +187,32 @@ struct InsertionLine: View {
             .frame(height: 2)
             .padding(.leading, 4 + CGFloat(depth) * SidebarMetrics.indentation)
             .allowsHitTesting(false)
+    }
+}
+
+extension EnvironmentValues {
+    @Entry var reportsSidebarRowFrames = false
+}
+
+private struct SidebarRowFrameReporter: ViewModifier {
+    let tab: Tab
+    let model: SidebarDragModel
+
+    @Environment(\.reportsSidebarRowFrames) private var reportsFrames
+
+    func body(content: Content) -> some View {
+        if reportsFrames {
+            content.onGeometryChange(for: CGRect.self, of: { $0.frame(in: .global) }) { frame in
+                model.rowFrames[tab.id] = frame
+            }
+        } else {
+            content
+        }
+    }
+}
+
+extension View {
+    func reportsSidebarRowFrame(of tab: Tab, to model: SidebarDragModel) -> some View {
+        modifier(SidebarRowFrameReporter(tab: tab, model: model))
     }
 }

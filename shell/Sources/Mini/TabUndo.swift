@@ -91,6 +91,35 @@ extension ShellController {
         register(TabUndoRecord(actionName: actionName, target: before, source: after), in: store)
     }
 
+    func registerWindowTransfer(_ actionName: String, tab: Tab, store: TabStore, undoMovesIntoWindow: Bool, arrangement: TabArrangementSnapshot, frame: NSRect) {
+        let undoManager = tabUndoManager
+        undoManager.beginUndoGrouping()
+        undoManager.registerUndo(withTarget: store) { [weak self] store in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                let space = self.space(of: store)
+                if space !== self.currentSpace {
+                    self.switchToSpace(space)
+                }
+                if undoMovesIntoWindow {
+                    guard store.tab(withIdentifier: tab.id) === tab else { return }
+                    let current = TabArrangementSnapshot(of: store)
+                    self.moveIntoLittleWindow(tab, from: store, frame: frame)
+                    self.registerWindowTransfer(actionName, tab: tab, store: store, undoMovesIntoWindow: false, arrangement: current, frame: frame)
+                } else {
+                    guard let littleWindow = self.littleWindows[tab.id], let window = littleWindow.window else { return }
+                    let currentFrame = window.frame
+                    self.moveIntoMainWindow(littleWindow)
+                    self.restore(arrangement, replacing: TabArrangementSnapshot(of: store), in: store)
+                    store.select(tab)
+                    self.registerWindowTransfer(actionName, tab: tab, store: store, undoMovesIntoWindow: true, arrangement: arrangement, frame: currentFrame)
+                }
+            }
+        }
+        undoManager.setActionName(actionName)
+        undoManager.endUndoGrouping()
+    }
+
     func forgetTabUndo(for store: TabStore) {
         tabUndoManager.removeAllActions(withTarget: store)
     }

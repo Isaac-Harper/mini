@@ -14,6 +14,7 @@ Mini is an open source exploration project: a personal, minimal browser built to
 - Links opened from other apps open in a little floating window with back, forward and an Open in Mini button (⌘O) that moves the live page into a tab
 - Spaces (Personal and Work to start), each with its own tabs, pins and its own cookies and logins; switch with the buttons at the bottom of the sidebar or ⌃1 to ⌃9
 - Swipe two fingers left or right on the sidebar to move to the next or previous space
+- Drag a tab out of the sidebar onto the page or off the window to tear it off into a little window, live page and all; drag a little window by its toolbar over the sidebar to dock it back
 - Each space has a color (Space > Space Color, or right-click its button) that lightly tints the sidebar and colors the selected row, focus ring and loading line; the page's theme color blends on top
 - Split view: two tabs side by side with a draggable divider, shown as one joined row in the sidebar
 - Command bar for URLs, search (with Google suggestions) and switching tabs

@@ -172,6 +172,56 @@ final class TabStore {
         observer?.tabStoreDidChangeStructure(self)
     }
 
+    func release(_ tab: Tab) {
+        precondition(!tab.isPinned, "Releasing a pinned tab")
+        precondition(tabsByIdentifier[tab.id] === tab, "Releasing a tab the store does not hold")
+        let parent = tab.parent
+        let wasSaved = tab.isSaved
+        let index = position(of: tab, in: siblings(of: tab))
+        let children = tab.children
+        detach(tab)
+        tab.children = []
+        var placeholder: Tab?
+        if let savedURL = tab.savedURL {
+            let freshTab = makeTab(url: savedURL, title: tab.url == savedURL ? tab.title : tab.savedTitle)
+            freshTab.savedURL = savedURL
+            freshTab.savedTitle = tab.savedTitle
+            freshTab.favicon = tab.url == savedURL ? tab.favicon : nil
+            freshTab.isCollapsed = tab.isCollapsed
+            freshTab.lastSelectedAt = tab.lastSelectedAt
+            insert(freshTab, into: parent, at: index)
+            freshTab.children = children
+            for child in children {
+                child.parent = freshTab
+            }
+            placeholder = freshTab
+        } else {
+            for (offset, child) in children.enumerated() {
+                insert(child, into: parent, at: index + offset)
+            }
+        }
+        tab.savedURL = nil
+        tab.savedTitle = ""
+        tabsByIdentifier[tab.id] = nil
+        let splitCount = splits.count
+        splits.removeAll { $0.contains(tab) }
+        let closesSelection = selectedTab === tab
+        if closesSelection {
+            selectedTab = nil
+        }
+        observer?.tabStore(self, didRemove: [tab])
+        if closesSelection {
+            let remaining = parent?.children ?? (wasSaved ? savedRootTabs : rootTabs)
+            let neighbor = placeholder == nil ? (remaining.indices.contains(index) ? remaining[index] : remaining.last) : nil
+            let selectable = selectableTabs.filter { $0 !== placeholder }
+            select(neighbor ?? parent ?? selectable.first { !$0.isSaved } ?? selectable.first)
+        }
+        if splits.count != splitCount {
+            observer?.tabStoreDidChangeSplits(self)
+        }
+        observer?.tabStoreDidChangeStructure(self)
+    }
+
     @discardableResult
     func newPinnedTab(pinnedURL: String, url: String, title: String) -> Tab {
         let tab = makeTab(url: url, title: title)

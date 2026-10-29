@@ -23,7 +23,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
     init(shell: ShellController) {
         windowToolbar = WindowToolbar(commands: shell)
         let sidebarController = NSViewController()
-        sidebarHostingView = SidebarHostingView(rootView: SidebarView(shell: shell))
+        sidebarHostingView = SidebarHostingView(rootView: SidebarView(shell: shell, reportsRowFrames: true))
         sidebarHostingView.onKeyDown = { [weak shell] event in shell?.sidebarKeyDown(event) ?? false }
         sidebarHostingView.onResignKeyboardFocus = { [weak shell] in shell?.sidebarResignedKeyboardFocus() }
         sidebarHostingView.sizingOptions = []

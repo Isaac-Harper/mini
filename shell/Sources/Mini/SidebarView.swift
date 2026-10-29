@@ -14,6 +14,7 @@ extension EnvironmentValues {
 
 struct SidebarView: View {
     let shell: ShellController
+    var reportsRowFrames = false
 
     private var store: TabStore { shell.store }
 
@@ -40,6 +41,19 @@ struct SidebarView: View {
             SiteTintView(spaceColor: shell.currentSpace.color.accent, neighborColor: shell.spaceSwipe.neighbor?.color.accent,
                          swipeProgress: shell.spaceSwipe.progress, color: store.selectedTab?.themeColor)
         }
+        .overlay {
+            if shell.sidebarDrag.isDockingWindow {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(.tint.opacity(0.08))
+                    .strokeBorder(.tint.opacity(0.5), lineWidth: 1.5)
+                    .padding(4)
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+                    .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.15), value: shell.sidebarDrag.isDockingWindow)
+        .environment(\.reportsSidebarRowFrames, reportsRowFrames)
         .tint(Color(nsColor: shell.currentSpace.color.accent))
     }
 

@@ -66,6 +66,18 @@ final class LittleWindowController: NSWindowController, NSWindowDelegate, NSTool
         ).integral
     }
 
+    static func frame(hangingFrom point: NSPoint) -> NSRect {
+        guard let screen = NSScreen.screens.first(where: { NSMouseInRect(point, $0.frame, false) }) ?? NSScreen.main else {
+            preconditionFailure("No screen for the little window")
+        }
+        let visible = screen.visibleFrame
+        let width = min(size.width, visible.width)
+        let height = min(size.height, visible.height)
+        let x = min(max(point.x - width / 2, visible.minX), visible.maxX - width)
+        let y = min(max(point.y + 14 - height, visible.minY), visible.maxY - height)
+        return NSRect(x: x, y: y, width: width, height: height).integral
+    }
+
     private func buildAddressField() {
         addressField.isBordered = false
         addressField.isBezeled = false
@@ -173,6 +185,10 @@ final class LittleWindowController: NSWindowController, NSWindowDelegate, NSTool
         if addressField.currentEditor() == nil {
             focusWebContent()
         }
+    }
+
+    func windowWillMove(_ notification: Notification) {
+        shell.dockTracker.begin(self)
     }
 
     func windowWillClose(_ notification: Notification) {
