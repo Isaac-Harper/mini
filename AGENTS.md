@@ -126,6 +126,7 @@ Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 - `Sources/MiniRules/UnreadTitle.swift`, `UnreadBadgeView.swift`: unread counts parsed from titles (pure, unit tested) and the favicon badge. (shell-ui)
 - `Sources/MiniRules/AddressEmphasis.swift`: address pill split around the registrable domain from an injected resolver (the core's public suffix list), unit tested. (shell-ui)
 - `AddressPillBadges.swift`: the pill's caption chips (preview, dev port, vitals warning dot). (shell-ui)
+- `ReloadTiming.swift`: the reload time label after a user reload. (shell-ui)
 - `VitalsPeek.swift`, `Sources/MiniRules/WebVitals.swift`, `Sources/MiniRules/EdgeHeaders.swift`: the pill's Core Web Vitals popover with the edge badge, unit tested thresholds and header parsing. (shell-ui)
 - `Sources/MiniRules/LocalDevelopment.swift`, `LocalServers.swift`, `DevServerReconnect.swift`: localhost dev tabs, the command bar's local server list from lsof, and the wait-and-reload after connection refused, unit tested rules. (shell-ui)
 - `Sources/MiniRules/PreviewDeployment.swift`, `PreviewSwitching.swift`: preview deployment hosts and the preview/production switch from history, unit tested. (shell-ui)

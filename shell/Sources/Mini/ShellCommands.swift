@@ -153,7 +153,7 @@ extension ShellController: NSMenuItemValidation {
     }
 
     @objc func reloadPage(_ sender: Any?) {
-        if let tab = commandBrowserTab { mini_browser_reload(tab.id) }
+        if let tab = commandBrowserTab { reloadByUser(tab) }
     }
 
     @objc func stopLoading(_ sender: Any?) {

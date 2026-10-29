@@ -18,6 +18,7 @@ extension ShellController {
         }
         if tab.url != url {
             loginFill.close(forTab: identifier)
+            tab.awaitsReloadTiming = false
         }
         cancelDevServerWait(of: tab, unlessShowing: url)
         tab.url = url
@@ -244,9 +245,13 @@ extension ShellController {
         urls.forEach(openExternalURL)
     }
 
-    func pageVitalsChanged(_ identifier: MiniTabId, vitals: WebVitals) {
-        guard let tab = liveTab(identifier), tab.vitals != vitals else { return }
-        tab.vitals = vitals
+    func pageVitalsChanged(_ identifier: MiniTabId, vitals: WebVitals, loadDuration: Double?) {
+        guard let tab = liveTab(identifier) else { return }
+        if let loadDuration, tab.awaitsReloadTiming {
+            tab.awaitsReloadTiming = false
+            showReloadDuration(loadDuration, of: tab)
+        }
+        if tab.vitals != vitals { tab.vitals = vitals }
     }
 
     func mainFrameHeadersReceived(_ identifier: MiniTabId, edge: EdgeSummary?) {

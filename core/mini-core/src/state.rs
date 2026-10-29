@@ -41,7 +41,7 @@ pub struct Callbacks {
     pub video_handed_off: unsafe extern "C" fn(MiniTabId, *const c_char, f64),
     pub source_received: unsafe extern "C" fn(MiniTabId, u64, *const u8, usize),
     pub main_frame_load_failed: unsafe extern "C" fn(MiniTabId, i32, *const c_char),
-    pub page_vitals_changed: unsafe extern "C" fn(MiniTabId, f64, f64, f64, f64),
+    pub page_vitals_changed: unsafe extern "C" fn(MiniTabId, f64, f64, f64, f64, f64),
     pub main_frame_headers_received: unsafe extern "C" fn(MiniTabId, *const c_char),
     pub browser_closed: unsafe extern "C" fn(MiniTabId),
     pub all_browsers_closed: unsafe extern "C" fn(),

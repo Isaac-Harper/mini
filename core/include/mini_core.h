@@ -184,8 +184,10 @@ typedef struct MiniCallbacks {
   // numbers only: largest contentful paint, interaction to next paint and
   // time to first byte in milliseconds (-1 until measured, relative to
   // activation for prerendered pages) and cumulative layout shift (largest
-  // session window). Sent on changes, at most every 250 ms.
-  void (*page_vitals_changed)(MiniTabId tab, double lcp, double inp, double cls, double ttfb);
+  // session window). load is the navigation's start to load event end in
+  // milliseconds (-1 until the load event finished). Sent on changes, at
+  // most every 250 ms.
+  void (*page_vitals_changed)(MiniTabId tab, double lcp, double inp, double cls, double ttfb, double load);
   // A main-frame document response arrived. headers holds only these, one
   // "name: value" per line (absent ones left out): server, age,
   // x-vercel-cache, x-vercel-id, cf-cache-status, cf-ray, x-nextjs-cache,

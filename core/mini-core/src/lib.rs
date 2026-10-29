@@ -76,7 +76,7 @@ pub struct MiniCallbacks {
     pub video_handed_off: Option<unsafe extern "C" fn(MiniTabId, *const c_char, f64)>,
     pub source_received: Option<unsafe extern "C" fn(MiniTabId, u64, *const u8, usize)>,
     pub main_frame_load_failed: Option<unsafe extern "C" fn(MiniTabId, i32, *const c_char)>,
-    pub page_vitals_changed: Option<unsafe extern "C" fn(MiniTabId, f64, f64, f64, f64)>,
+    pub page_vitals_changed: Option<unsafe extern "C" fn(MiniTabId, f64, f64, f64, f64, f64)>,
     pub main_frame_headers_received: Option<unsafe extern "C" fn(MiniTabId, *const c_char)>,
     pub browser_closed: Option<unsafe extern "C" fn(MiniTabId)>,
     pub all_browsers_closed: Option<unsafe extern "C" fn()>,

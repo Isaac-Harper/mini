@@ -345,12 +345,22 @@ private struct AddressPill: View {
                     .hapticFeedback(.press)
                     .glassTooltip("Fill Password")
                 }
+                if let selected, let reloadDuration = selected.reloadDurationText {
+                    Text(reloadDuration)
+                        .font(InterfaceFont.caption)
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                        .lineLimit(1)
+                        .fixedSize()
+                        .transition(.opacity)
+                        .accessibilityLabel("Reloaded in \(reloadDuration)")
+                }
                 if let selected, !selected.url.isEmpty {
                     Button {
                         if selected.isLoading {
                             shell.stopLoading(nil)
                         } else {
-                            shell.reloadSelected()
+                            shell.reloadByUser(selected)
                         }
                     } label: {
                         Image(systemName: selected.isLoading ? "xmark" : "arrow.clockwise")
@@ -366,6 +376,7 @@ private struct AddressPill: View {
                     .glassTooltip(selected.isLoading ? "Stop" : "Reload")
                 }
             }
+            .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: selected?.reloadDurationText)
             .glassEffect(.regular.interactive(), in: Capsule())
             .overlay {
                 if isEditing { FocusRing(cornerRadius: nil).transition(.opacity) }

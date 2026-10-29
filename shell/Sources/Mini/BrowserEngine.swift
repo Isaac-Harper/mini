@@ -185,9 +185,10 @@ final class BrowserEngine {
                 let failedURL = requiredString(failedURL)
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.mainFrameLoadFailed(identifier, errorCode: errorCode, failedURL: failedURL) }
             },
-            page_vitals_changed: { identifier, lcp, inp, cls, ttfb in
+            page_vitals_changed: { identifier, lcp, inp, cls, ttfb, load in
                 MainActor.assumeIsolated {
-                    BrowserEngine.shared.requiredShell.pageVitalsChanged(identifier, vitals: WebVitals(reportedLCP: lcp, inp: inp, cls: cls, ttfb: ttfb))
+                    BrowserEngine.shared.requiredShell.pageVitalsChanged(
+                        identifier, vitals: WebVitals(reportedLCP: lcp, inp: inp, cls: cls, ttfb: ttfb), loadDuration: load < 0 ? nil : load)
                 }
             },
             main_frame_headers_received: { identifier, headers in

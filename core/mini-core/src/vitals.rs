@@ -8,12 +8,12 @@ var key=Symbol.for('mini-vitals-'+__TOKEN__);
 if(window[key])return;
 Object.defineProperty(window,key,{value:true});
 var token=__TOKEN__,frameId=__FRAME__,signal=console.debug.bind(console);
-var state={lcp:-1,cls:0,inp:-1,ttfb:-1},last='',scheduled=false,sessionValue=0,sessionEntries=[],interactions={};
+var state={lcp:-1,cls:0,inp:-1,ttfb:-1,load:-1},last='',scheduled=false,sessionValue=0,sessionEntries=[],interactions={};
 function activation(){var entry=performance.getEntriesByType('navigation')[0];return entry&&entry.activationStart||0;}
 function report(){scheduled=false;var text=JSON.stringify(state);if(text===last)return;last=text;signal(token+':vitals:'+frameId+':'+text);}
 function schedule(){if(scheduled)return;scheduled=true;setTimeout(report,250);}
 function observe(type,options,handler){try{var observer=new PerformanceObserver(function(list){list.getEntries().forEach(handler);schedule();});var settings={type:type,buffered:true};for(var name in options)settings[name]=options[name];observer.observe(settings);}catch(error){}}
-observe('navigation',{},function(entry){state.ttfb=Math.max(0,entry.responseStart-(entry.activationStart||0));});
+observe('navigation',{},function(entry){state.ttfb=Math.max(0,entry.responseStart-(entry.activationStart||0));if(entry.loadEventEnd>0)state.load=Math.max(0,entry.loadEventEnd-(entry.activationStart||0));});
 observe('largest-contentful-paint',{},function(entry){state.lcp=Math.max(0,entry.startTime-activation());});
 observe('layout-shift',{},function(entry){if(entry.hadRecentInput)return;var first=sessionEntries[0],previous=sessionEntries[sessionEntries.length-1];
 if(previous&&entry.startTime-previous.startTime<1000&&entry.startTime-first.startTime<5000){sessionValue+=entry.value;sessionEntries.push(entry);}else{sessionValue=entry.value;sessionEntries=[entry];}
@@ -28,6 +28,7 @@ pub struct Vitals {
     pub cls: f64,
     pub inp: f64,
     pub ttfb: f64,
+    pub load: f64,
 }
 
 pub fn script(frame: &Frame, token: &str) -> String {
@@ -41,7 +42,7 @@ pub fn script(frame: &Frame, token: &str) -> String {
 
 pub fn parse(payload: &str) -> Option<Vitals> {
     let vitals = serde_json::from_str::<Vitals>(payload).ok()?;
-    let values = [vitals.lcp, vitals.cls, vitals.inp, vitals.ttfb];
+    let values = [vitals.lcp, vitals.cls, vitals.inp, vitals.ttfb, vitals.load];
     values.iter().all(|value| value.is_finite() && *value >= -1.0 && *value < 3_600_000.0).then_some(vitals)
 }
 
@@ -56,7 +57,7 @@ pub fn handle_signal(tab: MiniTabId, browser: &Browser, rest: &str) -> bool {
         .frame_by_identifier(Some(&CefString::from(frame_id)))
         .is_some_and(|frame| frame.is_main() == 1);
     if let (true, Some(vitals)) = (is_main_frame, parse(payload)) {
-        unsafe { (callbacks().page_vitals_changed)(tab, vitals.lcp, vitals.inp, vitals.cls, vitals.ttfb) };
+        unsafe { (callbacks().page_vitals_changed)(tab, vitals.lcp, vitals.inp, vitals.cls, vitals.ttfb, vitals.load) };
     }
     true
 }
@@ -68,17 +69,17 @@ mod tests {
     #[test]
     fn parses_the_reported_numbers() {
         assert_eq!(
-            parse(r#"{"lcp":1234.5,"cls":0.12,"inp":-1,"ttfb":88}"#),
-            Some(Vitals { lcp: 1234.5, cls: 0.12, inp: -1.0, ttfb: 88.0 })
+            parse(r#"{"lcp":1234.5,"cls":0.12,"inp":-1,"ttfb":88,"load":-1}"#),
+            Some(Vitals { lcp: 1234.5, cls: 0.12, inp: -1.0, ttfb: 88.0, load: -1.0 })
         );
     }
 
     #[test]
     fn rejects_anything_but_four_sane_numbers() {
-        assert_eq!(parse(r#"{"lcp":"x","cls":0,"inp":0,"ttfb":0}"#), None);
-        assert_eq!(parse(r#"{"lcp":1,"cls":0,"inp":0}"#), None);
-        assert_eq!(parse(r#"{"lcp":-5,"cls":0,"inp":0,"ttfb":0}"#), None);
-        assert_eq!(parse(r#"{"lcp":1e12,"cls":0,"inp":0,"ttfb":0}"#), None);
+        assert_eq!(parse(r#"{"lcp":"x","cls":0,"inp":0,"ttfb":0,"load":0}"#), None);
+        assert_eq!(parse(r#"{"lcp":1,"cls":0,"inp":0,"ttfb":0}"#), None);
+        assert_eq!(parse(r#"{"lcp":-5,"cls":0,"inp":0,"ttfb":0,"load":0}"#), None);
+        assert_eq!(parse(r#"{"lcp":1e12,"cls":0,"inp":0,"ttfb":0,"load":0}"#), None);
         assert_eq!(parse("not json"), None);
     }
 }

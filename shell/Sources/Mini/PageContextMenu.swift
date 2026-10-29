@@ -103,7 +103,7 @@ final class PageContextMenu: NSObject {
         if !request.has(MINI_CONTEXT_LINK), !request.has(MINI_CONTEXT_IMAGE), !request.has(MINI_CONTEXT_SELECTION), !request.has(MINI_CONTEXT_EDITABLE) {
             add(to: menu, "Back", symbol: "chevron.left", enabled: tab.canGoBack) { [tab] in mini_browser_go_back(tab.id) }
             add(to: menu, "Forward", symbol: "chevron.right", enabled: tab.canGoForward) { [tab] in mini_browser_go_forward(tab.id) }
-            add(to: menu, "Reload", symbol: "arrow.clockwise") { [tab] in mini_browser_reload(tab.id) }
+            add(to: menu, "Reload", symbol: "arrow.clockwise") { [shell, tab] in shell.reloadByUser(tab) }
             add(to: menu, "View Source", symbol: "chevron.left.forwardslash.chevron.right") { [tab] in SourceWindowController.show(sourceOf: tab) }
             menu.addItem(.separator())
         }
