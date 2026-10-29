@@ -29,6 +29,7 @@ enum ArchivePolicy {
         let lastSelectedAt: Date
         let isSelected: Bool
         let isSaved: Bool
+        let isFolded: Bool
         let children: [Candidate]
     }
 
@@ -46,7 +47,7 @@ enum ArchivePolicy {
         for child in candidate.children where !collect(child, now: now, into: &archived) {
             everyChildArchived = false
         }
-        guard everyChildArchived, !candidate.isSelected, !candidate.isSaved,
+        guard everyChildArchived, !candidate.isSelected, !candidate.isSaved, !candidate.isFolded,
               now.timeIntervalSince(candidate.lastSelectedAt) >= idleThreshold
         else { return false }
         archived.append(candidate.identifier)

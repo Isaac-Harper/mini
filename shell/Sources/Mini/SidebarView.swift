@@ -127,8 +127,14 @@ struct SpaceTabsView: View {
                         if !savedRows.isEmpty || showsSaveDrop {
                             SavedSectionDivider()
                         }
-                        ForEach(rows.filter { !$0.isSaved }) { visibleTab in
-                            row(for: visibleTab)
+                        ForEach(RegularSidebarItem.items(regularRows: rows.filter { !$0.isSaved }, groups: store.dayFoldGroups)) { item in
+                            switch item {
+                            case .tab(let visibleTab):
+                                row(for: visibleTab)
+                            case .dayFold(let group):
+                                DayFoldRow(shell: shell, group: group)
+                                    .transition(rowTransition)
+                            }
                         }
                         Color.clear
                             .frame(height: SidebarMetrics.rowHeight * 2)

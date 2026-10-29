@@ -50,6 +50,7 @@ struct UndoToastView: View {
                 HStack(spacing: SidebarMetrics.iconSpacing) {
                     Text(message)
                         .foregroundStyle(.primary)
+                        .minimumScaleFactor(0.85)
                     Text("\u{00B7}")
                         .foregroundStyle(.tertiary)
                     Button("Undo") {

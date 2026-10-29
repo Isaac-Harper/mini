@@ -137,6 +137,14 @@ extension ShellController: NSMenuItemValidation {
         showsEveningTint.toggle()
     }
 
+    @objc func toggleClosingTheDay(_ sender: Any?) {
+        closesDayAutomatically.toggle()
+    }
+
+    @objc func closeTheDayNowCommand(_ sender: Any?) {
+        closeTheDayNow()
+    }
+
     @objc func toggleSplitViewCommand(_ sender: Any?) {
         toggleSplitView()
     }
@@ -431,6 +439,9 @@ extension ShellController: NSMenuItemValidation {
             return keyLittleWindow == nil && selected.flatMap(previewCounterpartURL(of:)) != nil
         case #selector(toggleEveningTint(_:)):
             menuItem.state = showsEveningTint ? .on : .off
+            return true
+        case #selector(toggleClosingTheDay(_:)):
+            menuItem.state = closesDayAutomatically ? .on : .off
             return true
         case #selector(toggleTabSidebar(_:)):
             menuItem.title = windowController.isSidebarVisible ? "Hide Sidebar" : "Show Sidebar"

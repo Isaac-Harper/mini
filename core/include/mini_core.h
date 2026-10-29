@@ -236,6 +236,10 @@ void mini_browser_edit(MiniTabId tab, int32_t command);
 // document. True when the page has not reported (fail safe: Cmd-Z belongs to
 // the page). A main-frame navigation resets it to unknown.
 bool mini_browser_has_editable_focus(MiniTabId tab);
+// Whether the user typed into a text field, textarea or contenteditable of the
+// tab's page (in any frame) since it loaded, and has not submitted that form
+// since. A main-frame navigation resets it.
+bool mini_browser_has_unsaved_input(MiniTabId tab);
 void mini_browser_replace_misspelling(MiniTabId tab, const char *word);
 void mini_browser_add_word_to_dictionary(MiniTabId tab, const char *word);
 // Loads the image in the tab's space; image_copied delivers it.

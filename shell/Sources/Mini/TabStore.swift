@@ -22,7 +22,16 @@ struct VisibleTab: Identifiable {
     let depth: Int
     let split: TabSplit?
     let isSaved: Bool
+    let foldDay: Date?
     var id: MiniTabId { tab.id }
+}
+
+struct DayFoldGroup {
+    let day: Date
+    let foldedAt: Date
+    let roots: [Tab]
+    let tabCount: Int
+    let isExpanded: Bool
 }
 
 @MainActor
@@ -58,6 +67,7 @@ final class TabStore {
     private(set) var selectedTab: Tab?
     private(set) var splits: [TabSplit] = []
     var rowSelection = RowSelection<MiniTabId>()
+    private(set) var expandedFoldDays: Set<Date> = []
 
     @ObservationIgnored weak var observer: TabStoreObserver?
     @ObservationIgnored private let identifiers: TabIdentifierMint
@@ -79,10 +89,51 @@ final class TabStore {
         for tab in savedRootTabs {
             appendVisibleSubtree(of: tab, depth: 0, saved: true, to: &rows, emittedSplits: &emittedSplits)
         }
-        for tab in rootTabs {
+        for tab in rootTabs where tab.dayFold == nil {
             appendVisibleSubtree(of: tab, depth: 0, saved: false, to: &rows, emittedSplits: &emittedSplits)
         }
+        for group in dayFoldGroups where group.isExpanded {
+            for tab in group.roots {
+                appendVisibleSubtree(of: tab, depth: 1, saved: false, foldDay: group.day, to: &rows, emittedSplits: &emittedSplits)
+            }
+        }
         return rows
+    }
+
+    var dayFoldGroups: [DayFoldGroup] {
+        let folded = rootTabs.filter { $0.dayFold != nil }
+        let days = Set(folded.compactMap { $0.dayFold?.day }).sorted(by: >)
+        return days.map { day in
+            let roots = folded.filter { $0.dayFold?.day == day }
+            guard let foldedAt = roots.compactMap({ $0.dayFold?.foldedAt }).min() else { preconditionFailure("A fold group without tabs") }
+            return DayFoldGroup(day: day, foldedAt: foldedAt, roots: roots, tabCount: roots.reduce(0) { $0 + $1.subtree.count }, isExpanded: expandedFoldDays.contains(day))
+        }
+    }
+
+    func fold(_ roots: [Tab], into fold: DayFold) {
+        for root in roots {
+            precondition(root.parent == nil && !root.isSaved && !root.isPinned && tabsByIdentifier[root.id] === root, "Only regular root tabs fold")
+            root.dayFold = fold
+        }
+        rowSelection.clear()
+        observer?.tabStoreDidChangeStructure(self)
+    }
+
+    func unfold(day: Date) {
+        for tab in rootTabs where tab.dayFold?.day == day {
+            tab.dayFold = nil
+        }
+        expandedFoldDays.remove(day)
+        observer?.tabStoreDidChangeStructure(self)
+    }
+
+    func setFold(day: Date, expanded: Bool) {
+        if expanded {
+            expandedFoldDays.insert(day)
+        } else {
+            expandedFoldDays.remove(day)
+        }
+        observer?.tabStoreDidChangeStructure(self)
     }
 
     var selectableTabs: [Tab] {
@@ -119,6 +170,8 @@ final class TabStore {
         precondition(tabsByIdentifier[leading.id] === leading && tabsByIdentifier[trailing.id] === trailing, "Splitting a tab that is not in the store")
         precondition(!leading.isPinned && !trailing.isPinned, "Pinned tabs cannot be split")
         splits.removeAll { $0.contains(leading) || $0.contains(trailing) }
+        rootAncestor(of: leading).dayFold = nil
+        rootAncestor(of: trailing).dayFold = nil
         splits.append(TabSplit(leading: leading, trailing: trailing, fraction: fraction))
         observer?.tabStoreDidChangeSplits(self)
         observer?.tabStoreDidChangeStructure(self)
@@ -361,6 +414,7 @@ final class TabStore {
         }
         let previous = selectedTab
         selectedTab = tab
+        if let tab { rootAncestor(of: tab).dayFold = nil }
         tab?.lastSelectedAt = Date()
         tab?.idleFade = 1
         observer?.tabStore(self, didSelect: tab, previous: previous)
@@ -584,17 +638,17 @@ final class TabStore {
         return tab
     }
 
-    private func appendVisibleSubtree(of tab: Tab, depth: Int, saved: Bool, to rows: inout [VisibleTab], emittedSplits: inout Set<ObjectIdentifier>) {
+    private func appendVisibleSubtree(of tab: Tab, depth: Int, saved: Bool, foldDay: Date? = nil, to rows: inout [VisibleTab], emittedSplits: inout Set<ObjectIdentifier>) {
         if let split = split(containing: tab) {
             if emittedSplits.insert(ObjectIdentifier(split)).inserted {
-                rows.append(VisibleTab(tab: tab, depth: depth, split: split, isSaved: saved))
+                rows.append(VisibleTab(tab: tab, depth: depth, split: split, isSaved: saved, foldDay: foldDay))
             }
         } else {
-            rows.append(VisibleTab(tab: tab, depth: depth, split: nil, isSaved: saved))
+            rows.append(VisibleTab(tab: tab, depth: depth, split: nil, isSaved: saved, foldDay: foldDay))
         }
         guard !tab.isCollapsed else { return }
         for child in tab.children {
-            appendVisibleSubtree(of: child, depth: depth + 1, saved: saved, to: &rows, emittedSplits: &emittedSplits)
+            appendVisibleSubtree(of: child, depth: depth + 1, saved: saved, foldDay: foldDay, to: &rows, emittedSplits: &emittedSplits)
         }
     }
 
@@ -621,6 +675,7 @@ final class TabStore {
     }
 
     private func detach(_ tab: Tab) {
+        tab.dayFold = nil
         let index = position(of: tab, in: siblings(of: tab))
         if let parent = tab.parent {
             parent.children.remove(at: index)

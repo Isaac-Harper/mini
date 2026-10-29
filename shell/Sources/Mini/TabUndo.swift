@@ -13,6 +13,7 @@ struct TabArrangementSnapshot {
         let savedURL: String?
         let savedTitle: String
         let isCollapsed: Bool
+        let dayFold: DayFold?
         let children: [Node]
 
         init(_ tab: Tab) {
@@ -24,13 +25,14 @@ struct TabArrangementSnapshot {
             savedURL = tab.savedURL
             savedTitle = tab.savedTitle
             isCollapsed = tab.isCollapsed
+            dayFold = tab.dayFold
             children = tab.children.map(Node.init)
         }
 
         var subtree: [Node] { [self] + children.flatMap(\.subtree) }
 
         var signature: String {
-            "\(tab.id)|\(pinnedURL ?? "")|\(savedURL ?? "")|\(isCollapsed)(\(children.map(\.signature).joined(separator: ",")))"
+            "\(tab.id)|\(pinnedURL ?? "")|\(savedURL ?? "")|\(isCollapsed)|\(dayFold.map { "\($0.day.timeIntervalSinceReferenceDate)" } ?? "")(\(children.map(\.signature).joined(separator: ",")))"
         }
     }
 
@@ -278,6 +280,7 @@ extension ShellController {
             tab.savedURL = node.savedURL
             tab.savedTitle = node.savedTitle
             tab.isCollapsed = node.isCollapsed
+            tab.dayFold = node.dayFold
             tab.children = node.children.map(build)
             for child in tab.children {
                 child.parent = tab

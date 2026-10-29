@@ -1,6 +1,6 @@
 import Foundation
 
-struct SavedSpaceContents: Codable {
+struct SavedSpaceContents: Codable, Sendable {
     enum TabKind: String, Codable {
         case regular
         case saved
@@ -15,6 +15,8 @@ struct SavedSpaceContents: Codable {
         let kind: TabKind?
         let savedURL: String?
         let savedTitle: String?
+        let foldedDay: Date?
+        let foldedAt: Date?
     }
 
     struct SavedPinnedTab: Codable {
@@ -50,11 +52,12 @@ struct SavedSpace: Codable {
 struct SavedSession: Codable {
     let spaces: [SavedSpace]
     let currentSpace: String
+    let closedDay: Date?
 
     static func initial(personalContents: SavedSpaceContents) -> SavedSession {
         let personal = SavedSpace(id: Space.newIdentifier(), name: "Personal", symbol: "person.fill", color: .amber, usesDefaultProfile: true, contents: personalContents)
         let work = SavedSpace(id: Space.newIdentifier(), name: "Work", symbol: "briefcase.fill", color: .blue, usesDefaultProfile: false, contents: .empty)
-        return SavedSession(spaces: [personal, work], currentSpace: personal.id)
+        return SavedSession(spaces: [personal, work], currentSpace: personal.id, closedDay: nil)
     }
 }
 
@@ -62,6 +65,7 @@ struct SavedSession: Codable {
 final class SessionStore {
     private let fileURL: URL
     private var pendingSave: DispatchWorkItem?
+    var closedDay: Date?
 
     init(directory: URL) {
         fileURL = directory.appendingPathComponent("session.json")
@@ -76,6 +80,7 @@ final class SessionStore {
             fatalError("Could not read session at \(fileURL.path): \(error)")
         }
         if let session = try? JSONDecoder().decode(SavedSession.self, from: data), !session.spaces.isEmpty {
+            closedDay = session.closedDay
             return session
         }
         do {
@@ -106,7 +111,8 @@ final class SessionStore {
             spaces: spaces.map { space in
                 SavedSpace(id: space.id, name: space.name, symbol: space.symbol, color: space.color, usesDefaultProfile: space.usesDefaultProfile, contents: Self.contents(of: space.store))
             },
-            currentSpace: current.id
+            currentSpace: current.id,
+            closedDay: closedDay
         )
         do {
             let encoder = JSONEncoder()
@@ -181,6 +187,9 @@ final class SessionStore {
         }
         tab.isCollapsed = savedTab.isCollapsed && !tab.children.isEmpty
         tab.lastSelectedAt = savedTab.lastSelectedAt ?? Date()
+        if parent == nil, !tab.isSaved, let day = savedTab.foldedDay, let foldedAt = savedTab.foldedAt {
+            tab.dayFold = DayFold(day: day, foldedAt: foldedAt)
+        }
     }
 
     private static func savedTab(_ tab: Tab) -> SavedSpaceContents.SavedTab {
@@ -192,7 +201,9 @@ final class SessionStore {
             lastSelectedAt: tab.lastSelectedAt,
             kind: tab.isSaved ? .saved : .regular,
             savedURL: tab.savedURL,
-            savedTitle: tab.isSaved ? tab.savedTitle : nil
+            savedTitle: tab.isSaved ? tab.savedTitle : nil,
+            foldedDay: tab.dayFold?.day,
+            foldedAt: tab.dayFold?.foldedAt
         )
     }
 

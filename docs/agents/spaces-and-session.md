@@ -29,11 +29,11 @@ Detail for spaces (profiles, colors, swipe), session.json and per-space history.
 
 ## session.json
 
-- Shape: `{spaces: [{id, name, symbol, color, usesDefaultProfile, contents: {tabs, selectedPath, pinnedTabs, selectedPinnedIndex, splits}}], currentSpace}`. `tabs` holds saved roots first, then regular roots; every tab carries `kind` (`saved` or `regular`), saved ones also `savedURL` and `savedTitle`.
+- Shape: `{spaces: [{id, name, symbol, color, usesDefaultProfile, contents: {tabs, selectedPath, pinnedTabs, selectedPinnedIndex, splits}}], currentSpace, closedDay}`. Folded regular roots also carry `foldedDay` and `foldedAt` (tabs-and-undo.md, Close the Day); both and `closedDay` are optional, so older files load (no folds, and the first launch closes the day). `tabs` holds saved roots first, then regular roots; every tab carries `kind` (`saved` or `regular`), saved ones also `savedURL` and `savedTitle`.
 - A file without `kind` loads every tab as regular, and the next save writes `kind` everywhere. A space without `color` (older files) gets the next unused palette color in order at load (so Personal amber, Work blue).
 - A file in the pre-spaces shape (top-level `tabs`) is migrated once at load into Personal (person.fill, default profile) plus an empty Work (briefcase.fill), and launch immediately saves the new shape; the old shape is never written.
 - `SessionStore.swift`: session.json encode/restore and debounced saves; splits are saved as tree index paths plus fraction (`splits`); `pinnedTabs`, `selectedPinnedIndex`, `splits` and per-tab `lastSelectedAt` are optional so older files still load (a tab without `lastSelectedAt` counts as just selected).
-- Launch runs the archive pass, so restored unselected regular tabs whose `lastSelectedAt` is more than 12 h old are archived at once (this is what empties stale test seeds; see testing-harness.md).
+- Launch closes the day if a new one started, then runs the archive pass; with Close the Day off, restored unselected regular tabs whose `lastSelectedAt` is more than 12 h old are archived at once (this is what empties stale test seeds; see testing-harness.md).
 
 ## History
 

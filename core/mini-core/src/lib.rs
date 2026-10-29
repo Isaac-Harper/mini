@@ -414,6 +414,11 @@ pub extern "C" fn mini_browser_has_editable_focus(tab: MiniTabId) -> bool {
 }
 
 #[unsafe(no_mangle)]
+pub extern "C" fn mini_browser_has_unsaved_input(tab: MiniTabId) -> bool {
+    with_tab(tab, |state| state.editable_focus.has_unsaved_input())
+}
+
+#[unsafe(no_mangle)]
 pub extern "C" fn mini_browser_replace_misspelling(tab: MiniTabId, word: *const c_char) {
     let word = borrowed_text(word, "word");
     if let Some(browser) = created_browser(tab) {

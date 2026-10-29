@@ -84,6 +84,7 @@ enum MainMenu {
         menu.addItem(item("Hide Sidebar", #selector(ShellController.toggleTabSidebar(_:)), "s", [.command, .control], target: commands, symbol: "sidebar.left"))
         menu.addItem(item("Split View", #selector(ShellController.toggleSplitViewCommand(_:)), "\\", [.command, .control], target: commands, symbol: "rectangle.split.2x1"))
         menu.addItem(item("Evening Tint", #selector(ShellController.toggleEveningTint(_:)), "", target: commands, symbol: "moon"))
+        menu.addItem(item("Close the Day Automatically", #selector(ShellController.toggleClosingTheDay(_:)), "", target: commands, symbol: "moon.zzz"))
         menu.addItem(.separator())
         menu.addItem(item("Reload Page", #selector(ShellController.reloadPage(_:)), "r", target: commands, symbol: "arrow.clockwise"))
         menu.addItem(item("Stop", #selector(ShellController.stopLoading(_:)), ".", target: commands, symbol: "xmark"))
@@ -138,6 +139,7 @@ enum MainMenu {
         menu.addItem(item("Duplicate Tab", #selector(ShellController.duplicateSelectedTab(_:)), "d", [.command, .shift], target: commands, symbol: "plus.square.on.square"))
         menu.addItem(item("Archive Tab", #selector(ShellController.archiveSelectedTabs(_:)), "", target: commands))
         menu.addItem(item("Collapse Group", #selector(ShellController.toggleTabGroup(_:)), "\\", [.command, .option], target: commands, symbol: "rectangle.compress.vertical"))
+        menu.addItem(item("Close the Day Now", #selector(ShellController.closeTheDayNowCommand(_:)), "", target: commands, symbol: "moon.zzz"))
         menu.addItem(.separator())
         for index in 1...9 {
             let title = index == 9 ? "Select Last Tab" : "Select Tab \(index)"

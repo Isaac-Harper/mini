@@ -26,7 +26,7 @@ How Mini gets verified without disturbing the installed app, and the traps found
 - Separate windows (the tear-off preview panel, little windows) are captured by their own window numbers; a capture of the main window does not include them.
 - The sidebar split pane is 8pt wider than `sidebarHostingView` (the floating glass inset), so a scripted divider drag must start at the split view's first arranged subview `maxX`, not at the hosting view's width. A `mouseDown` off the divider returns at once, and the drag events already queued for it then land in the next drag, which looks like a first drag that does not track.
 - Shots requested from a scenario step are taken by a poller, so a scenario that wants a mid-gesture frame must pause after asking for it (the space swipe and tear-off scenarios hold the gesture for over a second); otherwise the capture shows the state after the gesture finished.
-- A seeded session.json carries `lastSelectedAt` timestamps. Once they are more than 12 h old, launch archives every unselected regular tab, so scenarios that look tabs up by title fail with a missing tab. Stamp seeds with the current time (seconds since 2001-01-01) and delete archive.json before each fresh run.
+- A seeded session.json carries `lastSelectedAt` timestamps. Once they are more than 12 h old, launch archives every unselected regular tab when Close the Day is off, and with it on (the default) a seed without a `closedDay` of today folds them into a day group at launch; so scenarios that look tabs up by title fail with a missing tab. Stamp seeds with the current time (seconds since 2001-01-01) and delete archive.json before each fresh run.
 
 ## Driving the app without input devices
 
@@ -36,6 +36,8 @@ How Mini gets verified without disturbing the installed app, and the traps found
 - `chrome://crash` loaded with `load_url` crashes the renderer and fires `on_render_process_terminated` (used to test the crash overlay).
 - Renderer-initiated `window.open` to a `data:` URL is blocked by Chromium; test popups with real URLs.
 - While the print panel is up only common-mode run loop sources fire, so `DispatchQueue.main.asyncAfter` steps wait until it closes; `NSApp.abortModal()` cancels it.
+
+- Close the Day takes its time as a `now:` argument (`closeTheDayIfNeeded(now:)`, `archiveIdleTabs(now:)`), so the harness drives day boundaries, the 4 am rule and group expiry with fake dates; seed `closedDay` with today's logical midnight to keep launch from folding.
 
 ## Shell
 

@@ -21,6 +21,9 @@ final class ShellController: NSObject {
     var showsEveningTint = UserDefaults.standard.object(forKey: ShellController.showsEveningTintKey) as? Bool ?? true {
         didSet { UserDefaults.standard.set(showsEveningTint, forKey: Self.showsEveningTintKey) }
     }
+    var closesDayAutomatically = UserDefaults.standard.object(forKey: ShellController.closesDayAutomaticallyKey) as? Bool ?? true {
+        didSet { UserDefaults.standard.set(closesDayAutomatically, forKey: Self.closesDayAutomaticallyKey) }
+    }
 
     @ObservationIgnored let sitePreferences: SitePreferences
     @ObservationIgnored let archive: ArchiveStore
@@ -28,7 +31,7 @@ final class ShellController: NSObject {
     @ObservationIgnored let history: HistoryLibrary
     @ObservationIgnored var historyWindow: HistoryWindowController?
     @ObservationIgnored private var archiveTimer: Timer?
-    @ObservationIgnored private let sessionStore: SessionStore
+    @ObservationIgnored let sessionStore: SessionStore
     @ObservationIgnored private(set) var windowController: MainWindowController!
     @ObservationIgnored private(set) var commandBar: CommandBarController!
     @ObservationIgnored private(set) var findBar: FindBarController!
@@ -52,7 +55,7 @@ final class ShellController: NSObject {
     @ObservationIgnored var littleWindows: [MiniTabId: LittleWindowController] = [:]
     @ObservationIgnored let tabIdentifiers = TabIdentifierMint()
     @ObservationIgnored let rootCacheDirectory: URL
-    @ObservationIgnored private let savedSession: SavedSession
+    @ObservationIgnored let savedSession: SavedSession
     @ObservationIgnored var pendingSpaceDeletions: [String: Set<MiniTabId>] = [:]
     @ObservationIgnored var pageFullscreen: PageFullscreen?
     @ObservationIgnored var tabUndoReplacements: [MiniTabId: Tab] = [:]
@@ -61,6 +64,7 @@ final class ShellController: NSObject {
 
     private static let archiveInterval: TimeInterval = 10 * 60
     private static let showsEveningTintKey = "ShowsEveningTint"
+    private static let closesDayAutomaticallyKey = "ClosesDayAutomatically"
 
     init(sessionStore: SessionStore, sitePreferences: SitePreferences, archive: ArchiveStore, faviconCache: FaviconCache, history: HistoryLibrary, rootCacheDirectory: URL) {
         self.faviconCache = faviconCache
@@ -167,6 +171,8 @@ final class ShellController: NSObject {
             guard let historyWindow = self?.historyWindow, historyWindow.window?.isVisible == true else { return }
             historyWindow.reload()
         }
+        closeTheDayIfNeeded(includingSavedSelections: true)
+        observeWakeForClosingTheDay()
         archiveIdleTabs()
         weather.start()
         applyCachedFavicons()
@@ -198,18 +204,22 @@ final class ShellController: NSObject {
         let store = space.store
         let selected = store.selectedTab
         let splitPartner = selected.flatMap { store.split(containing: $0)?.partner(of: $0) }
-        func candidate(_ tab: Tab) -> ArchivePolicy.Candidate {
+        func candidate(_ tab: Tab, isFolded: Bool) -> ArchivePolicy.Candidate {
             ArchivePolicy.Candidate(
                 identifier: tab.id,
                 lastSelectedAt: tab.lastSelectedAt,
                 isSelected: tab === selected || tab === splitPartner || tab.isPlayingAudio,
                 isSaved: tab.isSaved,
-                children: tab.children.map(candidate)
+                isFolded: isFolded,
+                children: tab.children.map { candidate($0, isFolded: isFolded) }
             )
         }
-        let identifiers = ArchivePolicy.tabsToArchive(in: store.treeRoots.map(candidate), now: now)
+        let idleIdentifiers = closesDayAutomatically ? [] : ArchivePolicy.tabsToArchive(in: store.treeRoots.map { candidate($0, isFolded: $0.dayFold != nil) }, now: now)
+        let expiredIdentifiers = store.dayFoldGroups
+            .filter { DayClosing.isExpired(foldedAt: $0.foldedAt, now: now, window: ArchivePolicy.idleThreshold) }
+            .flatMap { $0.roots.flatMap(\.subtree).reversed().map(\.id) }
         var archived: [ArchivedTab] = []
-        for identifier in identifiers {
+        for identifier in idleIdentifiers + expiredIdentifiers {
             guard let tab = store.tab(withIdentifier: identifier) else { continue }
             if !tab.url.isEmpty {
                 archived.append(ArchivedTab(url: tab.url, title: tab.displayTitle, archivedAt: now, spaceIdentifier: space.id))

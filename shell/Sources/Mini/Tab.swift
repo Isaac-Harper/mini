@@ -44,6 +44,7 @@ final class Tab: Identifiable {
     var isPausedFromNowPlaying = false
     var themeColor: NSColor?
     var idleFade = 1.0
+    var dayFold: DayFold?
     @ObservationIgnored var horizontalScrollRoom = HorizontalScrollRoom()
 
     @ObservationIgnored weak var parent: Tab?
