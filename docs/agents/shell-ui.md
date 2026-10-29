@@ -6,6 +6,7 @@ Detail for the Swift shell: coordinator, keys and menus, window and page card, s
 
 - `AppDelegate.swift`: builds the shell, menu and window at launch; dock reopen; URLs from other apps (queued until launch) go to `openExternalURL`, which opens a little window.
 - `ShellController.swift`: central coordinator: launch, tab store observer, browser lifecycle, focus model.
+- Page focus across navigations: a navigation swaps Chromium's `RenderWidgetHostViewCocoa` inside `WebContentsViewCocoa` (cross-site and same-site alike; the old view is hidden, not removed, which drops first responder to the window), so the page lost keyboard focus after every pill, command bar or link navigation. `navigate` on the selected tab, and a load that starts while first responder is inside the selected tab's host view, set `Tab.refocusesOnCommit`; `addressChanged` (the commit, by which the new view is in place) clears it and focuses the page again if first responder is then the window or nil. A new tab's first focus still comes from `needsInitialFocus` once its browser view is attached.
 - `BrowserEvents.swift`: ShellController extension handling every engine callback.
 - `BrowserHostView.swift`: NSView that CEF embeds the windowed (non-OSR) browser view into as a subview; sizes subviews to bounds. Switching tabs swaps which host view is visible and calls `mini_browser_set_hidden`.
 

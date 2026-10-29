@@ -50,6 +50,7 @@ final class Tab: Identifiable {
     @ObservationIgnored let hostView = BrowserHostView()
     @ObservationIgnored var browserState = BrowserState.none
     @ObservationIgnored var needsInitialFocus = false
+    @ObservationIgnored var refocusesOnCommit = false
     @ObservationIgnored var lastSelectedAt = Date()
     @ObservationIgnored var hasCrashed = false
     @ObservationIgnored var zoomedHost: String?

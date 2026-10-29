@@ -386,6 +386,7 @@ final class ShellController: NSObject {
     func navigate(_ tab: Tab, to url: String) {
         tab.url = url
         if tab.hasBrowser {
+            tab.refocusesOnCommit = tab === store.selectedTab
             url.withCString { mini_browser_load_url(tab.id, $0) }
         } else if tab === store.selectedTab {
             createBrowser(for: tab)
@@ -500,6 +501,13 @@ final class ShellController: NSObject {
             }
         }
         displayedTabs = shownTabs
+    }
+
+    func refocusAfterCommitIfOrphaned(_ tab: Tab) {
+        guard tab.refocusesOnCommit else { return }
+        tab.refocusesOnCommit = false
+        guard tab === store.selectedTab, window.firstResponder === window || window.firstResponder == nil else { return }
+        focusSelectedWebContent()
     }
 
     func focusIfAwaitingInitialFocus(_ tab: Tab) {

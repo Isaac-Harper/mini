@@ -25,6 +25,7 @@ extension ShellController {
             mini_browser_set_zoom_level(tab.id, host.map(sitePreferences.zoomLevel(host:)) ?? 0)
         }
         littleWindow(containing: identifier)?.updateAddress()
+        refocusAfterCommitIfOrphaned(tab)
         focusIfAwaitingInitialFocus(tab)
         scheduleSessionSave()
     }
@@ -60,6 +61,9 @@ extension ShellController {
         if isLoading, tab.hasCrashed {
             tab.hasCrashed = false
             crashOverlay.refresh()
+        }
+        if isLoading, tab === store.selectedTab, let responder = window.firstResponder as? NSView, responder.isDescendant(of: tab.hostView) {
+            tab.refocusesOnCommit = true
         }
         tab.isLoading = isLoading
         if tab === store.selectedTab {
