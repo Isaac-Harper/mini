@@ -38,7 +38,10 @@ struct CommandSuggestionsView: View {
                         .onHover { isHovering in
                             if isHovering { model.selectedIndex = index }
                         }
-                        .onTapGesture { activate(suggestion) }
+                        .onTapGesture {
+                            if case .action(let action) = suggestion, action.isEnabled { Haptics.controlActivated(.press) }
+                            activate(suggestion)
+                        }
                     if case .openLinks(let links) = suggestion {
                         PastedLinkPreviews(links: links, faviconLookup: faviconLookup)
                     }
@@ -86,6 +89,12 @@ private struct CommandSuggestionRow: View {
                             .foregroundStyle(.secondary)
                             .accessibilityLabel("Saved")
                     }
+                    if case .action(let action) = suggestion, action.isOn {
+                        Image(systemName: "checkmark")
+                            .font(InterfaceFont.accessorySymbol)
+                            .foregroundStyle(.secondary)
+                            .accessibilityLabel("On")
+                    }
                 }
                 if let detail {
                     Text(detail)
@@ -102,6 +111,7 @@ private struct CommandSuggestionRow: View {
         }
         .padding(.horizontal, CommandBarMetrics.rowPadding)
         .frame(height: CommandBarMetrics.rowHeight)
+        .opacity(isDisabled ? 0.4 : 1)
         .background {
             if isSelected {
                 let highlight = RoundedRectangle(cornerRadius: CornerMetrics.concentric(outer: CommandBarMetrics.cornerRadius, inset: CommandBarMetrics.contentInset), style: .continuous)
@@ -113,6 +123,11 @@ private struct CommandSuggestionRow: View {
                 }
             }
         }
+    }
+
+    private var isDisabled: Bool {
+        if case .action(let action) = suggestion { return !action.isEnabled }
+        return false
     }
 
     @ViewBuilder
@@ -140,6 +155,15 @@ private struct CommandSuggestionRow: View {
             }
         case .openLinks:
             Image(systemName: "square.stack").foregroundStyle(.secondary)
+        case .action(let action):
+            Group {
+                if let image = action.image {
+                    Image(nsImage: image).renderingMode(.template)
+                } else {
+                    Image(systemName: "command")
+                }
+            }
+            .foregroundStyle(.secondary)
         }
     }
 
@@ -152,6 +176,7 @@ private struct CommandSuggestionRow: View {
         case .archived(let entry): entry.title
         case .history(let entry): entry.displayTitle
         case .openLinks(let links): "Open \(links.count) Links"
+        case .action(let action): action.title
         }
     }
 
@@ -164,6 +189,7 @@ private struct CommandSuggestionRow: View {
         case .archived(let entry): URLInput.host(of: entry.url)
         case .history(let entry): URLInput.host(of: entry.url)
         case .openLinks: "Return opens them here, \u{2318}Return in the background, \u{2325}Return nested"
+        case .action: nil
         }
     }
 
@@ -176,6 +202,7 @@ private struct CommandSuggestionRow: View {
         case .archived: "Reopen"
         case .history: "Open"
         case .openLinks: "Open All"
+        case .action(let action): action.shortcut
         }
     }
 }

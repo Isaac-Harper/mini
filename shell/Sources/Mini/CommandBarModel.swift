@@ -14,6 +14,7 @@ enum CommandSuggestion: Identifiable {
     case archived(ArchivedTab)
     case history(HistoryEntry)
     case openLinks([PastedLink])
+    case action(CommandAction)
 
     var id: String {
         switch self {
@@ -23,6 +24,7 @@ enum CommandSuggestion: Identifiable {
         case .archived(let entry): "archived-\(entry.url)"
         case .history(let entry): "history-\(entry.url)"
         case .openLinks: "open-links"
+        case .action(let action): "action-\(action.id)"
         }
     }
 
@@ -55,6 +57,7 @@ final class CommandBarModel {
     private static let maximumOtherRows = 5
     private static let maximumHistoryRows = 4
     private static let recentTabCount = 5
+    private static let maximumActionRows = 10
 
     var trimmedQuery: String { query.trimmingCharacters(in: .whitespacesAndNewlines) }
 
@@ -81,6 +84,14 @@ final class CommandBarModel {
         searchSuggestions = []
         suggestions = [.openLinks(links)]
         selectedIndex = 0
+    }
+
+    func showActions(_ actions: [CommandAction]) {
+        let previouslySelectedIdentifier = selectedSuggestion?.id
+        query = ""
+        searchSuggestions = []
+        suggestions = actions.prefix(Self.maximumActionRows).map(CommandSuggestion.action)
+        selectedIndex = suggestions.firstIndex { $0.id == previouslySelectedIdentifier } ?? 0
     }
 
     func update(query: String, tabs: [Tab], selectedTab: Tab?, archived: [ArchivedTab], history: [HistoryEntry]) {

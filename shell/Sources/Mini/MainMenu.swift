@@ -44,6 +44,7 @@ enum MainMenu {
         menu.addItem(item("Reopen Closed Tab", #selector(ShellController.reopenClosedTab(_:)), "t", [.command, .shift], target: commands))
         menu.addItem(item("Open Location", #selector(ShellController.openLocation(_:)), "l", target: commands))
         menu.addItem(item("Open in Mini", #selector(ShellController.openLittleWindowInMini(_:)), "o", target: commands))
+        menu.addItem(item("Open in Safari", #selector(ShellController.openInSafari(_:)), "", target: commands))
         menu.addItem(.separator())
         menu.addItem(item("Print\u{2026}", #selector(ShellController.printPage(_:)), "p", target: commands))
         menu.addItem(.separator())
@@ -67,6 +68,7 @@ enum MainMenu {
         menu.addItem(item("Delete", #selector(NSText.delete(_:)), ""))
         menu.addItem(item("Select All", #selector(NSText.selectAll(_:)), "a"))
         menu.addItem(item("Copy URL", #selector(ShellController.copyTabAddress(_:)), "c", [.command, .shift], target: commands))
+        menu.addItem(item("Copy as Markdown Link", #selector(ShellController.copyTabMarkdownLink(_:)), "c", [.command, .option], target: commands))
         menu.addItem(.separator())
         menu.addItem(item("Find", #selector(ShellController.showFindBar(_:)), "f", target: commands))
         menu.addItem(item("Find Next", #selector(ShellController.findNextMatch(_:)), "g", target: commands))
@@ -134,6 +136,7 @@ enum MainMenu {
         menu.addItem(item("Pin Tab", #selector(ShellController.togglePinnedTab(_:)), "p", [.command, .control], target: commands))
         menu.addItem(item("Save Tab", #selector(ShellController.toggleSavedTab(_:)), "d", target: commands))
         menu.addItem(item("Duplicate Tab", #selector(ShellController.duplicateSelectedTab(_:)), "d", [.command, .shift], target: commands))
+        menu.addItem(item("Archive Tab", #selector(ShellController.archiveSelectedTabs(_:)), "", target: commands))
         menu.addItem(item("Collapse Group", #selector(ShellController.toggleTabGroup(_:)), "\\", [.command, .option], target: commands))
         menu.addItem(.separator())
         for index in 1...9 {

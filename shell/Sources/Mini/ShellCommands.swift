@@ -214,6 +214,16 @@ extension ShellController: NSMenuItemValidation {
         if let tab = store.selectedTab { duplicate(tab) }
     }
 
+    private var archivableTabs: [Tab] {
+        let tabs = store.rowSelection.isMultiple ? selectedRowTabs : store.selectedTab.map { [$0] } ?? []
+        return tabs.filter { !$0.isPinned && !$0.isSaved }
+    }
+
+    @objc func archiveSelectedTabs(_ sender: Any?) {
+        let tabs = archivableTabs
+        if !tabs.isEmpty { archiveTabs(tabs) }
+    }
+
     @objc func moveTabUp(_ sender: Any?) {
         if let tab = store.selectedTab { performUndoable("Move Tab") { store.move(tab, by: -1) } }
     }
@@ -252,6 +262,26 @@ extension ShellController: NSMenuItemValidation {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(url, forType: .string)
         toast.show("Copied")
+    }
+
+    private var commandPageTab: Tab? {
+        guard let tab = keyLittleWindow?.tab ?? store.selectedTab, !tab.url.isEmpty else { return nil }
+        return tab
+    }
+
+    @objc func copyTabMarkdownLink(_ sender: Any?) {
+        guard let tab = commandPageTab else { return }
+        let title = tab.displayTitle.replacingOccurrences(of: "[", with: "\\[").replacingOccurrences(of: "]", with: "\\]")
+        let address = tab.url.replacingOccurrences(of: "(", with: "%28").replacingOccurrences(of: ")", with: "%29")
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString("[\(title)](\(address))", forType: .string)
+        toast.show("Copied")
+    }
+
+    @objc func openInSafari(_ sender: Any?) {
+        guard let tab = commandPageTab, let url = URL(string: tab.url), ["http", "https"].contains(url.scheme?.lowercased()),
+              let safari = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.Safari") else { return }
+        NSWorkspace.shared.open([url], withApplicationAt: safari, configuration: NSWorkspace.OpenConfiguration())
     }
 
     @objc func fillPassword(_ sender: Any?) {
@@ -356,6 +386,14 @@ extension ShellController: NSMenuItemValidation {
             return commandBrowserTab != nil
         case #selector(copyTabAddress(_:)):
             return !((keyLittleWindow?.tab ?? selected)?.url.isEmpty ?? true)
+        case #selector(archiveSelectedTabs(_:)):
+            let count = archivableTabs.count
+            menuItem.title = count > 1 ? "Archive \(count) Tabs" : "Archive Tab"
+            return keyLittleWindow == nil && count > 0
+        case #selector(copyTabMarkdownLink(_:)):
+            return commandPageTab != nil
+        case #selector(openInSafari(_:)):
+            return commandPageTab.flatMap { URL(string: $0.url)?.scheme?.lowercased() }.map { ["http", "https"].contains($0) } ?? false
         case #selector(moveTabUp(_:)), #selector(moveTabDown(_:)):
             return selected != nil
         case #selector(duplicateSelectedTab(_:)):

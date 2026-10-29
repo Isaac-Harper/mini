@@ -129,6 +129,7 @@ Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 - `WeatherService.swift`, `WeatherRowView.swift`, `WeatherWeekView.swift`: weather row and 7-day popover. (shell-ui)
 - `CommandBarController.swift`, `CommandBarModel.swift`, `CommandSuggestionsView.swift`: the command bar. (shell-ui)
 - `PastedLinks.swift`: pasted link lists in the command bar. (shell-ui)
+- `CommandActions.swift`, `Sources/MiniRules/FuzzyMatch.swift`, `Sources/MiniRules/KeyEquivalentText.swift`: the command bar's `>` action list from the main menu, unit tested matching. (shell-ui)
 - `SearchSuggestions.swift`: Google suggestions. (shell-ui)
 - `URLInput.swift`: input to URL or search. (shell-ui)
 - `OverlayAnimation.swift`: shared overlay appear and disappear. (shell-ui)

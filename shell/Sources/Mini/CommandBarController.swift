@@ -176,7 +176,9 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
     private func updateIcon() {
         let trimmed = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         let symbolName: String
-        if !trimmed.isEmpty, case .address = URLInput.interpret(trimmed) {
+        if CommandActions.isActionQuery(trimmed) {
+            symbolName = "command"
+        } else if !trimmed.isEmpty, case .address = URLInput.interpret(trimmed) {
             symbolName = "globe"
         } else {
             symbolName = "magnifyingglass"
@@ -185,6 +187,12 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
     }
 
     private func activate(_ suggestion: CommandSuggestion) {
+        if case .action(let action) = suggestion {
+            guard action.isEnabled else { return }
+            close(restoringWebFocus: true)
+            DispatchQueue.main.async { MainActor.assumeIsolated { CommandActions.perform(action) } }
+            return
+        }
         let mode = self.mode
         close(restoringWebFocus: false)
         switch suggestion {
@@ -200,6 +208,8 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
             shell.open(entry.url, from: mode)
         case .openLinks(let links):
             shell.openLinks(links, inBackground: false, nested: NSApp.currentEvent?.modifierFlags.contains(.option) == true)
+        case .action:
+            preconditionFailure("actions are performed before the switch")
         }
         shell.focusSelectedWebContent()
     }
@@ -211,7 +221,7 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
             return
         }
         let query = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !query.isEmpty else { return }
+        guard !query.isEmpty, !CommandActions.isActionQuery(query) else { return }
         close(restoringWebFocus: true)
         shell.openInBackground(URLInput.interpret(query).url)
     }
@@ -234,6 +244,12 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
         if let pastedSummary, field.stringValue != pastedSummary {
             pastedText = nil
             self.pastedSummary = nil
+        }
+        if pastedText == nil, CommandActions.isActionQuery(field.stringValue) {
+            searchSuggestionFetcher.cancel()
+            withoutAnimation { model.showActions(CommandActions.ranked(CommandActions.actionQuery(of: field.stringValue))) }
+            updateIcon()
+            return
         }
         let links = PastedLinks.parse(pastedText ?? field.stringValue)
         if links.count >= 2 {
@@ -290,6 +306,8 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
             let query = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
             if let suggestion = model.selectedSuggestion {
                 activate(suggestion)
+            } else if CommandActions.isActionQuery(query) {
+                return true
             } else if !query.isEmpty {
                 activate(.open(URLInput.interpret(query)))
             } else {
