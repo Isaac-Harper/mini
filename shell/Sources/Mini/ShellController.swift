@@ -123,6 +123,7 @@ final class ShellController: NSObject {
             }
         }
         sidebarDrag.onEnd = { [weak self] in self?.tearOff.reset() }
+        sidebarDrag.isSavedRow = { [weak self] identifier in self?.store.tab(withIdentifier: identifier)?.isSaved ?? false }
         registerSpacesWithEngine()
         applySpaceAccent()
         for space in spaces {

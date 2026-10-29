@@ -13,6 +13,7 @@ extension ShellController {
         let before = TabArrangementSnapshot(of: store)
         let frame = LittleWindowController.frame(hangingFrom: screenPoint)
         moveIntoLittleWindow(tab, from: store, frame: frame)
+        Haptics.tabTornOff()
         registerWindowTransfer("Tear Off Tab", tab: tab, store: store, undoMovesIntoWindow: false, arrangement: before, frame: frame)
     }
 
@@ -26,6 +27,7 @@ extension ShellController {
             place(tab, at: target, in: store)
         }
         store.select(tab)
+        Haptics.littleWindowDocked()
         registerWindowTransfer("Dock Tab", tab: tab, store: store, undoMovesIntoWindow: true, arrangement: TabArrangementSnapshot(of: store), frame: frame)
     }
 
@@ -114,6 +116,12 @@ final class TabTearOffTracker {
     func update(_ tab: Tab, at point: NSPoint) {
         let isPast = shell.canTearOff(tab) && isBeyondSidebar(point)
         isPastThreshold = isPast
+        if isPast, shell.sidebarDrag.target != nil {
+            shell.sidebarDrag.target = nil
+        }
+        if shell.sidebarDrag.isPastTearOff != isPast {
+            shell.sidebarDrag.isPastTearOff = isPast
+        }
         if isPast {
             preview.show(for: tab, hangingFrom: point)
         } else {
@@ -131,6 +139,9 @@ final class TabTearOffTracker {
 
     func reset() {
         isPastThreshold = false
+        if shell.sidebarDrag.isPastTearOff {
+            shell.sidebarDrag.isPastTearOff = false
+        }
         preview.hide()
     }
 

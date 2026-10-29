@@ -12,6 +12,8 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
     private var controlsCluster: WindowControlsCluster?
     private var peekSidebar: PeekSidebarController?
     private var expandedSidebarWidth: CGFloat = 240
+    private var sidebarCollapseDetent = DetentChange<Bool>()
+    private var sidebarEdgeDetent = DetentEntry<SidebarWidthEdge>()
     private var showsCollapsedControls = false
     private var isToolbarVisible = true
 
@@ -59,10 +61,31 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
         let cluster = WindowControlsCluster(commands: shell, window: window, rootView: rootView)
         controlsCluster = cluster
         peekSidebar = PeekSidebarController(shell: shell, cluster: cluster, rootView: rootView)
-        NotificationCenter.default.addObserver(forName: NSSplitView.didResizeSubviewsNotification, object: splitViewController.splitView, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { self?.updateCollapsedControls() }
+        NotificationCenter.default.addObserver(forName: NSSplitView.didResizeSubviewsNotification, object: splitViewController.splitView, queue: .main) { [weak self] notification in
+            let isDividerDrag = notification.userInfo?["NSSplitViewDividerIndex"] != nil
+            MainActor.assumeIsolated {
+                self?.updateCollapsedControls()
+                self?.noteSidebarResize(isDividerDrag: isDividerDrag)
+            }
         }
         updateCollapsedControls()
+    }
+
+    private func noteSidebarResize(isDividerDrag: Bool) {
+        let isCollapsed = sidebarItem.isCollapsed
+        guard let pane = splitViewController.splitView.arrangedSubviews.first else { preconditionFailure("Split view without a sidebar pane") }
+        pane.layoutSubtreeIfNeeded()
+        let width = sidebarItem.viewController.view.frame.width
+        let edge = isCollapsed ? nil : SidebarWidthEdge.of(width: width, minimum: sidebarItem.minimumThickness, maximum: sidebarItem.maximumThickness)
+        let isDirect = isDividerDrag && [.leftMouseDragged, .leftMouseUp].contains(NSApp.currentEvent?.type)
+        let snapped = sidebarCollapseDetent.update(isCollapsed)
+        let reachedEdge = sidebarEdgeDetent.update(edge)
+        guard isDirect else { return }
+        if snapped {
+            Haptics.sidebarSnappedCollapsed()
+        } else if reachedEdge {
+            Haptics.sidebarReachedWidthLimit()
+        }
     }
 
     private func updateCollapsedControls() {
@@ -300,6 +323,7 @@ final class WebAreaView: NSView {
     private let divider = SplitDividerView()
     private let focusBorder = SplitFocusBorderView()
     private let progressLine = LoadingProgressLineView()
+    private var splitDividerDetent = DetentEntry<SplitDividerDetent>()
     private var progressTabIdentifier: MiniTabId?
     private var progressFraction: CGFloat = 0
 
@@ -412,7 +436,15 @@ final class WebAreaView: NSView {
 
     private func dragDivider(to locationInWindow: NSPoint, finished: Bool) {
         guard let splitArrangement, splitContentWidth > 0 else { return }
-        let x = convert(locationInWindow, from: nil).x - Self.dividerWidth / 2
+        let rawWidth = convert(locationInWindow, from: nil).x - Self.dividerWidth / 2
+        let x = SplitDividerDetent.snappedLeadingWidth(rawWidth, contentWidth: splitContentWidth)
+        let detent = SplitDividerDetent.of(leadingWidth: x, contentWidth: splitContentWidth, minimum: min(Self.minimumSplitSideWidth, splitContentWidth / 2))
+        if splitDividerDetent.update(detent) {
+            detent == .center ? Haptics.splitSnappedToCenter() : Haptics.splitReachedMinimum()
+        }
+        if finished {
+            splitDividerDetent = DetentEntry()
+        }
         let fraction = Double(clampedLeadingWidth(fraction: Double(x / splitContentWidth)) / splitContentWidth)
         self.splitArrangement = SplitArrangement(
             leading: splitArrangement.leading,

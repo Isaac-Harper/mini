@@ -82,6 +82,7 @@ final class SpaceSwipeController {
         var travel: CGFloat = 0
         var verticalTravel: CGFloat = 0
         var axis: SpaceSwipeTravel.Axis?
+        var threshold = ThresholdCrossing()
         var samples: [(time: TimeInterval, delta: CGFloat)] = []
 
         var velocity: CGFloat {
@@ -146,8 +147,12 @@ final class SpaceSwipeController {
         guard current.axis == .horizontal else { return false }
         current.samples.append((ProcessInfo.processInfo.systemUptime, fingersRight))
         if current.samples.count > 12 { current.samples.removeFirst() }
-        gesture = current
         track(current)
+        let progress = model.neighbor == nil ? 0 : abs(model.offset) / max(model.width * SpaceSwipeTravel.commitFraction, 1)
+        if current.threshold.update(progress: progress) {
+            Haptics.spaceSwipeCrossedThreshold()
+        }
+        gesture = current
         return true
     }
 

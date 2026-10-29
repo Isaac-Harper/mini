@@ -15,19 +15,28 @@ final class SidebarDragModel {
     }
 
     private(set) var draggedTab: Tab?
-    var target: Target?
+    var target: Target? {
+        didSet { noteDetent() }
+    }
+    var isPastTearOff = false {
+        didSet { noteDetent() }
+    }
     var isDockingWindow = false
 
     @ObservationIgnored var rowFrames: [MiniTabId: CGRect] = [:]
     @ObservationIgnored var onPointerMoved: ((Tab, NSPoint, Bool) -> Void)?
     @ObservationIgnored var onEnd: (() -> Void)?
+    @ObservationIgnored var isSavedRow: ((MiniTabId) -> Bool)?
+    @ObservationIgnored private var detent = DetentChange<TabDragDetent>()
     @ObservationIgnored private var releaseTimer: Timer?
 
     static let acceptedTypes: [UTType] = [.text]
 
     func beginDrag(_ tab: Tab) -> NSItemProvider {
         draggedTab = tab
+        detent.reset()
         target = nil
+        isPastTearOff = false
         releaseTimer?.invalidate()
         let timer = Timer(timeInterval: 1.0 / 60, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated {
@@ -49,7 +58,25 @@ final class SidebarDragModel {
         releaseTimer = nil
         draggedTab = nil
         target = nil
+        isPastTearOff = false
+        detent.reset()
         onEnd?()
+    }
+
+    func drop(_ tab: Tab, _ perform: () -> Void) {
+        let before = TabPlacement(of: tab)
+        perform()
+        if TabPlacement(of: tab) != before {
+            Haptics.tabDropChangedPlacement()
+        }
+    }
+
+    private func noteDetent() {
+        guard draggedTab != nil else { return }
+        let current = TabDragDetent.of(target, isPastTearOff: isPastTearOff) { [isSavedRow] identifier in isSavedRow?(identifier) ?? false }
+        if detent.update(current) {
+            Haptics.tabDragTargetChanged()
+        }
     }
 
     var isDraggingUnpinnedTab: Bool {
@@ -91,7 +118,9 @@ struct TabRowDropDelegate: DropDelegate {
 
     func performDrop(info: DropInfo) -> Bool {
         guard let dragged = model.draggedTab, shell.store.canMove(dragged, relativeTo: tab) else { return false }
-        shell.performUndoable(dragged.isPinned ? "Unpin Tab" : "Move Tab") { shell.store.move(dragged, relativeTo: tab, position: dropPosition(info)) }
+        model.drop(dragged) {
+            shell.performUndoable(dragged.isPinned ? "Unpin Tab" : "Move Tab") { shell.store.move(dragged, relativeTo: tab, position: dropPosition(info)) }
+        }
         model.end()
         return true
     }
@@ -120,10 +149,12 @@ struct PinnedDropDelegate: DropDelegate {
 
     func performDrop(info: DropInfo) -> Bool {
         guard let dragged = model.draggedTab, validateDrop(info: info) else { return false }
-        if dragged.isPinned {
-            shell.performUndoable("Move Tab") { shell.store.movePinned(dragged, to: index) }
-        } else {
-            shell.performUndoable("Pin Tab") { shell.store.pin(dragged, at: index) }
+        model.drop(dragged) {
+            if dragged.isPinned {
+                shell.performUndoable("Move Tab") { shell.store.movePinned(dragged, to: index) }
+            } else {
+                shell.performUndoable("Pin Tab") { shell.store.pin(dragged, at: index) }
+            }
         }
         model.end()
         return true
@@ -151,7 +182,9 @@ struct TabListEndDropDelegate: DropDelegate {
 
     func performDrop(info: DropInfo) -> Bool {
         guard let dragged = model.draggedTab else { return false }
-        shell.performUndoable(dragged.isPinned ? "Unpin Tab" : "Move Tab") { shell.store.moveToEnd(dragged) }
+        model.drop(dragged) {
+            shell.performUndoable(dragged.isPinned ? "Unpin Tab" : "Move Tab") { shell.store.moveToEnd(dragged) }
+        }
         model.end()
         return true
     }

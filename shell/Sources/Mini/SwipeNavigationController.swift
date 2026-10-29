@@ -19,6 +19,7 @@ final class SwipeNavigationController {
         var verticalTravel: CGFloat = 0
         var direction: Direction?
         var isRejected = false
+        var threshold = ThresholdCrossing()
 
         var progress: CGFloat {
             switch direction {
@@ -111,6 +112,9 @@ final class SwipeNavigationController {
             current.direction = direction
             current.travel = direction == .back ? 0.01 : -0.01
             showIndicator(direction)
+        }
+        if current.threshold.update(progress: current.progress) {
+            Haptics.swipeNavigationCrossedThreshold()
         }
         gesture = current
         updateIndicator(current)

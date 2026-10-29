@@ -84,6 +84,7 @@ final class PeekSidebarController {
         }
         guard NSEvent.pressedMouseButtons == 0, shell.sidebarDrag.draggedTab == nil else { return }
         isPeeking = true
+        Haptics.peekSidebarOpened()
         hideGeneration += 1
         guard let rootView = panel.superview, let leadingConstraint else { return }
         rootView.addSubview(panel, positioned: .above, relativeTo: nil)
