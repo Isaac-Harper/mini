@@ -53,7 +53,7 @@ final class WindowToolbar: NSObject, NSToolbarDelegate {
             preconditionFailure("Missing SF Symbol \(symbolName)")
         }
         let button = HistoryButton(image: image, target: commands, action: action)
-        Self.style(button, label)
+        Self.style(button, label, commands: commands)
         button.menuProvider = { [unowned commands] in commands.historyMenu(forward: forward) }
         let toolbarItem = HistoryToolbarItem(itemIdentifier: identifier)
         toolbarItem.label = label
@@ -70,14 +70,15 @@ final class WindowToolbar: NSObject, NSToolbarDelegate {
         }
         let button = HoverHighlightButton(image: image, target: commands, action: action)
         button.feedback = .toggle
-        Self.style(button, label)
+        Self.style(button, label, commands: commands)
         let toolbarItem = NSToolbarItem(itemIdentifier: identifier)
         toolbarItem.label = label
         toolbarItem.view = button
         return toolbarItem
     }
 
-    static func style(_ button: HoverHighlightButton, _ label: String) {
+    static func style(_ button: HoverHighlightButton, _ label: String, commands: ShellController) {
+        button.focusAccent = { [unowned commands] in commands.currentSpace.color.accent }
         guard let image = button.image else { preconditionFailure("Toolbar button without a symbol") }
         button.isBordered = false
         button.tooltip = label

@@ -9,6 +9,7 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
     private let glassView = NSGlassEffectView()
     private let field = CommandField()
     private let iconView = NSImageView()
+    private let focusRing = FocusRingView()
     private var suggestionsView: OverlayHostingView<CommandSuggestionsView>!
     private let offsetGuide = NSLayoutGuide()
     private var suggestionsHeight: NSLayoutConstraint!
@@ -60,6 +61,9 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
         content.addSubview(iconView)
         content.addSubview(field)
         content.addSubview(suggestionsView)
+        focusRing.translatesAutoresizingMaskIntoConstraints = false
+        focusRing.cornerRadius = CornerMetrics.concentric(outer: CommandBarMetrics.cornerRadius, inset: CommandBarMetrics.contentInset) - FocusRingMetrics.offset
+        content.addSubview(focusRing)
         NSLayoutConstraint.activate([
             iconView.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: CommandBarMetrics.fieldInset),
             iconView.widthAnchor.constraint(equalToConstant: CommandBarMetrics.fieldIconWidth),
@@ -67,6 +71,10 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
             field.leadingAnchor.constraint(equalTo: iconView.trailingAnchor, constant: CommandBarMetrics.fieldIconSpacing),
             field.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -CommandBarMetrics.fieldInset),
             field.topAnchor.constraint(equalTo: content.topAnchor, constant: CommandBarMetrics.fieldTopInset),
+            focusRing.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: CommandBarMetrics.contentInset),
+            focusRing.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -CommandBarMetrics.contentInset),
+            focusRing.topAnchor.constraint(equalTo: content.topAnchor, constant: CommandBarMetrics.contentInset),
+            focusRing.bottomAnchor.constraint(equalTo: field.bottomAnchor, constant: CommandBarMetrics.contentInset),
             suggestionsView.leadingAnchor.constraint(equalTo: content.leadingAnchor),
             suggestionsView.trailingAnchor.constraint(equalTo: content.trailingAnchor),
             suggestionsView.topAnchor.constraint(equalTo: field.bottomAnchor, constant: CommandBarMetrics.suggestionsTopSpacing),
@@ -118,6 +126,7 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
             model.showRecentTabs(from: store.allTabs, excluding: store.selectedTab)
         }
         updateIcon()
+        focusRing.accent = shell.currentSpace.color.accent
         shell.localServers.onChange = { [weak self] in self?.localServersChanged() }
         model.setLocalServers(shell.localServers.servers)
         shell.localServers.refreshIfStale()

@@ -147,7 +147,7 @@ final class WindowControlsCluster {
         }
         let button = HoverHighlightButton(image: image, target: commands, action: action)
         button.feedback = .toggle
-        WindowToolbar.style(button, label)
+        WindowToolbar.style(button, label, commands: commands)
         return button
     }
 
@@ -156,7 +156,7 @@ final class WindowControlsCluster {
             preconditionFailure("Missing SF Symbol \(symbolName)")
         }
         let button = HistoryButton(image: image, target: commands, action: action)
-        WindowToolbar.style(button, label)
+        WindowToolbar.style(button, label, commands: commands)
         button.menuProvider = { [unowned commands] in commands.historyMenu(forward: forward) }
         return button
     }

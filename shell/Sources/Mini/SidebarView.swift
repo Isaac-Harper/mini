@@ -189,6 +189,7 @@ struct SpaceTabsView: View {
             }
         }
         .transition(rowTransition)
+        .zIndex(shell.sidebarKeyboard.focusedTabIdentifier == visibleTab.tab.id ? 1 : 0)
     }
 }
 
@@ -365,6 +366,9 @@ private struct AddressPill: View {
                 }
             }
             .glassEffect(.regular.interactive(), in: Capsule())
+            .overlay {
+                if isEditing { FocusRing(cornerRadius: nil).transition(.opacity) }
+            }
         }
     }
 

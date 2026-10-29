@@ -46,6 +46,29 @@ class HoverHighlightButton: NSButton, TooltipText {
     }
 
     var tooltipText: String { tooltip }
+    var focusAccent: (() -> NSColor)?
+
+    private let focusRing = FocusRingLayer()
+
+    override func becomeFirstResponder() -> Bool {
+        let accepted = super.becomeFirstResponder()
+        if accepted { showFocusRing(true) }
+        return accepted
+    }
+
+    override func resignFirstResponder() -> Bool {
+        let accepted = super.resignFirstResponder()
+        if accepted { showFocusRing(false) }
+        return accepted
+    }
+
+    private func showFocusRing(_ shown: Bool) {
+        focusRingType = .none
+        wantsLayer = true
+        if focusRing.superlayer == nil { layer?.addSublayer(focusRing) }
+        focusRing.update(around: bounds, cornerRadius: hoverCornerRadius, accent: focusAccent?() ?? .controlAccentColor)
+        focusRing.isHidden = !shown
+    }
     var feedback: ControlFeedback = .press
     var bouncesOnPress = true
 

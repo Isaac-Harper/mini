@@ -116,6 +116,7 @@ Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 - `FadingTruncation.swift`: faded title ends for SwiftUI text and the little window field. (shell-ui)
 - `GlassTooltip.swift`: the one glass tooltip for SwiftUI and AppKit controls. (shell-ui)
 - `LaunchReveal.swift`: the once-per-launch sidebar and page card reveal. (shell-ui)
+- `FocusRing.swift`: the space-colored keyboard focus ring. (shell-ui)
 - `HoverHighlight.swift`: the shared hover highlight for SwiftUI and AppKit controls. (shell-ui)
 - `InterfaceMetrics.swift`: every sidebar and command bar metric on the 4pt grid, and the shared fonts. (shell-ui)
 - `SiteTintView.swift`: sidebar tint from space color, page theme color and the evening tint. (shell-ui)
