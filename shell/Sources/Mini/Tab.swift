@@ -22,6 +22,7 @@ final class Tab: Identifiable {
     var isPlayingAudio = false
     var isAudioMuted = false
     var mediaTitle = ""
+    var mediaVideoURL = ""
     var mediaArtwork: NSImage? {
         didSet { mediaArtworkTint = mediaArtwork.flatMap(DominantColor.of) }
     }

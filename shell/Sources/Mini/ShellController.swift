@@ -13,6 +13,8 @@ final class ShellController: NSObject {
     let weatherPopover = WeatherPopoverPresenter()
     let sidebarDrag = SidebarDragModel()
     let sidebarKeyboard = SidebarKeyboardFocus()
+    let airPlay = AirPlayVideo()
+    let soundOutput = SoundOutput()
     private(set) var nowPlayingTab: Tab?
     private(set) var eveningTintDate = Date()
     var showsEveningTint = UserDefaults.standard.object(forKey: ShellController.showsEveningTintKey) as? Bool ?? true {
@@ -235,14 +237,22 @@ final class ShellController: NSObject {
 
     func togglePlayback(of tab: Tab) {
         guard tab.hasBrowser else { return }
+        if airPlay.tab === tab {
+            airPlay.togglePlayback()
+            return
+        }
         let play = !tab.isPlayingAudio
         tab.isPausedFromNowPlaying = !play
         mini_browser_control_media(tab.id, play)
     }
 
-    func audioStateChanged(_ tab: Tab, isPlaying: Bool, mediaTitle: String) {
+    func audioStateChanged(_ tab: Tab, isPlaying: Bool, mediaTitle: String, mediaVideoURL: String) {
         tab.isPlayingAudio = isPlaying
         tab.mediaTitle = mediaTitle
+        if airPlay.tab === tab, isPlaying || mediaVideoURL != tab.mediaVideoURL {
+            airPlay.end(takingBack: false)
+        }
+        tab.mediaVideoURL = mediaVideoURL
         if isPlaying {
             tab.isPausedFromNowPlaying = false
             nowPlayingTab = tab
@@ -252,6 +262,9 @@ final class ShellController: NSObject {
     }
 
     func forgetNowPlaying(_ tabs: [Tab]) {
+        if let handedOff = airPlay.tab, tabs.contains(where: { $0 === handedOff }) {
+            airPlay.end(takingBack: false)
+        }
         guard let current = nowPlayingTab, tabs.contains(where: { $0 === current }) else { return }
         nowPlayingTab = allSpaceTabs.first { $0.isPlayingAudio }
     }

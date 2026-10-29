@@ -13,6 +13,8 @@ if(window[key])return;
 var token=__TOKEN__,frameId=__FRAME__,signal=console.debug.bind(console),last='',pausedByMini=[],scheduled=false;
 function media(){return Array.prototype.slice.call(document.querySelectorAll('video,audio'));}
 function audible(element){return !element.paused&&!element.ended&&!element.muted&&element.volume>0&&element.readyState>2;}
+function directSource(element){return element.tagName==='VIDEO'&&!element.srcObject&&/^https?:/i.test(element.currentSrc)?element.currentSrc:'';}
+function sourced(url){return media().filter(function(element){return url&&element.currentSrc===url;});}
 function artwork(metadata){var best='',area=-1;
 if(metadata&&metadata.artwork)Array.prototype.forEach.call(metadata.artwork,function(item){if(!item||!item.src)return;var size=0;String(item.sizes||'').split(/\s+/).forEach(function(entry){var match=/^(\d+)x(\d+)$/i.exec(entry);if(match)size=Math.max(size,match[1]*match[2]);});if(size>=area){area=size;best=item.src;}});
 if(!best){var video=media().filter(function(element){return element.tagName==='VIDEO'&&audible(element)&&element.poster;})[0];if(video)best=video.poster;}
@@ -21,13 +23,16 @@ function report(){scheduled=false;
 var playing=media().some(audible);
 var metadata=navigator.mediaSession&&navigator.mediaSession.metadata;
 var title=metadata?[metadata.title,metadata.artist].filter(Boolean).join(' · '):'';
-var state=JSON.stringify({playing:playing,title:title,artwork:playing?artwork(metadata):''});
+var video=playing?media().filter(audible).map(directSource).filter(Boolean)[0]||'':'';
+var state=JSON.stringify({playing:playing,title:title,artwork:playing?artwork(metadata):'',video:video});
 if(state===last)return;last=state;signal(token+':media:'+frameId+':'+state);}
 function schedule(){if(scheduled)return;scheduled=true;setTimeout(report,250);}
 ['play','playing','pause','ended','volumechange','emptied','loadedmetadata'].forEach(function(type){document.addEventListener(type,schedule,true);});
 Object.defineProperty(window,key,{value:{
 pause:function(){pausedByMini=media().filter(audible);pausedByMini.forEach(function(element){element.pause();});},
-resume:function(){var targets=pausedByMini.length?pausedByMini:media().filter(function(element){return element.paused&&element.currentTime>0;}).slice(-1);pausedByMini=[];targets.forEach(function(element){element.play().catch(function(){});});}
+resume:function(){var targets=pausedByMini.length?pausedByMini:media().filter(function(element){return element.paused&&element.currentTime>0;}).slice(-1);pausedByMini=[];targets.forEach(function(element){element.play().catch(function(){});});},
+handOff:function(url){var targets=sourced(url);if(!targets.length)return;targets.forEach(function(element){element.pause();});signal(token+':media-handoff:'+frameId+':'+JSON.stringify({video:url,position:targets[0].currentTime}));},
+takeBack:function(url,position,play){sourced(url).forEach(function(element){element.currentTime=position;if(play)element.play().catch(function(){});});}
 }});
 })();"#;
 
@@ -48,15 +53,28 @@ struct MediaState {
     title: String,
     #[serde(default)]
     artwork: String,
+    #[serde(default)]
+    video: String,
+}
+
+#[derive(Deserialize)]
+struct Handoff {
+    video: String,
+    position: f64,
 }
 
 #[derive(Clone, Default, PartialEq)]
 pub struct PlayingFrame {
     title: String,
     artwork: String,
+    video: String,
 }
 
 pub fn handle_signal(tab: MiniTabId, rest: &str) -> bool {
+    if let Some(rest) = rest.strip_prefix(":media-handoff:") {
+        handle_handoff(tab, rest);
+        return true;
+    }
     let Some(rest) = rest.strip_prefix(":media:") else {
         return false;
     };
@@ -73,11 +91,17 @@ pub fn handle_signal(tab: MiniTabId, rest: &str) -> bool {
             } else {
                 String::new()
             };
+            let video = if is_video_url(&state.video) {
+                state.video
+            } else {
+                String::new()
+            };
             frames.insert(
                 frame_id.to_owned(),
                 PlayingFrame {
                     title: state.title,
                     artwork,
+                    video,
                 },
             );
         } else {
@@ -85,6 +109,26 @@ pub fn handle_signal(tab: MiniTabId, rest: &str) -> bool {
         }
     });
     true
+}
+
+fn handle_handoff(tab: MiniTabId, rest: &str) {
+    let Some((_, payload)) = rest.split_once(':') else {
+        return;
+    };
+    let Ok(handoff) = serde_json::from_str::<Handoff>(payload) else {
+        return;
+    };
+    if !is_video_url(&handoff.video) || !handoff.position.is_finite() || handoff.position < 0.0 {
+        return;
+    }
+    let video = c_string(&handoff.video);
+    unsafe { (callbacks().video_handed_off)(tab, video.as_ptr(), handoff.position) };
+}
+
+fn is_video_url(url: &str) -> bool {
+    ["https:", "http:"]
+        .iter()
+        .any(|scheme| url.starts_with(scheme))
 }
 
 fn is_artwork_url(url: &str) -> bool {
@@ -111,9 +155,17 @@ fn update(
             &state.media_title,
             media_title(&state.playing_frames),
         );
-        let report = (playing != was_playing || title != state.media_title)
-            .then(|| (playing, title.clone()));
+        let video = kept_while_idle(
+            playing,
+            is_new_document,
+            &state.media_video,
+            video_url(&state.playing_frames),
+        );
+        let report =
+            (playing != was_playing || title != state.media_title || video != state.media_video)
+                .then(|| (playing, title.clone(), video.clone()));
         state.media_title = title;
+        state.media_video = video;
         let artwork = kept_while_idle(
             playing,
             is_new_document,
@@ -129,9 +181,10 @@ fn update(
         };
         (report, artwork_change)
     });
-    if let Some((playing, title)) = report {
+    if let Some((playing, title, video)) = report {
         let title = c_string(&title);
-        unsafe { (callbacks().audio_state_changed)(tab, playing, title.as_ptr()) };
+        let video = c_string(&video);
+        unsafe { (callbacks().audio_state_changed)(tab, playing, title.as_ptr(), video.as_ptr()) };
     }
     if let Some((url, generation, browser)) = artwork {
         match browser {
@@ -163,6 +216,15 @@ fn media_title(frames: &std::collections::BTreeMap<String, PlayingFrame>) -> Str
         .values()
         .map(|frame| &frame.title)
         .find(|title| !title.is_empty())
+        .cloned()
+        .unwrap_or_default()
+}
+
+fn video_url(frames: &std::collections::BTreeMap<String, PlayingFrame>) -> String {
+    frames
+        .values()
+        .map(|frame| &frame.video)
+        .find(|video| !video.is_empty())
         .cloned()
         .unwrap_or_default()
 }
@@ -220,10 +282,29 @@ pub fn reset(tab: MiniTabId) {
 }
 
 pub fn control(browser: &Browser, token: &str, play: bool) {
+    run_in_every_frame(browser, token, if play { "resume()" } else { "pause()" });
+}
+
+pub fn hand_off_video(browser: &Browser, token: &str, video: &str) {
+    let call = format!("handOff({})", javascript_string_literal(video));
+    run_in_every_frame(browser, token, &call);
+}
+
+pub fn take_back_video(browser: &Browser, token: &str, video: &str, position: f64, play: bool) {
+    let call = format!(
+        "takeBack({},{},{})",
+        javascript_string_literal(video),
+        position,
+        play
+    );
+    run_in_every_frame(browser, token, &call);
+}
+
+fn run_in_every_frame(browser: &Browser, token: &str, call: &str) {
     let script = format!(
-        "(function(){{var api=window[Symbol.for('mini-media-'+{})];if(api)api.{}();}})();",
+        "(function(){{var api=window[Symbol.for('mini-media-'+{})];if(api)api.{}}})();",
         javascript_string_literal(token),
-        if play { "resume" } else { "pause" }
+        call
     );
     let mut identifiers = CefStringList::new();
     browser.frame_identifiers(Some(&mut identifiers));
@@ -249,6 +330,7 @@ mod tests {
         PlayingFrame {
             title: title.to_owned(),
             artwork: artwork.to_owned(),
+            video: String::new(),
         }
     }
 
@@ -261,6 +343,31 @@ mod tests {
         assert!(!is_artwork_url("javascript:alert(1)"));
         assert!(!is_artwork_url("file:///etc/passwd"));
         assert!(!is_artwork_url(""));
+    }
+
+    #[test]
+    fn handed_off_videos_are_web_urls_only() {
+        assert!(is_video_url("https://example.com/movie.mp4"));
+        assert!(is_video_url("http://127.0.0.1/stream.m3u8"));
+        assert!(!is_video_url("blob:https://www.youtube.com/0b5c"));
+        assert!(!is_video_url("data:video/mp4;base64,AAAA"));
+        assert!(!is_video_url("file:///Users/movie.mp4"));
+        assert!(!is_video_url(""));
+    }
+
+    #[test]
+    fn video_comes_from_the_first_frame_that_plays_one() {
+        let mut frames = std::collections::BTreeMap::new();
+        frames.insert("a".to_owned(), frame("Song", ""));
+        assert_eq!(video_url(&frames), "");
+        frames.insert(
+            "b".to_owned(),
+            PlayingFrame {
+                video: "https://example.com/movie.mp4".to_owned(),
+                ..frame("", "")
+            },
+        );
+        assert_eq!(video_url(&frames), "https://example.com/movie.mp4");
     }
 
     #[test]

@@ -31,6 +31,7 @@ Mini is an open source exploration project: a personal, minimal browser built to
 - A crashed page shows a Reload button instead of a blank tab
 - Web notifications appear as macOS notifications after you allow them for a site (View > Allow Notifications from This Site turns them on or off); clicking one returns you to its tab
 - A Now Playing row with the track's artwork (or the video poster, or the site icon), softly tinted to match, and play/pause for the tab that last started audio; a speaker icon on playing tabs mutes them
+- AirPlay from the Now Playing row: a video with its own file or HLS source plays on an Apple TV or AirPlay TV through the native device list, picking up where the page was and handing back when it ends; streamed video (YouTube and other MediaSource players) can't be handed over, so the button offers the Mac's sound output and display mirroring instead
 - A one-line weather row at the bottom of the sidebar (Open-Meteo, city-level location; hover for the 7-day forecast, click to search the weather)
 - Fullscreen video fills the whole screen; the sidebar and page card come back when it ends
 - View > Clear Data for This Site deletes that site's cookies and storage in the current space

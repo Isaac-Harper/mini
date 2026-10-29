@@ -60,7 +60,7 @@ pub struct MiniCallbacks {
         unsafe extern "C" fn(MiniTabId, *const c_char, u32, *const c_char, *const c_char, *const c_char, *const c_char, bool),
     >,
     pub notification_close: Option<unsafe extern "C" fn(MiniTabId, *const c_char, u32)>,
-    pub audio_state_changed: Option<unsafe extern "C" fn(MiniTabId, bool, *const c_char)>,
+    pub audio_state_changed: Option<unsafe extern "C" fn(MiniTabId, bool, *const c_char, *const c_char)>,
     pub status_message_changed: Option<unsafe extern "C" fn(MiniTabId, *const c_char)>,
     pub fullscreen_mode_changed: Option<unsafe extern "C" fn(MiniTabId, bool)>,
     pub loading_progress_changed: Option<unsafe extern "C" fn(MiniTabId, f64)>,
@@ -69,6 +69,7 @@ pub struct MiniCallbacks {
     pub context_menu_requested: Option<unsafe extern "C" fn(MiniTabId, *const context_menu::MiniContextMenu)>,
     pub image_copied: Option<unsafe extern "C" fn(MiniTabId, *const u8, usize)>,
     pub media_artwork_changed: Option<unsafe extern "C" fn(MiniTabId, *const u8, usize)>,
+    pub video_handed_off: Option<unsafe extern "C" fn(MiniTabId, *const c_char, f64)>,
     pub browser_closed: Option<unsafe extern "C" fn(MiniTabId)>,
     pub all_browsers_closed: Option<unsafe extern "C" fn()>,
     pub app_relaunched: Option<unsafe extern "C" fn(*const *const c_char, usize)>,
@@ -541,6 +542,31 @@ pub extern "C" fn mini_browser_set_muted(tab: MiniTabId, muted: bool) {
 pub extern "C" fn mini_browser_control_media(tab: MiniTabId, play: bool) {
     if let Some(browser) = created_browser(tab) {
         media::control(&browser, login::token(), play);
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn mini_browser_hand_off_video(tab: MiniTabId, video_url: *const c_char) {
+    let video_url = borrowed_text(video_url, "video_url");
+    if let Some(browser) = created_browser(tab) {
+        media::hand_off_video(&browser, login::token(), video_url);
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn mini_browser_take_back_video(
+    tab: MiniTabId,
+    video_url: *const c_char,
+    position: f64,
+    play: bool,
+) {
+    let video_url = borrowed_text(video_url, "video_url");
+    assert!(
+        position.is_finite() && position >= 0.0,
+        "position {position} is not a time"
+    );
+    if let Some(browser) = created_browser(tab) {
+        media::take_back_video(&browser, login::token(), video_url, position, play);
     }
 }
 

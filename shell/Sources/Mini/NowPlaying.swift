@@ -38,6 +38,10 @@ struct NowPlayingRowView: View {
         return Color(nsColor: color).opacity(0.22)
     }
 
+    private var isPlaying: Bool {
+        shell.airPlay.tab === tab ? shell.airPlay.isPlaying : tab.isPlayingAudio
+    }
+
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: SidebarMetrics.rowCornerRadius, style: .continuous)
         HStack(spacing: SidebarMetrics.iconSpacing) {
@@ -47,10 +51,11 @@ struct NowPlayingRowView: View {
                 .truncationMode(.tail)
                 .foregroundStyle(.primary)
             Spacer(minLength: 0)
+            AirPlayButton(shell: shell, tab: tab)
             Button {
                 shell.togglePlayback(of: tab)
             } label: {
-                Image(systemName: tab.isPlayingAudio ? "pause.fill" : "play.fill")
+                Image(systemName: isPlaying ? "pause.fill" : "play.fill")
                     .font(InterfaceFont.controlSymbol)
                     .foregroundStyle(.secondary)
                     .frame(width: SidebarMetrics.accessorySize, height: SidebarMetrics.accessorySize)
@@ -58,7 +63,7 @@ struct NowPlayingRowView: View {
             }
             .buttonStyle(.plain)
             .focusable(false)
-            .help(tab.isPlayingAudio ? "Pause" : "Play")
+            .help(isPlaying ? "Pause" : "Play")
         }
         .padding(.leading, SidebarMetrics.rowLeadingPadding)
         .padding(.trailing, SidebarMetrics.rowTrailingPadding)

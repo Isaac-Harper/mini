@@ -173,13 +173,18 @@ extension ShellController {
         notifications.close(tab: identifier, frameIdentifier: frame, notification: notification)
     }
 
-    func audioStateChanged(_ identifier: MiniTabId, isPlaying: Bool, mediaTitle: String) {
+    func audioStateChanged(_ identifier: MiniTabId, isPlaying: Bool, mediaTitle: String, mediaVideoURL: String) {
         if let littleWindow = littleWindow(containing: identifier) {
             littleWindow.tab.isPlayingAudio = isPlaying
             return
         }
         guard let tab = liveTab(identifier) else { return }
-        audioStateChanged(tab, isPlaying: isPlaying, mediaTitle: mediaTitle)
+        audioStateChanged(tab, isPlaying: isPlaying, mediaTitle: mediaTitle, mediaVideoURL: mediaVideoURL)
+    }
+
+    func videoHandedOff(_ identifier: MiniTabId, url: String, position: Double) {
+        guard let tab = liveTab(identifier) else { return }
+        airPlay.videoHandedOff(tab, url: url, position: position)
     }
 
     func mediaArtworkChanged(_ identifier: MiniTabId, pngData: Data) {

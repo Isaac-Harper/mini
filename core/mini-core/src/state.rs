@@ -29,7 +29,7 @@ pub struct Callbacks {
     pub notification_show:
         unsafe extern "C" fn(MiniTabId, *const c_char, u32, *const c_char, *const c_char, *const c_char, *const c_char, bool),
     pub notification_close: unsafe extern "C" fn(MiniTabId, *const c_char, u32),
-    pub audio_state_changed: unsafe extern "C" fn(MiniTabId, bool, *const c_char),
+    pub audio_state_changed: unsafe extern "C" fn(MiniTabId, bool, *const c_char, *const c_char),
     pub status_message_changed: unsafe extern "C" fn(MiniTabId, *const c_char),
     pub fullscreen_mode_changed: unsafe extern "C" fn(MiniTabId, bool),
     pub loading_progress_changed: unsafe extern "C" fn(MiniTabId, f64),
@@ -38,6 +38,7 @@ pub struct Callbacks {
     pub context_menu_requested: unsafe extern "C" fn(MiniTabId, *const crate::context_menu::MiniContextMenu),
     pub image_copied: unsafe extern "C" fn(MiniTabId, *const u8, usize),
     pub media_artwork_changed: unsafe extern "C" fn(MiniTabId, *const u8, usize),
+    pub video_handed_off: unsafe extern "C" fn(MiniTabId, *const c_char, f64),
     pub browser_closed: unsafe extern "C" fn(MiniTabId),
     pub all_browsers_closed: unsafe extern "C" fn(),
     pub app_relaunched: unsafe extern "C" fn(*const *const c_char, usize),
@@ -127,6 +128,9 @@ impl Callbacks {
             media_artwork_changed: table
                 .media_artwork_changed
                 .expect("MiniCallbacks.media_artwork_changed is null"),
+            video_handed_off: table
+                .video_handed_off
+                .expect("MiniCallbacks.video_handed_off is null"),
             browser_closed: table
                 .browser_closed
                 .expect("MiniCallbacks.browser_closed is null"),
@@ -151,6 +155,7 @@ pub struct TabState {
     pub login_form_frames: HashSet<String>,
     pub playing_frames: std::collections::BTreeMap<String, crate::media::PlayingFrame>,
     pub media_title: String,
+    pub media_video: String,
     pub artwork_url: String,
     pub artwork_generation: u64,
     pub site_data_observer: Option<Registration>,

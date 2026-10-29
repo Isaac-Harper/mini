@@ -133,10 +133,12 @@ final class BrowserEngine {
                     BrowserEngine.shared.requiredShell.notificationClose(identifier, frame: frame, notification: notification)
                 }
             },
-            audio_state_changed: { identifier, isPlaying, mediaTitle in
+            audio_state_changed: { identifier, isPlaying, mediaTitle, mediaVideoURL in
                 let mediaTitle = requiredString(mediaTitle)
+                let mediaVideoURL = requiredString(mediaVideoURL)
                 MainActor.assumeIsolated {
-                    BrowserEngine.shared.requiredShell.audioStateChanged(identifier, isPlaying: isPlaying, mediaTitle: mediaTitle)
+                    BrowserEngine.shared.requiredShell.audioStateChanged(
+                        identifier, isPlaying: isPlaying, mediaTitle: mediaTitle, mediaVideoURL: mediaVideoURL)
                 }
             },
             status_message_changed: { identifier, text in
@@ -169,6 +171,10 @@ final class BrowserEngine {
             media_artwork_changed: { identifier, png, length in
                 let pngData = length > 0 && png != nil ? Data(bytes: png!, count: length) : Data()
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.mediaArtworkChanged(identifier, pngData: pngData) }
+            },
+            video_handed_off: { identifier, url, position in
+                let url = requiredString(url)
+                MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.videoHandedOff(identifier, url: url, position: position) }
             },
             browser_closed: { identifier in
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.browserClosed(identifier) }

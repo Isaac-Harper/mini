@@ -133,9 +133,12 @@ typedef struct MiniCallbacks {
                             const char *title, const char *body, const char *tag, bool silent);
   void (*notification_close)(MiniTabId tab, const char *frame_id, uint32_t notification);
   // Whether any media element in the tab is audibly playing, with the page's
-  // mediaSession title (and artist) when it sets one, else "". Fires on changes.
-  // Pausing keeps the last title; a new main-frame document clears it.
-  void (*audio_state_changed)(MiniTabId tab, bool is_playing, const char *media_title);
+  // mediaSession title (and artist) when it sets one, else "". video_url is
+  // the playing video's own http(s) source when it has one (not MediaSource,
+  // a blob or a stream), else "": the URL AirPlay can hand to a receiver.
+  // Fires on changes. Pausing keeps the last title and video_url; a new
+  // main-frame document clears them.
+  void (*audio_state_changed)(MiniTabId tab, bool is_playing, const char *media_title, const char *video_url);
   // Status text from the page, the hovered link's URL in practice. "" when
   // the pointer leaves the link.
   void (*status_message_changed)(MiniTabId tab, const char *text);
@@ -167,6 +170,9 @@ typedef struct MiniCallbacks {
   // context; PNG bytes at 2x, at most 128 px. length 0 when there is none.
   // Pausing keeps the last artwork; a new main-frame document clears it.
   void (*media_artwork_changed)(MiniTabId tab, const uint8_t *png, size_t length);
+  // Result of mini_browser_hand_off_video: the page paused its video playing
+  // video_url, which was at position seconds.
+  void (*video_handed_off)(MiniTabId tab, const char *video_url, double position);
   void (*browser_closed)(MiniTabId tab);
   void (*all_browsers_closed)(void);
   // Mini was launched again on this profile (CEF's already-running relaunch).
@@ -265,6 +271,12 @@ void mini_browser_set_muted(MiniTabId tab, bool muted);
 // Pauses audible media elements in every frame (play = false) or resumes the
 // ones it paused, else the last paused element (play = true).
 void mini_browser_control_media(MiniTabId tab, bool play);
+// Pauses every video playing video_url (from audio_state_changed) in every
+// frame; video_handed_off reports where it stopped.
+void mini_browser_hand_off_video(MiniTabId tab, const char *video_url);
+// Seeks the videos playing video_url to position seconds (finite, not
+// negative) and plays them when play is true.
+void mini_browser_take_back_video(MiniTabId tab, const char *video_url, double position, bool play);
 
 void mini_set_notification_permission(const char *origin, int32_t state);
 // Fires the page's click event for a notification the user clicked.

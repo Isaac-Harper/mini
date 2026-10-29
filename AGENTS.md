@@ -116,6 +116,7 @@ Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 - `SidebarKeyboard.swift`: sidebar keyboard focus. (shell-ui)
 - `Downloads.swift`: downloads model and sidebar rows. (shell-ui)
 - `NowPlaying.swift`, `DominantColor.swift`: Now Playing row, mute button, artwork tint. (shell-ui)
+- `AirPlay.swift`: AirPlay video handoff, the row's route picker, the sound output fallback menu. (shell-ui)
 - `WeatherService.swift`, `WeatherRowView.swift`, `WeatherWeekView.swift`: weather row and 7-day popover. (shell-ui)
 - `CommandBarController.swift`, `CommandBarModel.swift`, `CommandSuggestionsView.swift`: the command bar. (shell-ui)
 - `PastedLinks.swift`: pasted link lists in the command bar. (shell-ui)
