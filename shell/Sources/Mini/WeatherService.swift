@@ -11,6 +11,8 @@ struct WeatherReading: Codable, Equatable {
     let isDay: Bool
     let place: String?
     let days: [WeatherDay]
+    let sunrises: [Date]
+    let sunsets: [Date]
 }
 
 struct WeatherDay: Codable, Equatable, Identifiable {
@@ -65,10 +67,22 @@ private struct OpenMeteoForecast: Decodable {
         let temperature_2m_max: [Double]
         let temperature_2m_min: [Double]
         let precipitation_probability_max: [Int?]
+        let sunrise: [String]
+        let sunset: [String]
     }
 
+    let timezone: String
     let current: Current
     let daily: Daily
+
+    func sunTimes(_ times: [String]) -> [Date] {
+        guard let zone = TimeZone(identifier: timezone) else { return [] }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = zone
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm"
+        return times.compactMap { formatter.date(from: $0) }
+    }
 }
 
 @MainActor
@@ -152,7 +166,7 @@ final class WeatherService: NSObject, CLLocationManagerDelegate {
             URLQueryItem(name: "latitude", value: String(format: "%.2f", latitude)),
             URLQueryItem(name: "longitude", value: String(format: "%.2f", longitude)),
             URLQueryItem(name: "current", value: "temperature_2m,weather_code,is_day"),
-            URLQueryItem(name: "daily", value: "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max"),
+            URLQueryItem(name: "daily", value: "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset"),
             URLQueryItem(name: "timezone", value: "auto"),
             URLQueryItem(name: "forecast_days", value: "7"),
         ] + (usesFahrenheit ? [URLQueryItem(name: "temperature_unit", value: "fahrenheit")] : [])
@@ -185,7 +199,9 @@ final class WeatherService: NSObject, CLLocationManagerDelegate {
                 code: forecast.current.weather_code,
                 isDay: forecast.current.is_day == 1,
                 place: place ?? self.reading?.place,
-                days: days
+                days: days,
+                sunrises: forecast.sunTimes(daily.sunrise),
+                sunsets: forecast.sunTimes(daily.sunset)
             )
             self.reading = reading
             if let encoded = try? JSONEncoder().encode(reading) {

@@ -16,6 +16,7 @@ Mini is an open source exploration project: a personal, minimal browser built to
 - Swipe two fingers left or right on the sidebar to move to the next or previous space
 - Drag a tab out of the sidebar onto the page or off the window to tear it off into a little window, live page and all; drag a little window by its toolbar over the sidebar to dock it back
 - On a Force Touch trackpad, quiet haptic detents mark the moments that click into place: the sidebar snapping shut or open and reaching its width limits, the split divider snapping to center, a dragged tab changing where it will land, a swipe passing the point where it commits, and a tab tearing off or docking
+- After sunset the sidebar warms very slightly, easing in and out over 20 minutes around sunset and sunrise from the weather row's forecast (View > Evening Tint)
 - Each space has a color (Space > Space Color, or right-click its button) that lightly tints the sidebar and colors the selected row, focus ring and loading line; the page's theme color blends on top
 - Split view: two tabs side by side with a draggable divider, shown as one joined row in the sidebar
 - Command bar for URLs, search (with Google suggestions) and switching tabs

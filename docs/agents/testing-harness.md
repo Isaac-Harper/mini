@@ -6,6 +6,7 @@ How Mini gets verified without disturbing the installed app, and the traps found
 
 - `make run` builds, bundles, signs and launches. Gates: app launches, page renders in the content card, tabs create/switch/close/nest, Cmd shortcuts work while a page has focus, Cmd-Q quits cleanly (no crash report), session restores on relaunch.
 - `cargo clippy` and `cargo test` in `core/` (unit tests cover the pure rules and the injected script builders), `swift build` in `shell/`.
+- `make test` runs `cargo test` and the Swift tests. Swift tests cover only the `MiniRules` target: `swift test` alone links the app with `-rdynamic`, which keeps the CEF sandbox symbols `-dead_strip` normally drops and fails, so the Makefile builds just `MiniRulesTests` and runs `swift test --skip-build`.
 - Visible changes come with screenshots of the real app.
 
 ## Rules for test instances

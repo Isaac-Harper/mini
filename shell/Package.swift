@@ -16,9 +16,10 @@ let package = Package(
     ],
     targets: [
         .systemLibrary(name: "CMiniCore", path: "Sources/CMiniCore"),
+        .target(name: "MiniRules", path: "Sources/MiniRules", swiftSettings: [.swiftLanguageMode(.v6)]),
         .executableTarget(
             name: "Mini",
-            dependencies: ["CMiniCore"],
+            dependencies: ["CMiniCore", "MiniRules"],
             path: "Sources/Mini",
             swiftSettings: [.swiftLanguageMode(.v6)],
             linkerSettings: [
@@ -29,6 +30,12 @@ let package = Package(
                 .linkedFramework("Foundation"),
                 .linkedFramework("CoreFoundation"),
             ]
+        ),
+        .testTarget(
+            name: "MiniRulesTests",
+            dependencies: ["MiniRules"],
+            path: "Tests/MiniRulesTests",
+            swiftSettings: [.swiftLanguageMode(.v6)]
         ),
     ]
 )

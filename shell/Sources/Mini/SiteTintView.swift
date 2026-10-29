@@ -5,12 +5,14 @@ struct SiteTintView: View {
     let neighborColor: NSColor?
     let swipeProgress: CGFloat
     let color: NSColor?
+    let eveningStrength: Double
 
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @Environment(\.colorSchemeContrast) private var contrast
     @Environment(\.colorScheme) private var colorScheme
 
     private static let strength = 0.2
+    private static let eveningColor = Color(red: 1, green: 0.6, blue: 0.22)
 
     private var showsTint: Bool { !reduceTransparency && contrast != .increased }
 
@@ -26,6 +28,11 @@ struct SiteTintView: View {
         return Color(nsColor: neighborColor).opacity(spaceStrength * swipeProgress)
     }
 
+    private var eveningTint: Color {
+        guard showsTint else { return .clear }
+        return Self.eveningColor.opacity((colorScheme == .dark ? 0.07 : 0.06) * eveningStrength)
+    }
+
     private var tint: Color {
         guard let color, showsTint else { return .clear }
         return Color(nsColor: color).opacity(Self.strength * color.alphaComponent * (1 - swipeProgress))
@@ -33,6 +40,9 @@ struct SiteTintView: View {
 
     var body: some View {
         ZStack {
+            Rectangle()
+                .fill(eveningTint)
+                .animation(.easeInOut(duration: 3), value: eveningStrength)
             Rectangle()
                 .fill(spaceTint)
                 .animation(.easeInOut(duration: 0.3), value: spaceColor)

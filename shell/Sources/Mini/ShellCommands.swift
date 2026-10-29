@@ -130,6 +130,10 @@ extension ShellController: NSMenuItemValidation {
         windowController.toggleSidebar()
     }
 
+    @objc func toggleEveningTint(_ sender: Any?) {
+        showsEveningTint.toggle()
+    }
+
     @objc func toggleSplitViewCommand(_ sender: Any?) {
         toggleSplitView()
     }
@@ -378,6 +382,9 @@ extension ShellController: NSMenuItemValidation {
             return keyLittleWindow == nil && selectedWebOrigin != nil
         case #selector(resetPermissionsForSite(_:)):
             return selected.map { sitePreferences.hasPermissionDecisions(forSiteAt: $0.url) } ?? false
+        case #selector(toggleEveningTint(_:)):
+            menuItem.state = showsEveningTint ? .on : .off
+            return true
         case #selector(toggleTabSidebar(_:)):
             menuItem.title = windowController.isSidebarVisible ? "Hide Sidebar" : "Show Sidebar"
             return true

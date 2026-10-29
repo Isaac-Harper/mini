@@ -1,5 +1,6 @@
 import AppKit
 import CMiniCore
+import MiniRules
 import Observation
 
 @MainActor
@@ -13,6 +14,10 @@ final class ShellController: NSObject {
     let sidebarDrag = SidebarDragModel()
     let sidebarKeyboard = SidebarKeyboardFocus()
     private(set) var nowPlayingTab: Tab?
+    private(set) var eveningTintDate = Date()
+    var showsEveningTint = UserDefaults.standard.object(forKey: ShellController.showsEveningTintKey) as? Bool ?? true {
+        didSet { UserDefaults.standard.set(showsEveningTint, forKey: Self.showsEveningTintKey) }
+    }
 
     @ObservationIgnored let sitePreferences: SitePreferences
     @ObservationIgnored let archive: ArchiveStore
@@ -52,6 +57,7 @@ final class ShellController: NSObject {
     @ObservationIgnored var pageUndoKeyTimestamp: TimeInterval?
 
     private static let archiveInterval: TimeInterval = 10 * 60
+    private static let showsEveningTintKey = "ShowsEveningTint"
 
     init(sessionStore: SessionStore, sitePreferences: SitePreferences, archive: ArchiveStore, faviconCache: FaviconCache, history: HistoryLibrary, rootCacheDirectory: URL) {
         self.faviconCache = faviconCache
@@ -163,8 +169,20 @@ final class ShellController: NSObject {
         applyCachedFavicons()
         faviconCache.prune(keepingPagesAt: allSpaceTabs.flatMap { [$0.url, $0.pinnedURL ?? ""] } + archive.entries.map(\.url))
         archiveTimer = Timer.scheduledTimer(withTimeInterval: Self.archiveInterval, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.archiveIdleTabs() }
+            MainActor.assumeIsolated {
+                self?.archiveIdleTabs()
+                self?.updateEveningTint()
+            }
         }
+    }
+
+    var eveningTintStrength: Double {
+        guard showsEveningTint, let reading = weather.reading else { return 0 }
+        return EveningTint.strength(at: eveningTintDate, sunrises: reading.sunrises, sunsets: reading.sunsets)
+    }
+
+    func updateEveningTint() {
+        eveningTintDate = Date()
     }
 
     func archiveIdleTabs(now: Date = Date()) {

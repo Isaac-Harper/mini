@@ -110,7 +110,8 @@ Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 - `WindowControlsCluster.swift`: controls while the sidebar is collapsed. (shell-ui)
 - `PeekSidebarController.swift`: peek sidebar from the left edge. (shell-ui)
 - `SidebarView.swift`, `TabRowView.swift`, `PinnedTabsView.swift`: SwiftUI sidebar, rows, tiles, address pill, space buttons. (shell-ui)
-- `SiteTintView.swift`: sidebar tint from space color and page theme color. (shell-ui)
+- `SiteTintView.swift`: sidebar tint from space color, page theme color and the evening tint. (shell-ui)
+- `Sources/MiniRules/EveningTint.swift`: pure evening tint strength curve, in its own target so `Tests/MiniRulesTests` can test it without linking the app. (shell-ui)
 - `SidebarKeyboard.swift`: sidebar keyboard focus. (shell-ui)
 - `Downloads.swift`: downloads model and sidebar rows. (shell-ui)
 - `NowPlaying.swift`, `DominantColor.swift`: Now Playing row, mute button, artwork tint. (shell-ui)
@@ -165,7 +166,7 @@ Bundle and scripts (detail in signing-release-codecs.md):
 ## Verification
 
 - `make run` builds, bundles, signs and launches. Gates: app launches, page renders in the content card, tabs create/switch/close/nest, Cmd shortcuts work while a page has focus, Cmd-Q quits cleanly (no crash report), session restores on relaunch.
-- `cargo clippy` and `cargo test` in `core/`, `swift build` in `shell/`.
+- `cargo clippy` and `cargo test` in `core/`, `swift build` in `shell/`; `make test` runs `cargo test` and the Swift `MiniRulesTests`.
 - Scenario testing runs a separate scratch-bundle instance in the background; rules in testing-harness.md.
 
 ## Status

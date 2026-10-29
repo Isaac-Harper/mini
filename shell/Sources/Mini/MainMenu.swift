@@ -81,6 +81,7 @@ enum MainMenu {
         let menu = NSMenu(title: "View")
         menu.addItem(item("Hide Sidebar", #selector(ShellController.toggleTabSidebar(_:)), "s", [.command, .control], target: commands))
         menu.addItem(item("Split View", #selector(ShellController.toggleSplitViewCommand(_:)), "\\", [.command, .control], target: commands))
+        menu.addItem(item("Evening Tint", #selector(ShellController.toggleEveningTint(_:)), "", target: commands))
         menu.addItem(.separator())
         menu.addItem(item("Reload Page", #selector(ShellController.reloadPage(_:)), "r", target: commands))
         menu.addItem(item("Stop", #selector(ShellController.stopLoading(_:)), ".", target: commands))

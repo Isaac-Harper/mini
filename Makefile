@@ -9,7 +9,7 @@ CARGO_PROFILE_FLAG :=
 endif
 
 .DEFAULT_GOAL := bundle
-.PHONY: core shell bundle run install release clean
+.PHONY: core shell bundle run install release test clean
 
 core:
 	cd core && cargo build $(CARGO_PROFILE_FLAG)
@@ -33,6 +33,10 @@ install: bundle
 	ditto build/Mini.app /Applications/Mini.app
 	$(LSREGISTER) -f /Applications/Mini.app
 	open -g /Applications/Mini.app
+
+test:
+	cd core && cargo test
+	cd shell && swift build -c release --target MiniRulesTests && swift test -c release --skip-build
 
 release:
 	@test -n "$(VERSION)" || { echo "usage: make release VERSION=X.Y.Z" >&2; exit 1; }

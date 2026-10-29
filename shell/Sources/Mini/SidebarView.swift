@@ -39,7 +39,7 @@ struct SidebarView: View {
         }
         .background {
             SiteTintView(spaceColor: shell.currentSpace.color.accent, neighborColor: shell.spaceSwipe.neighbor?.color.accent,
-                         swipeProgress: shell.spaceSwipe.progress, color: store.selectedTab?.themeColor)
+                         swipeProgress: shell.spaceSwipe.progress, color: store.selectedTab?.themeColor, eveningStrength: shell.eveningTintStrength)
         }
         .overlay {
             if shell.sidebarDrag.isDockingWindow {
