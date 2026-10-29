@@ -119,7 +119,7 @@ private struct CommandSuggestionRow: View {
     private var icon: some View {
         switch suggestion {
         case .switchToTab(let tab):
-            FaviconView(image: tab.favicon, size: CommandBarMetrics.rowIconSize)
+            FaviconView(image: tab.favicon, size: CommandBarMetrics.rowIconSize, tone: tab.faviconTone)
         case .open(.address):
             Image(systemName: "globe").foregroundStyle(.secondary)
         case .open(.search):

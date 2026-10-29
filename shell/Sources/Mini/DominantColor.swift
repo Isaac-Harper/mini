@@ -1,4 +1,12 @@
 import AppKit
+import MiniRules
+
+extension FaviconTone {
+    static func of(_ image: NSImage) -> FaviconTone {
+        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return FaviconTone(luminance: 0, coverage: 0) }
+        return measure(premultipliedRGBA: DominantColor.pixels(of: cgImage).flatMap { [$0.red, $0.green, $0.blue, $0.alpha] })
+    }
+}
 
 enum DominantColor {
     struct Pixel: Equatable {

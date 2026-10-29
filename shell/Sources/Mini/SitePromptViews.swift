@@ -1,9 +1,15 @@
 import AppKit
+import MiniRules
 import SwiftUI
 
 struct FaviconView: View {
     let image: NSImage?
     let size: CGFloat
+    var tone: FaviconTone? = nil
+
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.colorSchemeContrast) private var contrast
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
     var body: some View {
         Group {
@@ -14,6 +20,21 @@ struct FaviconView: View {
             }
         }
         .frame(width: size, height: size)
+        .background {
+            if image != nil, let tone, tone.needsBackingPlate(on: colorScheme == .dark ? .dark : .light) {
+                RoundedRectangle(cornerRadius: size / 4 + Self.plateInset, style: .continuous)
+                    .fill(colorScheme == .dark ? Color.white : Color.black)
+                    .opacity(plateOpacity)
+                    .padding(-Self.plateInset)
+            }
+        }
+    }
+
+    private static let plateInset: CGFloat = 2
+
+    private var plateOpacity: Double {
+        let base = colorScheme == .dark ? 0.45 : 0.25
+        return contrast == .increased || reduceTransparency ? min(1, base + 0.3) : base
     }
 }
 
@@ -28,7 +49,7 @@ struct TabIconView: View {
                 .scaleEffect(size / 20)
                 .frame(width: size, height: size)
         } else {
-            FaviconView(image: tab.favicon, size: size)
+            FaviconView(image: tab.favicon, size: size, tone: tab.faviconTone)
         }
     }
 }

@@ -1,5 +1,6 @@
 import AppKit
 import CMiniCore
+import MiniRules
 import Observation
 
 @MainActor
@@ -8,7 +9,12 @@ final class Tab: Identifiable {
     let id: MiniTabId
     var url: String
     var title: String
-    var favicon: NSImage?
+    var favicon: NSImage? {
+        didSet {
+            if favicon !== oldValue { faviconTone = favicon.map(FaviconTone.of) }
+        }
+    }
+    private(set) var faviconTone: FaviconTone?
     var pinnedURL: String?
     var savedURL: String?
     @ObservationIgnored var savedTitle = ""
