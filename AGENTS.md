@@ -110,6 +110,7 @@ Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 - `WindowControlsCluster.swift`: controls while the sidebar is collapsed. (shell-ui)
 - `PeekSidebarController.swift`: peek sidebar from the left edge. (shell-ui)
 - `SidebarView.swift`, `TabRowView.swift`, `PinnedTabsView.swift`: SwiftUI sidebar, rows, tiles, address pill, space buttons. (shell-ui)
+- `FadingTruncation.swift`: faded title ends for SwiftUI text and the little window field. (shell-ui)
 - `InterfaceMetrics.swift`: every sidebar and command bar metric on the 4pt grid, and the shared fonts. (shell-ui)
 - `SiteTintView.swift`: sidebar tint from space color, page theme color and the evening tint. (shell-ui)
 - `Sources/MiniRules/EveningTint.swift`: pure evening tint strength curve, in its own target so `Tests/MiniRulesTests` can test it without linking the app. (shell-ui)

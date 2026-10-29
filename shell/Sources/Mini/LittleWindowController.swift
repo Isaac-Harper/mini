@@ -7,7 +7,7 @@ final class LittleWindowController: NSWindowController, NSWindowDelegate, NSTool
     let space: Space
     private unowned let shell: ShellController
     private let toolbar = NSToolbar(identifier: "LittleWindowToolbar")
-    private let addressField = NSTextField()
+    private let addressField = FadingTextField()
     private var isPromoting = false
 
     private static let size = NSSize(width: 960, height: 680)
@@ -88,7 +88,7 @@ final class LittleWindowController: NSWindowController, NSWindowDelegate, NSTool
         addressField.alignment = .center
         addressField.font = .systemFont(ofSize: 13, weight: .medium)
         addressField.textColor = .secondaryLabelColor
-        addressField.lineBreakMode = .byTruncatingMiddle
+        addressField.lineBreakMode = .byClipping
         addressField.cell?.usesSingleLineMode = true
         addressField.cell?.isScrollable = true
         addressField.delegate = self
@@ -138,6 +138,7 @@ final class LittleWindowController: NSWindowController, NSWindowDelegate, NSTool
         addressField.stringValue = tab.url
         window.makeFirstResponder(addressField)
         addressField.currentEditor()?.selectAll(nil)
+        addressField.updateFade()
     }
 
     private func endEditingAddress() {

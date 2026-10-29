@@ -26,8 +26,7 @@ struct TabRowView: View {
                     .animation(.easeInOut(duration: 0.3), value: tab.isLoading)
                     .padding(.trailing, SidebarMetrics.iconSpacing - SidebarMetrics.accessorySpacing)
                 Text(tab.displayTitle)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
+                    .fadingTruncation()
                     .foregroundStyle(isSelected ? .primary : .secondary)
             }
             .opacity(isDimmed ? 0.5 : (isSelected || isHovered || tab.isSaved ? 1 : tab.idleFade))
@@ -198,8 +197,7 @@ private struct SplitTabHalfView: View {
                     .opacity(tab.isLoading ? 0.4 : 1)
                     .animation(.easeInOut(duration: 0.3), value: tab.isLoading)
                 Text(tab.displayTitle)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
+                    .fadingTruncation()
                     .foregroundStyle(isFocused ? .primary : .secondary)
             }
             .opacity(isPairSelected || isHovered ? 1 : tab.idleFade)

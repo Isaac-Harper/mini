@@ -13,6 +13,7 @@ enum SidebarMetrics {
     static let iconSpacing: CGFloat = 8
     static let accessorySize: CGFloat = 16
     static let accessorySpacing: CGFloat = 4
+    static let titleFadeWidth: CGFloat = 16
     static let topPadding: CGFloat = 4
     static let sectionSpacing: CGFloat = 12
     static let addressPillHeight: CGFloat = 32

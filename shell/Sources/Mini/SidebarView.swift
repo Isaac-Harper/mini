@@ -231,10 +231,8 @@ private struct AddressPill: View {
                     shell.commandBar.open(mode: .editCurrent)
                 } label: {
                     Text(showsFullAddress ? selected?.url ?? "" : host ?? "Search or enter address")
-                        .lineLimit(1)
-                        .truncationMode(.middle)
+                        .fadingTruncation()
                         .foregroundStyle(host == nil ? .tertiary : .secondary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.leading, isInsecure ? SidebarMetrics.accessorySpacing : SidebarMetrics.addressPillTextInset)
                         .frame(height: SidebarMetrics.addressPillHeight)
                         .contentShape(Rectangle())
