@@ -1,5 +1,17 @@
 import SwiftUI
 
+private struct SuggestionListEntry {
+    let index: Int
+    let suggestion: CommandSuggestion
+    let previous: CommandSuggestion?
+
+    static func entries(_ suggestions: [CommandSuggestion]) -> [SuggestionListEntry] {
+        suggestions.indices.map { index in
+            SuggestionListEntry(index: index, suggestion: suggestions[index], previous: index > 0 ? suggestions[index - 1] : nil)
+        }
+    }
+}
+
 struct CommandSuggestionsView: View {
     let model: CommandBarModel
     let faviconLookup: (String) -> NSImage?
@@ -8,11 +20,13 @@ struct CommandSuggestionsView: View {
     var body: some View {
         if !model.suggestions.isEmpty {
             VStack(spacing: 0) {
-                ForEach(Array(model.suggestions.enumerated()), id: \.element.id) { index, suggestion in
-                    if suggestion.isHistory, index == 0 || !model.suggestions[index - 1].isHistory {
+                ForEach(SuggestionListEntry.entries(model.suggestions), id: \.suggestion.id) { entry in
+                    let index = entry.index
+                    let suggestion = entry.suggestion
+                    if suggestion.isHistory, entry.previous?.isHistory != true {
                         SuggestionSectionHeader(title: "History")
                     }
-                    if suggestion.isArchived, index == 0 || !model.suggestions[index - 1].isArchived {
+                    if suggestion.isArchived, entry.previous?.isArchived != true {
                         SuggestionSectionHeader(title: "Archived")
                     }
                     CommandSuggestionRow(suggestion: suggestion, isSelected: index == model.selectedIndex, faviconLookup: faviconLookup)
