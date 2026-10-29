@@ -150,6 +150,7 @@ pub struct TabState {
     pub favicon_generation: u64,
     pub login_form_frames: HashSet<String>,
     pub playing_frames: std::collections::BTreeMap<String, crate::media::PlayingFrame>,
+    pub media_title: String,
     pub artwork_url: String,
     pub artwork_generation: u64,
     pub site_data_observer: Option<Registration>,

@@ -95,21 +95,31 @@ fn is_artwork_url(url: &str) -> bool {
 
 fn update(
     tab: MiniTabId,
-    clears_artwork: bool,
+    is_new_document: bool,
     change: impl FnOnce(&mut std::collections::BTreeMap<String, PlayingFrame>),
 ) {
     let (report, artwork) = with_core(|core| {
         let Some(state) = core.tabs.get_mut(&tab) else {
             return (None, None);
         };
-        let before = summary(&state.playing_frames);
+        let was_playing = !state.playing_frames.is_empty();
         change(&mut state.playing_frames);
-        let after = summary(&state.playing_frames);
-        let artwork = if state.playing_frames.is_empty() && !clears_artwork {
-            state.artwork_url.clone()
-        } else {
-            artwork_url(&state.playing_frames)
-        };
+        let playing = !state.playing_frames.is_empty();
+        let title = kept_while_idle(
+            playing,
+            is_new_document,
+            &state.media_title,
+            media_title(&state.playing_frames),
+        );
+        let report = (playing != was_playing || title != state.media_title)
+            .then(|| (playing, title.clone()));
+        state.media_title = title;
+        let artwork = kept_while_idle(
+            playing,
+            is_new_document,
+            &state.artwork_url,
+            artwork_url(&state.playing_frames),
+        );
         let artwork_change = if artwork != state.artwork_url {
             state.artwork_url = artwork.clone();
             state.artwork_generation += 1;
@@ -117,7 +127,7 @@ fn update(
         } else {
             None
         };
-        ((before != after).then_some(after), artwork_change)
+        (report, artwork_change)
     });
     if let Some((playing, title)) = report {
         let title = c_string(&title);
@@ -140,14 +150,21 @@ fn update(
     }
 }
 
-fn summary(frames: &std::collections::BTreeMap<String, PlayingFrame>) -> (bool, String) {
-    let title = frames
+fn kept_while_idle(playing: bool, is_new_document: bool, kept: &str, current: String) -> String {
+    if playing || is_new_document {
+        current
+    } else {
+        kept.to_owned()
+    }
+}
+
+fn media_title(frames: &std::collections::BTreeMap<String, PlayingFrame>) -> String {
+    frames
         .values()
         .map(|frame| &frame.title)
         .find(|title| !title.is_empty())
         .cloned()
-        .unwrap_or_default();
-    (!frames.is_empty(), title)
+        .unwrap_or_default()
 }
 
 fn artwork_url(frames: &std::collections::BTreeMap<String, PlayingFrame>) -> String {
@@ -253,6 +270,17 @@ mod tests {
         frames.insert("a".to_owned(), frame("Song", ""));
         frames.insert("b".to_owned(), frame("", "https://example.com/b.jpg"));
         assert_eq!(artwork_url(&frames), "https://example.com/b.jpg");
-        assert_eq!(summary(&frames), (true, "Song".to_owned()));
+        assert_eq!(media_title(&frames), "Song");
+    }
+
+    #[test]
+    fn title_and_artwork_are_kept_while_paused_and_cleared_by_a_new_document() {
+        assert_eq!(kept_while_idle(false, false, "Song", String::new()), "Song");
+        assert_eq!(kept_while_idle(false, true, "Song", String::new()), "");
+        assert_eq!(kept_while_idle(true, false, "Song", String::new()), "");
+        assert_eq!(
+            kept_while_idle(true, false, "Song", "Next".to_owned()),
+            "Next"
+        );
     }
 }

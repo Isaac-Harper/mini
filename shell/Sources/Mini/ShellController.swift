@@ -224,7 +224,7 @@ final class ShellController: NSObject {
 
     func audioStateChanged(_ tab: Tab, isPlaying: Bool, mediaTitle: String) {
         tab.isPlayingAudio = isPlaying
-        if !mediaTitle.isEmpty { tab.mediaTitle = mediaTitle }
+        tab.mediaTitle = mediaTitle
         if isPlaying {
             tab.isPausedFromNowPlaying = false
             nowPlayingTab = tab

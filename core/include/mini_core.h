@@ -134,6 +134,7 @@ typedef struct MiniCallbacks {
   void (*notification_close)(MiniTabId tab, const char *frame_id, uint32_t notification);
   // Whether any media element in the tab is audibly playing, with the page's
   // mediaSession title (and artist) when it sets one, else "". Fires on changes.
+  // Pausing keeps the last title; a new main-frame document clears it.
   void (*audio_state_changed)(MiniTabId tab, bool is_playing, const char *media_title);
   // Status text from the page, the hovered link's URL in practice. "" when
   // the pointer leaves the link.
