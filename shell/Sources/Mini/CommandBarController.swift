@@ -11,6 +11,8 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
     private let iconView = NSImageView()
     private var suggestionsView: OverlayHostingView<CommandSuggestionsView>!
     private let offsetGuide = NSLayoutGuide()
+    private var suggestionsHeight: NSLayoutConstraint!
+    private let content = NSView()
     private let searchSuggestionFetcher = SearchSuggestionFetcher()
     private var mode: CommandBarMode = .newTab
     private var pastedText: String?
@@ -27,7 +29,7 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
             faviconLookup: { [weak shell] address in shell?.faviconCache.image(forPageAt: address) },
             activate: { [weak self] suggestion in self?.activate(suggestion) }
         ))
-        suggestionsView.sizingOptions = [.minSize, .intrinsicContentSize]
+        suggestionsView.sizingOptions = [.intrinsicContentSize]
         buildViews()
     }
 
@@ -51,7 +53,7 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
         iconView.contentTintColor = .secondaryLabelColor
         updateIcon()
 
-        let content = NSView()
+        content.wantsLayer = true
         for view in [field, iconView, suggestionsView!, content] as [NSView] {
             view.translatesAutoresizingMaskIntoConstraints = false
         }
@@ -70,6 +72,8 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
             suggestionsView.topAnchor.constraint(equalTo: field.bottomAnchor, constant: CommandBarMetrics.suggestionsTopSpacing),
             suggestionsView.bottomAnchor.constraint(equalTo: content.bottomAnchor, constant: -CommandBarMetrics.suggestionsBottomInset),
         ])
+        suggestionsHeight = suggestionsView.heightAnchor.constraint(equalToConstant: 0)
+        suggestionsHeight.isActive = true
 
         glassView.cornerRadius = CommandBarMetrics.cornerRadius
         glassView.style = .regular
@@ -117,8 +121,11 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
         if !isOpen {
             isOpen = true
             attach(to: shell.windowController!)
-            OverlayAnimation.appear(glassView)
+            fitSuggestions(animated: false)
+            OverlayAnimation.appear(glassView, scale: 0.97, blurring: content)
             dismissView.alphaValue = 1
+        } else {
+            fitSuggestions(animated: true)
         }
         shell.window.makeFirstResponder(field)
         field.currentEditor()?.selectAll(nil)
@@ -250,6 +257,27 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
         var transaction = Transaction(animation: nil)
         transaction.disablesAnimations = true
         withTransaction(transaction, change)
+        DispatchQueue.main.async { [weak self] in
+            MainActor.assumeIsolated { self?.fitSuggestions(animated: true) }
+        }
+    }
+
+    private func fitSuggestions(animated: Bool) {
+        guard isOpen else { return }
+        suggestionsView.layoutSubtreeIfNeeded()
+        let height = suggestionsView.intrinsicContentSize.height
+        guard abs(height - suggestionsHeight.constant) > 0.5 else { return }
+        guard animated, !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else {
+            suggestionsHeight.constant = height
+            return
+        }
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.18
+            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            context.allowsImplicitAnimation = true
+            suggestionsHeight.animator().constant = height
+            glassView.superview?.layoutSubtreeIfNeeded()
+        }
     }
 
     func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
