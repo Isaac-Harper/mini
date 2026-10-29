@@ -45,6 +45,7 @@ extension ShellController {
             tab.favicon = nil
             return
         }
+        tab.faviconArrivedLive = true
         tab.favicon = image
         faviconCache.store(pngData, image: image, forPageAt: tab.url)
     }

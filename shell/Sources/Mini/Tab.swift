@@ -15,6 +15,7 @@ final class Tab: Identifiable {
         }
     }
     private(set) var faviconTone: FaviconTone?
+    @ObservationIgnored var faviconArrivedLive = false
     var pinnedURL: String?
     var savedURL: String?
     @ObservationIgnored var savedTitle = ""

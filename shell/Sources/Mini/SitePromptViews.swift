@@ -6,6 +6,7 @@ struct FaviconView: View {
     let image: NSImage?
     let size: CGFloat
     var tone: FaviconTone? = nil
+    var fadesIn = false
 
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.colorSchemeContrast) private var contrast
@@ -14,11 +15,12 @@ struct FaviconView: View {
     var body: some View {
         Group {
             if let image {
-                Image(nsImage: image).resizable().interpolation(.high)
+                Image(nsImage: image).resizable().interpolation(.high).transition(.opacity)
             } else {
-                Image(systemName: "globe").resizable().foregroundStyle(.secondary)
+                Image(systemName: "globe").resizable().foregroundStyle(.secondary).transition(.opacity)
             }
         }
+        .animation(fadesIn ? .easeOut(duration: 0.15) : nil, value: image != nil)
         .frame(width: size, height: size)
         .background {
             if image != nil, let tone, tone.needsBackingPlate(on: colorScheme == .dark ? .dark : .light) {
@@ -49,7 +51,7 @@ struct TabIconView: View {
                 .scaleEffect(size / 20)
                 .frame(width: size, height: size)
         } else {
-            FaviconView(image: tab.favicon, size: size, tone: tab.faviconTone)
+            FaviconView(image: tab.favicon, size: size, tone: tab.faviconTone, fadesIn: tab.faviconArrivedLive)
         }
     }
 }
