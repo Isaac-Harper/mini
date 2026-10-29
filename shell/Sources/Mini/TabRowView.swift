@@ -24,6 +24,7 @@ struct TabRowView: View {
                 TabIconView(tab: tab, size: SidebarMetrics.iconSize)
                     .opacity(tab.isLoading ? 0.4 : 1)
                     .animation(.easeInOut(duration: 0.3), value: tab.isLoading)
+                    .overlay(alignment: .topTrailing) { UnreadBadgeView(tab: tab) }
                     .padding(.trailing, SidebarMetrics.iconSpacing - SidebarMetrics.accessorySpacing)
                 Text(tab.displayTitle)
                     .fadingTruncation()
@@ -198,6 +199,7 @@ private struct SplitTabHalfView: View {
                 TabIconView(tab: tab, size: SidebarMetrics.iconSize)
                     .opacity(tab.isLoading ? 0.4 : 1)
                     .animation(.easeInOut(duration: 0.3), value: tab.isLoading)
+                    .overlay(alignment: .topTrailing) { UnreadBadgeView(tab: tab) }
                 Text(tab.displayTitle)
                     .fadingTruncation()
                     .foregroundStyle(isFocused ? .primary : .secondary)

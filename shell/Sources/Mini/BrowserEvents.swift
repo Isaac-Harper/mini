@@ -31,7 +31,12 @@ extension ShellController {
 
     func titleChanged(_ identifier: MiniTabId, title: String) {
         guard let tab = liveTab(identifier) else { return }
+        let previousUnread = tab.unread
         tab.title = title
+        if let unread = tab.unread, unread.showsBadge, !displayedTabs.contains(where: { $0 === tab }),
+           (unread.count ?? 0) > (previousUnread?.count ?? 0) || previousUnread?.showsBadge != true {
+            tab.unreadPulses += 1
+        }
         if let spaceIdentifier = spaceIdentifier(ofTab: identifier) {
             history.updateTitle(title, url: tab.url, inSpace: spaceIdentifier)
         }

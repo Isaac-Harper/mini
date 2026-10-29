@@ -8,7 +8,14 @@ import Observation
 final class Tab: Identifiable {
     let id: MiniTabId
     var url: String
-    var title: String
+    var title: String {
+        didSet {
+            if title != oldValue { refreshUnread() }
+        }
+    }
+    private(set) var unread: UnreadTitle?
+    var unreadPulses = 0
+    @ObservationIgnored private var unreadTracker = UnreadBadgeTracker()
     var favicon: NSImage? {
         didSet {
             if favicon !== oldValue { faviconTone = favicon.map(FaviconTone.of) }
@@ -51,6 +58,12 @@ final class Tab: Identifiable {
         self.id = id
         self.url = url
         self.title = title
+        refreshUnread()
+    }
+
+    private func refreshUnread() {
+        let address = URL(string: url)
+        unread = unreadTracker.update(title: title, host: address?.host()?.lowercased(), path: address?.path() ?? "")
     }
 
     enum BrowserState {
@@ -71,6 +84,7 @@ final class Tab: Identifiable {
     }
 
     var displayTitle: String {
+        let title = unread?.title ?? title
         if !title.isEmpty { return title }
         if let host = URLInput.host(of: url) { return host }
         return "New Tab"

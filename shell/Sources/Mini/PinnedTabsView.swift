@@ -71,6 +71,7 @@ private struct PinnedTabTile: View {
                 }
             }
             TabIconView(tab: tab, size: SidebarMetrics.iconSize)
+                .overlay(alignment: .topTrailing) { UnreadBadgeView(tab: tab, isOnTile: true) }
         }
         .frame(maxWidth: .infinity)
         .frame(height: SidebarMetrics.pinnedTileHeight)

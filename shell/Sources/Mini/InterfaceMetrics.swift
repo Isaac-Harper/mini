@@ -24,6 +24,9 @@ enum SidebarMetrics {
     static let pinnedTileCornerRadius: CGFloat = 12
     static let pinnedTileMinimumWidth: CGFloat = 44
     static let artworkSize: CGFloat = 20
+    static let rowBadgeHeight: CGFloat = 12
+    static let tileBadgeHeight: CGFloat = 16
+    static let badgeRingWidth: CGFloat = 1.5
     static let sectionHeaderHeight: CGFloat = 20
     static let sectionDividerHeight: CGFloat = 12
     static let downloadVerticalPadding: CGFloat = 4
