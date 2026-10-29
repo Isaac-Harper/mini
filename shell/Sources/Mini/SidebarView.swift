@@ -357,7 +357,7 @@ private struct AddressPill: View {
         guard let selected, host != nil else {
             return Text("Search or enter address").foregroundStyle(.tertiary)
         }
-        let emphasis = showsFullAddress ? AddressEmphasis.of(url: selected.url) : AddressEmphasis.of(host: host ?? "")
+        let emphasis = showsFullAddress ? AddressEmphasis.of(url: selected.url, registrableDomain: URLInput.registrableDomain) : AddressEmphasis.of(host: host ?? "", registrableDomain: URLInput.registrableDomain)
         let leading = Text(emphasis.leading).foregroundStyle(.secondary)
         let domain = Text(emphasis.domain).foregroundStyle(.primary)
         let trailing = Text(emphasis.trailing).foregroundStyle(.secondary)

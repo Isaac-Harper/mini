@@ -12,6 +12,7 @@ mod media;
 mod navigation;
 mod notifications;
 mod permissions;
+mod registrable_domain;
 mod resource_requests;
 mod site_data;
 mod state;
@@ -615,6 +616,11 @@ pub extern "C" fn mini_adblock_set_enabled(enabled: bool) {
 #[unsafe(no_mangle)]
 pub extern "C" fn mini_adblock_set_host_exempt(host: *const c_char, exempt: bool) {
     ad_blocking::set_host_exempt(borrowed_text(host, "host"), exempt);
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn mini_registrable_domain_length(host: *const c_char) -> usize {
+    registrable_domain::registrable_domain(borrowed_text(host, "host")).map_or(0, str::len)
 }
 
 #[unsafe(no_mangle)]

@@ -1,3 +1,4 @@
+import CMiniCore
 import Foundation
 
 enum URLInput {
@@ -38,6 +39,12 @@ enum URLInput {
     static func host(of address: String) -> String? {
         guard let host = URL(string: address)?.host(), !host.isEmpty else { return nil }
         return host.hasPrefix("www.") ? String(host.dropFirst(4)) : host
+    }
+
+    static func registrableDomain(of host: String) -> String? {
+        let length = host.withCString { mini_registrable_domain_length($0) }
+        guard length > 0 else { return nil }
+        return String(decoding: host.utf8.suffix(length), as: UTF8.self)
     }
 
     static func isInsecure(_ address: String) -> Bool {

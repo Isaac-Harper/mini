@@ -89,6 +89,7 @@ Rust core (`core/`, detail in cef-and-core.md):
 - `src/ad_blocking/`: Brave `adblock` engine, lists, resources, matching.
 - `src/context_menu.rs`: context menu params to Swift and the item ABI calls.
 - `src/site_data.rs`: Clear Data for This Site.
+- `src/registrable_domain.rs`: registrable domain from the public suffix list (`psl`), unit tested.
 - `src/navigation.rs`: session history visitor and `history.go` offsets.
 - `src/downloads.rs`: download destination naming and progress.
 
@@ -116,7 +117,7 @@ Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 - `SiteTintView.swift`: sidebar tint from space color, page theme color and the evening tint. (shell-ui)
 - `Sources/MiniRules/FaviconTone.swift`: favicon luminance and coverage, and when a backing plate is needed, unit tested. (shell-ui)
 - `Sources/MiniRules/UnreadTitle.swift`, `UnreadBadgeView.swift`: unread counts parsed from titles (pure, unit tested) and the favicon badge. (shell-ui)
-- `Sources/MiniRules/AddressEmphasis.swift`: registrable domain split for the address pill, unit tested. (shell-ui)
+- `Sources/MiniRules/AddressEmphasis.swift`: address pill split around the registrable domain from an injected resolver (the core's public suffix list), unit tested. (shell-ui)
 - `AddressPillBadges.swift`: the pill's caption chips (preview). (shell-ui)
 - `Sources/MiniRules/PreviewDeployment.swift`, `PreviewSwitching.swift`: preview deployment hosts and the preview/production switch from history, unit tested. (shell-ui)
 - `Sources/MiniRules/EveningTint.swift`: pure evening tint strength curve, in its own target so `Tests/MiniRulesTests` can test it without linking the app. (shell-ui)

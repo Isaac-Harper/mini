@@ -300,6 +300,13 @@ void mini_fill_login(MiniTabId tab, const char *frame_id, const char *expected_o
 void mini_adblock_set_enabled(bool enabled);
 void mini_adblock_set_host_exempt(const char *host, bool exempt);
 
+// UTF-8 byte length of the host's registrable domain (public suffix plus one
+// label, from the public suffix list the core embeds, private section
+// included), which is always a suffix of the host. 0 for IP addresses and for
+// hosts that are themselves a public suffix or a single label. Pure; any
+// thread, before or after mini_initialize.
+size_t mini_registrable_domain_length(const char *host);
+
 #ifdef __cplusplus
 }
 #endif
