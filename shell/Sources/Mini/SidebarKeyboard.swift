@@ -7,6 +7,7 @@ import SwiftUI
 @Observable
 final class SidebarKeyboardFocus {
     var focusedTabIdentifier: MiniTabId?
+    var showsRing = true
 }
 
 extension ShellController {
@@ -20,6 +21,7 @@ extension ShellController {
         guard !items.isEmpty else { return }
         let start = store.selectedTab.flatMap { selected in items.first { $0 === selected } } ?? items[0]
         guard windowController.focusSidebar() else { return }
+        sidebarKeyboard.showsRing = true
         sidebarKeyboard.focusedTabIdentifier = start.id
     }
 
@@ -40,6 +42,7 @@ extension ShellController {
 
     func sidebarResignedKeyboardFocus() {
         sidebarKeyboard.focusedTabIdentifier = nil
+        clearRowSelection()
     }
 
     func sidebarKeyDown(_ event: NSEvent) -> Bool {
@@ -50,6 +53,23 @@ extension ShellController {
             return true
         }
         let tab = items[index]
+        let isShifted = event.modifierFlags.contains(.shift)
+        if [125, 126, 51, 117, 53].contains(event.keyCode) {
+            sidebarKeyboard.showsRing = true
+        }
+        if isShifted, [125, 126].contains(event.keyCode) {
+            guard !tab.isPinned, let next = extendRowSelection(by: event.keyCode == 125 ? 1 : -1, from: tab) else { return true }
+            sidebarKeyboard.focusedTabIdentifier = next.id
+            return true
+        }
+        if !isShifted, [125, 126].contains(event.keyCode) {
+            clearRowSelection()
+        }
+        if [51, 117].contains(event.keyCode), let group = groupTabs(including: tab) ?? (selectedRowTabs.isEmpty ? nil : selectedRowTabs) {
+            closeTabs(group)
+            returnFocusToPage()
+            return true
+        }
         switch event.keyCode {
         case 125:
             moveSidebarFocus(to: min(index + 1, items.count - 1), in: items)
@@ -106,7 +126,7 @@ struct SidebarFocusRing: View {
     let cornerRadius: CGFloat
 
     var body: some View {
-        if shell.sidebarKeyboard.focusedTabIdentifier == tab.id {
+        if shell.sidebarKeyboard.focusedTabIdentifier == tab.id, shell.sidebarKeyboard.showsRing {
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                 .strokeBorder(.tint, lineWidth: 2)
                 .allowsHitTesting(false)

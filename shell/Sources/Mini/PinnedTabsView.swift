@@ -6,6 +6,7 @@ struct PinnedTabsView: View {
     private let columns = [GridItem(.adaptive(minimum: SidebarMetrics.pinnedTileMinimumWidth), spacing: SidebarMetrics.pinnedTileSpacing)]
 
     @Environment(\.sidebarStore) private var sidebarStore
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var store: TabStore { sidebarStore ?? shell.store }
 
@@ -20,6 +21,7 @@ struct PinnedTabsView: View {
                 }
             }
         }
+        .animation(reduceMotion ? .easeInOut(duration: 0.12) : .spring(duration: 0.28, bounce: 0.12), value: store.selectedTab?.id)
     }
 }
 
@@ -56,31 +58,45 @@ private struct PinnedTabTile: View {
 
     private var isSelected: Bool { store.selectedTab === tab }
 
+    @Environment(\.selectionNamespace) private var namespace
+
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: SidebarMetrics.pinnedTileCornerRadius, style: .continuous)
-        TabIconView(tab: tab, size: SidebarMetrics.iconSize)
-            .frame(maxWidth: .infinity)
-            .frame(height: SidebarMetrics.pinnedTileHeight)
-            .glassEffect(isSelected ? .regular.tint(Color(nsColor: shell.currentSpace.color.accent).opacity(0.22)).interactive() : .regular.interactive(), in: shape)
-            .overlay(alignment: .topTrailing) {
-                AudioToggleButton(shell: shell, tab: tab).offset(x: 4, y: -4)
-            }
-            .overlay(alignment: .leading) {
-                if isDropTarget {
-                    Capsule().fill(.tint).frame(width: 2).padding(.vertical, SidebarMetrics.rowTrailingPadding).offset(x: -(SidebarMetrics.pinnedTileSpacing + 2) / 2).allowsHitTesting(false)
+        ZStack {
+            if isSelected {
+                if let namespace {
+                    shape.fill(.tint.opacity(0.22)).matchedGeometryEffect(id: "pinnedSelection", in: namespace)
+                } else {
+                    shape.fill(.tint.opacity(0.22))
                 }
             }
-            .overlay { SidebarFocusRing(shell: shell, tab: tab, cornerRadius: SidebarMetrics.pinnedTileCornerRadius) }
-            .contentShape(shape)
-            .help(tab.displayTitle)
-            .onTapGesture { shell.store.select(tab) }
-            .onDrag { shell.sidebarDrag.beginDrag(tab) }
-            .onDrop(of: SidebarDragModel.acceptedTypes, delegate: PinnedDropDelegate(shell: shell, index: index))
-            .contextMenu {
-                Button("Duplicate Tab") { shell.duplicate(tab) }
-                Button("Unpin Tab") { shell.performUndoable("Unpin Tab") { shell.store.unpin(tab) } }
-                Button("Save Tab") { shell.performUndoable("Save Tab") { shell.store.save(tab) } }
-                Button("Close Tab") { shell.performUndoable("Close Tab") { shell.store.close(tab) } }
+            TabIconView(tab: tab, size: SidebarMetrics.iconSize)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: SidebarMetrics.pinnedTileHeight)
+        .glassEffect(.regular.interactive(), in: shape)
+        .overlay(alignment: .topTrailing) {
+            AudioToggleButton(shell: shell, tab: tab).offset(x: 4, y: -4)
+        }
+        .overlay(alignment: .leading) {
+            if isDropTarget {
+                Capsule().fill(.tint).frame(width: 2).padding(.vertical, SidebarMetrics.rowTrailingPadding).offset(x: -(SidebarMetrics.pinnedTileSpacing + 2) / 2).allowsHitTesting(false)
             }
+        }
+        .overlay { SidebarFocusRing(shell: shell, tab: tab, cornerRadius: SidebarMetrics.pinnedTileCornerRadius) }
+        .contentShape(shape)
+        .help(tab.displayTitle)
+        .onTapGesture {
+            shell.clearRowSelection()
+            shell.store.select(tab)
+        }
+        .onDrag { shell.sidebarDrag.beginDrag(tab) }
+        .onDrop(of: SidebarDragModel.acceptedTypes, delegate: PinnedDropDelegate(shell: shell, index: index))
+        .contextMenu {
+            Button("Duplicate Tab") { shell.duplicate(tab) }
+            Button("Unpin Tab") { shell.performUndoable("Unpin Tab") { shell.store.unpin(tab) } }
+            Button("Save Tab") { shell.performUndoable("Save Tab") { shell.store.save(tab) } }
+            Button("Close Tab") { shell.performUndoable("Close Tab") { shell.store.close(tab) } }
+        }
     }
 }

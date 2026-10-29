@@ -109,6 +109,8 @@ extension ShellController: NSMenuItemValidation {
             historyWindow?.close()
         } else if commandBar.isOpen {
             commandBar.close(restoringWebFocus: true)
+        } else if store.rowSelection.isMultiple {
+            closeTabs(selectedRowTabs)
         } else if let tab = store.selectedTab {
             performUndoable("Close Tab") { store.close(tab) }
         }
@@ -319,6 +321,8 @@ extension ShellController: NSMenuItemValidation {
         case #selector(redoTabAction(_:)):
             return tabUndoManager.canRedo
         case #selector(closeTab(_:)):
+            let count = keyLittleWindow == nil && !commandBar.isOpen && store.rowSelection.isMultiple ? store.rowSelection.identifiers.count : 1
+            menuItem.title = count > 1 ? "Close \(count) Tabs" : "Close Tab"
             return keyLittleWindow != nil || commandBar.isOpen || selected != nil
         case #selector(openLittleWindowInMini(_:)):
             return keyLittleWindow != nil

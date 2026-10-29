@@ -103,6 +103,9 @@ struct TabRowDropDelegate: DropDelegate {
 
     func validateDrop(info: DropInfo) -> Bool {
         guard let dragged = model.draggedTab else { return false }
+        if let group = shell.groupTabs(including: dragged) {
+            return !group.contains { $0 === tab || tab.isDescendant(of: $0) }
+        }
         return shell.store.canMove(dragged, relativeTo: tab)
     }
 
@@ -117,9 +120,13 @@ struct TabRowDropDelegate: DropDelegate {
     }
 
     func performDrop(info: DropInfo) -> Bool {
-        guard let dragged = model.draggedTab, shell.store.canMove(dragged, relativeTo: tab) else { return false }
+        guard let dragged = model.draggedTab, validateDrop(info: info) else { return false }
         model.drop(dragged) {
-            shell.performUndoable(dragged.isPinned ? "Unpin Tab" : "Move Tab") { shell.store.move(dragged, relativeTo: tab, position: dropPosition(info)) }
+            if let group = shell.groupTabs(including: dragged) {
+                shell.moveTabs(group, relativeTo: tab, position: dropPosition(info))
+            } else {
+                shell.performUndoable(dragged.isPinned ? "Unpin Tab" : "Move Tab") { shell.store.move(dragged, relativeTo: tab, position: dropPosition(info)) }
+            }
         }
         model.end()
         return true
@@ -152,6 +159,8 @@ struct PinnedDropDelegate: DropDelegate {
         model.drop(dragged) {
             if dragged.isPinned {
                 shell.performUndoable("Move Tab") { shell.store.movePinned(dragged, to: index) }
+            } else if let group = shell.groupTabs(including: dragged) {
+                shell.pinTabs(group, at: index)
             } else {
                 shell.performUndoable("Pin Tab") { shell.store.pin(dragged, at: index) }
             }
@@ -183,7 +192,11 @@ struct TabListEndDropDelegate: DropDelegate {
     func performDrop(info: DropInfo) -> Bool {
         guard let dragged = model.draggedTab else { return false }
         model.drop(dragged) {
-            shell.performUndoable(dragged.isPinned ? "Unpin Tab" : "Move Tab") { shell.store.moveToEnd(dragged) }
+            if let group = shell.groupTabs(including: dragged) {
+                shell.moveTabsToEnd(group)
+            } else {
+                shell.performUndoable(dragged.isPinned ? "Unpin Tab" : "Move Tab") { shell.store.moveToEnd(dragged) }
+            }
         }
         model.end()
         return true

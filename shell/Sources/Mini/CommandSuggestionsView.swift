@@ -17,6 +17,9 @@ struct CommandSuggestionsView: View {
     let faviconLookup: (String) -> NSImage?
     let activate: (CommandSuggestion) -> Void
 
+    @Namespace private var selectionNamespace
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
         if !model.suggestions.isEmpty {
             VStack(spacing: 0) {
@@ -29,7 +32,8 @@ struct CommandSuggestionsView: View {
                     if suggestion.isArchived, entry.previous?.isArchived != true {
                         SuggestionSectionHeader(title: "Archived")
                     }
-                    CommandSuggestionRow(suggestion: suggestion, isSelected: index == model.selectedIndex, faviconLookup: faviconLookup)
+                    CommandSuggestionRow(suggestion: suggestion, isSelected: index == model.selectedIndex, faviconLookup: faviconLookup,
+                                         selectionNamespace: reduceMotion ? nil : selectionNamespace)
                         .contentShape(Rectangle())
                         .onHover { isHovering in
                             if isHovering { model.selectedIndex = index }
@@ -42,6 +46,7 @@ struct CommandSuggestionsView: View {
             }
             .padding(.horizontal, CommandBarMetrics.contentInset)
             .padding(.bottom, CommandBarMetrics.contentInset)
+            .animation(reduceMotion ? nil : .spring(duration: 0.2, bounce: 0.1), value: model.selectedIndex)
         }
     }
 }
@@ -64,6 +69,7 @@ private struct CommandSuggestionRow: View {
     let suggestion: CommandSuggestion
     let isSelected: Bool
     let faviconLookup: (String) -> NSImage?
+    let selectionNamespace: Namespace.ID?
 
     var body: some View {
         HStack(spacing: CommandBarMetrics.rowIconSpacing) {
@@ -98,7 +104,13 @@ private struct CommandSuggestionRow: View {
         .frame(height: CommandBarMetrics.rowHeight)
         .background {
             if isSelected {
-                RoundedRectangle(cornerRadius: CommandBarMetrics.cornerRadius - CommandBarMetrics.contentInset, style: .continuous).fill(.fill.secondary)
+                let highlight = RoundedRectangle(cornerRadius: CornerMetrics.concentric(outer: CommandBarMetrics.cornerRadius, inset: CommandBarMetrics.contentInset), style: .continuous)
+                    .fill(.fill.secondary)
+                if let selectionNamespace {
+                    highlight.matchedGeometryEffect(id: "commandSelection", in: selectionNamespace)
+                } else {
+                    highlight
+                }
             }
         }
     }

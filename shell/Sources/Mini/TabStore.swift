@@ -1,5 +1,6 @@
 import Foundation
 import CMiniCore
+import MiniRules
 import Observation
 
 @MainActor
@@ -56,6 +57,7 @@ final class TabStore {
     private(set) var rootTabs: [Tab] = []
     private(set) var selectedTab: Tab?
     private(set) var splits: [TabSplit] = []
+    var rowSelection = RowSelection<MiniTabId>()
 
     @ObservationIgnored weak var observer: TabStoreObserver?
     @ObservationIgnored private let identifiers: TabIdentifierMint

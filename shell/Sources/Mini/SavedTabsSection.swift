@@ -65,7 +65,11 @@ struct SavedEndDropDelegate: DropDelegate {
     func performDrop(info: DropInfo) -> Bool {
         guard let dragged = model.draggedTab, validateDrop(info: info) else { return false }
         model.drop(dragged) {
-            shell.performUndoable("Save Tab") { shell.store.save(dragged) }
+            if let group = shell.groupTabs(including: dragged) {
+                shell.saveTabs(group)
+            } else {
+                shell.performUndoable("Save Tab") { shell.store.save(dragged) }
+            }
         }
         model.end()
         return true

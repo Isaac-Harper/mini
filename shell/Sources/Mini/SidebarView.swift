@@ -81,6 +81,7 @@ struct SpaceTabsView: View {
     private var store: TabStore { space.store }
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Namespace private var selectionNamespace
 
     private var rowTransition: AnyTransition {
         reduceMotion ? .opacity : .asymmetric(insertion: .move(edge: .leading).combined(with: .opacity), removal: .opacity)
@@ -88,6 +89,10 @@ struct SpaceTabsView: View {
 
     private var rowAnimation: Animation {
         return reduceMotion ? .easeInOut(duration: 0.15) : .spring(duration: 0.2)
+    }
+
+    private var selectionAnimation: Animation {
+        reduceMotion ? .easeInOut(duration: 0.12) : .spring(duration: 0.28, bounce: 0.12)
     }
 
     var body: some View {
@@ -128,6 +133,8 @@ struct SpaceTabsView: View {
                     }
                     .padding(.horizontal, SidebarMetrics.edgeInset)
                     .animation(rowAnimation, value: store.visibleTabs.map(\.id))
+                    .animation(selectionAnimation, value: store.selectedTab?.id)
+                    .animation(.easeOut(duration: 0.12), value: store.rowSelection)
                 }
                 .scrollIndicators(.never)
                 .background {
@@ -141,6 +148,7 @@ struct SpaceTabsView: View {
             }
         }
         .environment(\.sidebarStore, store)
+        .environment(\.selectionNamespace, reduceMotion ? nil : selectionNamespace)
     }
 
     private func row(for visibleTab: VisibleTab) -> some View {

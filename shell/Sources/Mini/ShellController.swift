@@ -567,6 +567,7 @@ extension ShellController: TabStoreObserver {
     }
 
     func tabStoreDidChangeStructure(_ store: TabStore) {
+        store.rowSelection.retain(store.visibleTabs.map(\.id))
         applyCachedFavicons()
         scheduleSessionSave()
     }

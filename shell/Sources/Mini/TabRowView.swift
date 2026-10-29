@@ -15,6 +15,8 @@ struct TabRowView: View {
 
     private var isDimmed: Bool { tab.isSaved && !isSelected && !tab.hasBrowser }
 
+    private var isInGroup: Bool { store.rowSelection.contains(tab.id) }
+
     var body: some View {
         HStack(spacing: SidebarMetrics.accessorySpacing) {
             disclosure
@@ -63,47 +65,48 @@ struct TabRowView: View {
         .padding(.leading, SidebarMetrics.indent(depth: depth))
         .padding(.trailing, SidebarMetrics.rowTrailingPadding)
         .frame(height: SidebarMetrics.rowHeight)
-        .background { rowBackground }
+        .background { RowHighlight(isSelected: isSelected, isInGroup: isInGroup, isHovered: isHovered) }
         .overlay { TabDropIndicator(shell: shell, tab: tab, depth: depth) }
         .overlay { SidebarFocusRing(shell: shell, tab: tab, cornerRadius: SidebarMetrics.rowCornerRadius) }
         .reportsSidebarRowFrame(of: tab, to: shell.sidebarDrag)
         .contentShape(Rectangle())
         .onHover { isHovered = $0 }
-        .onTapGesture { shell.store.select(tab) }
+        .onTapGesture { shell.clickRow(tab) }
         .onDrag { shell.sidebarDrag.beginDrag(tab) }
         .onDrop(of: SidebarDragModel.acceptedTypes, delegate: TabRowDropDelegate(shell: shell, tab: tab))
         .contextMenu {
-            Button("Open in Split View") { shell.openInSplitView(tab) }
-                .disabled(!canOpenInSplitView)
-            Button("Duplicate Tab") { shell.duplicate(tab) }
-                .disabled(tab.url.isEmpty)
-            Button("Pin Tab") { shell.performUndoable("Pin Tab") { shell.store.pin(tab) } }
-                .disabled(tab.url.isEmpty)
-            if tab.isSaved {
-                Button("Remove from Saved") { shell.performUndoable("Remove from Saved") { shell.store.unsave(tab) } }
-                Divider()
-                Button("Delete") { shell.performUndoable("Delete Tab") { shell.store.remove(tab) } }
+            if let group = shell.groupTabs(including: tab) {
+                GroupTabMenu(shell: shell, tabs: group)
             } else {
-                Button("Save Tab") { shell.performUndoable("Save Tab") { shell.store.save(tab) } }
-                    .disabled(!shell.store.canSave(tab))
-                Button("Close Tab") { shell.performUndoable("Close Tab") { shell.store.close(tab) } }
+                menu
             }
+        }
+    }
+
+    @ViewBuilder
+    private var menu: some View {
+        Button("Open in Split View") { shell.openInSplitView(tab) }
+            .disabled(!canOpenInSplitView)
+        Button("Duplicate Tab") { shell.duplicate(tab) }
+            .disabled(tab.url.isEmpty)
+        Button("Pin Tab") { shell.performUndoable("Pin Tab") { shell.store.pin(tab) } }
+            .disabled(tab.url.isEmpty)
+        if tab.isSaved {
+            Button("Remove from Saved") { shell.performUndoable("Remove from Saved") { shell.store.unsave(tab) } }
+            Divider()
+            Button("Delete") { shell.performUndoable("Delete Tab") { shell.store.remove(tab) } }
+        } else {
+            Button("Save Tab") { shell.performUndoable("Save Tab") { shell.store.save(tab) } }
+                .disabled(!shell.store.canSave(tab))
+            Divider()
+            Button("Archive Tab") { shell.archiveTabs([tab]) }
+            Button("Close Tab") { shell.performUndoable("Close Tab") { shell.store.close(tab) } }
         }
     }
 
     private var canOpenInSplitView: Bool {
         guard let selected = shell.store.selectedTab else { return false }
         return selected !== tab && !selected.isPinned
-    }
-
-    @ViewBuilder
-    private var rowBackground: some View {
-        let shape = RoundedRectangle(cornerRadius: SidebarMetrics.rowCornerRadius, style: .continuous)
-        if isSelected {
-            SelectionHighlight(shape: shape)
-        } else if isHovered {
-            shape.fill(.fill.quaternary)
-        }
     }
 
     @ViewBuilder
@@ -150,14 +153,7 @@ struct SplitTabRowView: View {
         .padding(.leading, SidebarMetrics.indent(depth: depth))
         .padding(.trailing, SidebarMetrics.rowLeadingPadding)
         .frame(height: SidebarMetrics.rowHeight)
-        .background {
-            let shape = RoundedRectangle(cornerRadius: SidebarMetrics.rowCornerRadius, style: .continuous)
-            if isSelected {
-                SelectionHighlight(shape: shape)
-            } else if isHovered {
-                shape.fill(.fill.quaternary)
-            }
-        }
+        .background { RowHighlight(isSelected: isSelected, isInGroup: store.rowSelection.contains(split.leading.id), isHovered: isHovered) }
         .overlay { TabDropIndicator(shell: shell, tab: split.leading, depth: depth) }
         .overlay { SidebarFocusRing(shell: shell, tab: split.leading, cornerRadius: SidebarMetrics.rowCornerRadius) }
         .reportsSidebarRowFrame(of: split.leading, to: shell.sidebarDrag)
@@ -166,10 +162,19 @@ struct SplitTabRowView: View {
         .onDrag { shell.sidebarDrag.beginDrag(split.leading) }
         .onDrop(of: SidebarDragModel.acceptedTypes, delegate: TabRowDropDelegate(shell: shell, tab: split.leading))
         .contextMenu {
-            Button("Separate Tabs") { shell.performUndoable("Separate Tabs") { shell.store.unsplit(split) } }
-            Button("Close \(split.leading.displayTitle)") { shell.performUndoable("Close Tab") { shell.store.close(split.leading) } }
-            Button("Close \(split.trailing.displayTitle)") { shell.performUndoable("Close Tab") { shell.store.close(split.trailing) } }
+            if let group = shell.groupTabs(including: split.leading) {
+                GroupTabMenu(shell: shell, tabs: group)
+            } else {
+                splitMenu
+            }
         }
+    }
+
+    @ViewBuilder
+    private var splitMenu: some View {
+        Button("Separate Tabs") { shell.performUndoable("Separate Tabs") { shell.store.unsplit(split) } }
+        Button("Close \(split.leading.displayTitle)") { shell.performUndoable("Close Tab") { shell.store.close(split.leading) } }
+        Button("Close \(split.trailing.displayTitle)") { shell.performUndoable("Close Tab") { shell.store.close(split.trailing) } }
     }
 }
 
@@ -226,6 +231,6 @@ private struct SplitTabHalfView: View {
         }
         .contentShape(Rectangle())
         .onHover { isHovered = $0 }
-        .onTapGesture { shell.store.select(tab) }
+        .onTapGesture { shell.clickRow(tab) }
     }
 }

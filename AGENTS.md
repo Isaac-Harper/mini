@@ -114,6 +114,7 @@ Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 - `SiteTintView.swift`: sidebar tint from space color, page theme color and the evening tint. (shell-ui)
 - `Sources/MiniRules/EveningTint.swift`: pure evening tint strength curve, in its own target so `Tests/MiniRulesTests` can test it without linking the app. (shell-ui)
 - `SidebarKeyboard.swift`: sidebar keyboard focus. (shell-ui)
+- `SidebarSelection.swift`, `Sources/MiniRules/RowSelection.swift`: multi-select rows (pure range and toggle rules, unit tested) and the group actions. (tabs-and-undo)
 - `Downloads.swift`: downloads model and sidebar rows. (shell-ui)
 - `NowPlaying.swift`, `DominantColor.swift`: Now Playing row, mute button, artwork tint. (shell-ui)
 - `AirPlay.swift`: AirPlay video handoff, the row's route picker, the sound output fallback menu. (shell-ui)

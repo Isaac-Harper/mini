@@ -4,7 +4,7 @@ import SwiftUI
 
 extension ShellController {
     func canTearOff(_ tab: Tab) -> Bool {
-        !tab.isPinned && !tab.url.isEmpty && store.tab(withIdentifier: tab.id) === tab
+        !tab.isPinned && !tab.url.isEmpty && store.tab(withIdentifier: tab.id) === tab && groupTabs(including: tab) == nil
     }
 
     func tearOff(_ tab: Tab, at screenPoint: NSPoint) {
