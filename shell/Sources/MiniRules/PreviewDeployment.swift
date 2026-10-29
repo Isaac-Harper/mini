@@ -31,7 +31,7 @@ public struct PreviewDeployment: Equatable, Sendable {
         return nil
     }
 
-    public static func productionProjects(ofHost rawHost: String) -> [String] {
+    public static func productionProjects(ofHost rawHost: String, registrableDomain: (String) -> String?) -> [String] {
         let host = rawHost.lowercased()
         guard of(host: host) == nil else { return [] }
         for suffix in [".vercel.app", ".netlify.app", ".pages.dev"] {
@@ -41,16 +41,16 @@ public struct PreviewDeployment: Equatable, Sendable {
         let labels = host.split(separator: ".").map(String.init)
         guard labels.count >= 2, !labels.allSatisfy({ $0.allSatisfy(\.isNumber) }) else { return [] }
         let firstLabel = labels[0] == "www" ? labels[1] : labels[0]
-        let domainLabel = AddressEmphasis.registrableDomain(of: host).split(separator: ".").first.map(String.init) ?? firstLabel
+        let domainLabel = (registrableDomain(host) ?? host).split(separator: ".").first.map(String.init) ?? firstLabel
         return firstLabel == domainLabel ? [firstLabel] : [firstLabel, domainLabel]
     }
 
-    public static func counterpart(of rawHost: String, amongVisitedHosts visitedHosts: [String]) -> String? {
+    public static func counterpart(of rawHost: String, amongVisitedHosts visitedHosts: [String], registrableDomain: (String) -> String?) -> String? {
         let host = rawHost.lowercased()
         if let preview = of(host: host) {
-            return visitedHosts.first { productionProjects(ofHost: $0).contains(preview.project) }?.lowercased()
+            return visitedHosts.first { productionProjects(ofHost: $0, registrableDomain: registrableDomain).contains(preview.project) }?.lowercased()
         }
-        let projects = productionProjects(ofHost: host)
+        let projects = productionProjects(ofHost: host, registrableDomain: registrableDomain)
         guard !projects.isEmpty else { return nil }
         return visitedHosts.first { visited in
             guard let preview = of(host: visited) else { return false }

@@ -2,6 +2,11 @@ import Testing
 import MiniRules
 
 struct PreviewDeploymentTests {
+    private static func lastTwoLabels(_ host: String) -> String? {
+        let labels = host.split(separator: ".")
+        return labels.count >= 2 ? labels.suffix(2).joined(separator: ".") : nil
+    }
+
     @Test func vercelGitBranchPreviewsCarryTheBranch() {
         #expect(PreviewDeployment.of(host: "mini-git-feature-login-isaac.vercel.app")
             == PreviewDeployment(platform: .vercel, project: "mini", branch: "feature-login"))
@@ -41,29 +46,29 @@ struct PreviewDeploymentTests {
     }
 
     @Test func productionProjectsComeFromTheFirstLabelAndTheDomain() {
-        #expect(PreviewDeployment.productionProjects(ofHost: "mini.vercel.app") == ["mini"])
-        #expect(PreviewDeployment.productionProjects(ofHost: "nextjs.org") == ["nextjs"])
-        #expect(PreviewDeployment.productionProjects(ofHost: "www.nextjs.org") == ["nextjs"])
-        #expect(PreviewDeployment.productionProjects(ofHost: "docs.mini.dev") == ["docs", "mini"])
-        #expect(PreviewDeployment.productionProjects(ofHost: "mini-git-main-isaac.vercel.app") == [])
-        #expect(PreviewDeployment.productionProjects(ofHost: "127.0.0.1") == [])
-        #expect(PreviewDeployment.productionProjects(ofHost: "localhost") == [])
+        #expect(PreviewDeployment.productionProjects(ofHost: "mini.vercel.app", registrableDomain: Self.lastTwoLabels) == ["mini"])
+        #expect(PreviewDeployment.productionProjects(ofHost: "nextjs.org", registrableDomain: Self.lastTwoLabels) == ["nextjs"])
+        #expect(PreviewDeployment.productionProjects(ofHost: "www.nextjs.org", registrableDomain: Self.lastTwoLabels) == ["nextjs"])
+        #expect(PreviewDeployment.productionProjects(ofHost: "docs.mini.dev", registrableDomain: Self.lastTwoLabels) == ["docs", "mini"])
+        #expect(PreviewDeployment.productionProjects(ofHost: "mini-git-main-isaac.vercel.app", registrableDomain: Self.lastTwoLabels) == [])
+        #expect(PreviewDeployment.productionProjects(ofHost: "127.0.0.1", registrableDomain: Self.lastTwoLabels) == [])
+        #expect(PreviewDeployment.productionProjects(ofHost: "localhost", registrableDomain: Self.lastTwoLabels) == [])
     }
 
     @Test func previewFindsOnlyAVisitedProduction() {
         let preview = "mini-git-feature-isaac.vercel.app"
-        #expect(PreviewDeployment.counterpart(of: preview, amongVisitedHosts: ["github.com", "mini.dev", "mini.vercel.app"]) == "mini.dev")
-        #expect(PreviewDeployment.counterpart(of: preview, amongVisitedHosts: ["github.com", "minimal.dev"]) == nil)
-        #expect(PreviewDeployment.counterpart(of: preview, amongVisitedHosts: []) == nil)
+        #expect(PreviewDeployment.counterpart(of: preview, amongVisitedHosts: ["github.com", "mini.dev", "mini.vercel.app"], registrableDomain: Self.lastTwoLabels) == "mini.dev")
+        #expect(PreviewDeployment.counterpart(of: preview, amongVisitedHosts: ["github.com", "minimal.dev"], registrableDomain: Self.lastTwoLabels) == nil)
+        #expect(PreviewDeployment.counterpart(of: preview, amongVisitedHosts: [], registrableDomain: Self.lastTwoLabels) == nil)
     }
 
     @Test func productionFindsTheMostRecentVisitedPreview() {
         let visited = ["github.com", "mini-a1b2c3d4e-isaac.vercel.app", "mini-git-old-isaac.vercel.app"]
-        #expect(PreviewDeployment.counterpart(of: "mini.dev", amongVisitedHosts: visited) == "mini-a1b2c3d4e-isaac.vercel.app")
-        #expect(PreviewDeployment.counterpart(of: "other.dev", amongVisitedHosts: visited) == nil)
+        #expect(PreviewDeployment.counterpart(of: "mini.dev", amongVisitedHosts: visited, registrableDomain: Self.lastTwoLabels) == "mini-a1b2c3d4e-isaac.vercel.app")
+        #expect(PreviewDeployment.counterpart(of: "other.dev", amongVisitedHosts: visited, registrableDomain: Self.lastTwoLabels) == nil)
     }
 
     @Test func previewNeverPairsWithAnotherPreview() {
-        #expect(PreviewDeployment.counterpart(of: "mini-git-a-isaac.vercel.app", amongVisitedHosts: ["mini-git-b-isaac.vercel.app"]) == nil)
+        #expect(PreviewDeployment.counterpart(of: "mini-git-a-isaac.vercel.app", amongVisitedHosts: ["mini-git-b-isaac.vercel.app"], registrableDomain: Self.lastTwoLabels) == nil)
     }
 }
