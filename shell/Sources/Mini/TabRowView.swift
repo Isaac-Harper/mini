@@ -48,6 +48,12 @@ struct TabRowView: View {
                 .focusable(false)
                 .glassTooltip("Back to Saved Page")
             }
+            if isHovered, let port = LocalDevelopment.port(ofLocalAddress: tab.url) {
+                Text(":\(String(port))")
+                    .font(InterfaceFont.caption)
+                    .foregroundStyle(.tertiary)
+                    .monospacedDigit()
+            }
             if isHovered {
                 Button {
                     shell.performUndoable("Close Tab") { shell.store.close(tab) }

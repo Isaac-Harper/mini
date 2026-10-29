@@ -118,6 +118,9 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
             model.showRecentTabs(from: store.allTabs, excluding: store.selectedTab)
         }
         updateIcon()
+        shell.localServers.onChange = { [weak self] in self?.localServersChanged() }
+        model.setLocalServers(shell.localServers.servers)
+        shell.localServers.refreshIfStale()
         if !isOpen {
             isOpen = true
             attach(to: shell.windowController!)
@@ -208,6 +211,8 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
             shell.open(entry.url, from: mode)
         case .openLinks(let links):
             shell.openLinks(links, inBackground: false, nested: NSApp.currentEvent?.modifierFlags.contains(.option) == true)
+        case .localServer(let server):
+            shell.open(server.address, from: mode)
         case .action:
             preconditionFailure("actions are performed before the switch")
         }
@@ -240,7 +245,13 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
         return true
     }
 
+    private func localServersChanged() {
+        guard isOpen else { return }
+        withoutAnimation { model.setLocalServers(shell.localServers.servers) }
+    }
+
     func controlTextDidChange(_ notification: Notification) {
+        shell.localServers.refreshIfStale()
         if let pastedSummary, field.stringValue != pastedSummary {
             pastedText = nil
             self.pastedSummary = nil

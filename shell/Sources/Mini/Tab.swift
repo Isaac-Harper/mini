@@ -56,6 +56,7 @@ final class Tab: Identifiable {
     @ObservationIgnored var lastSelectedAt = Date()
     @ObservationIgnored var hasCrashed = false
     @ObservationIgnored var zoomedHost: String?
+    @ObservationIgnored var devServerWait: DevServerWait?
 
     init(id: MiniTabId, url: String, title: String) {
         self.id = id

@@ -18,6 +18,7 @@ extension ShellController {
         if tab.url != url {
             loginFill.close(forTab: identifier)
         }
+        cancelDevServerWait(of: tab, unlessShowing: url)
         tab.url = url
         let host = SitePreferences.host(of: url)
         if host != tab.zoomedHost {

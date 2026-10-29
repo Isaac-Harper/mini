@@ -11,11 +11,11 @@ struct AddressPillChip: View {
             .foregroundStyle(.secondary)
             .lineLimit(1)
             .truncationMode(.tail)
+            .frame(maxWidth: SidebarMetrics.addressPillChipMaximumTextWidth)
+            .fixedSize()
             .padding(.horizontal, SidebarMetrics.addressPillChipPadding)
             .frame(height: SidebarMetrics.addressPillChipHeight)
-            .frame(maxWidth: SidebarMetrics.addressPillChipMaximumWidth)
             .background(Capsule().fill(.fill.tertiary))
-            .layoutPriority(1)
             .glassTooltip(help)
     }
 }
@@ -24,7 +24,9 @@ struct AddressPillBadges: View {
     let tab: Tab
 
     var body: some View {
-        if let host = URLInput.host(of: tab.url), let preview = PreviewDeployment.of(host: host) {
+        if let port = LocalDevelopment.port(ofLocalAddress: tab.url) {
+            AddressPillChip(text: "dev :\(String(port))", help: "Local development server on port \(String(port))")
+        } else if let host = URLInput.host(of: tab.url), let preview = PreviewDeployment.of(host: host) {
             AddressPillChip(text: preview.branch.map { "Preview \u{00B7} \($0)" } ?? "Preview",
                             help: preview.branch.map { "Preview deployment of \(preview.project), branch \($0)" } ?? "Preview deployment of \(preview.project)")
         }

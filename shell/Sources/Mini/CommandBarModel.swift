@@ -1,4 +1,5 @@
 import Foundation
+import MiniRules
 import Observation
 
 enum CommandBarMode {
@@ -15,6 +16,7 @@ enum CommandSuggestion: Identifiable {
     case history(HistoryEntry)
     case openLinks([PastedLink])
     case action(CommandAction)
+    case localServer(LocalServer)
 
     var id: String {
         switch self {
@@ -25,11 +27,17 @@ enum CommandSuggestion: Identifiable {
         case .history(let entry): "history-\(entry.url)"
         case .openLinks: "open-links"
         case .action(let action): "action-\(action.id)"
+        case .localServer(let server): "server-\(server.port)"
         }
     }
 
     var isArchived: Bool {
         if case .archived = self { return true }
+        return false
+    }
+
+    var isLocalServer: Bool {
+        if case .localServer = self { return true }
         return false
     }
 
@@ -52,27 +60,46 @@ final class CommandBarModel {
     @ObservationIgnored private var history: [HistoryEntry] = []
     @ObservationIgnored private var searchSuggestions: [String] = []
     @ObservationIgnored private var searchSuggestionsQuery = ""
+    @ObservationIgnored private var localServers: [LocalServer] = []
+    @ObservationIgnored private var showsRecentTabs = false
 
     private static let maximumSearchSuggestions = 4
     private static let maximumOtherRows = 5
     private static let maximumHistoryRows = 4
     private static let recentTabCount = 5
     private static let maximumActionRows = 10
+    private static let maximumLocalServerRows = 5
 
     var trimmedQuery: String { query.trimmingCharacters(in: .whitespacesAndNewlines) }
 
     func showRecentTabs(from tabs: [Tab], excluding selectedTab: Tab?) {
         query = ""
+        self.tabs = tabs
+        self.selectedTab = selectedTab
+        showsRecentTabs = true
         searchSuggestions = []
         suggestions = tabs
             .filter { $0 !== selectedTab }
             .sorted { $0.lastSelectedAt > $1.lastSelectedAt }
             .prefix(Self.recentTabCount)
             .map(CommandSuggestion.switchToTab)
+            + localServers.prefix(Self.maximumLocalServerRows).map(CommandSuggestion.localServer)
         selectedIndex = 0
     }
 
+    func setLocalServers(_ servers: [LocalServer]) {
+        localServers = servers
+        if showsRecentTabs {
+            let previouslySelectedIdentifier = selectedSuggestion?.id
+            showRecentTabs(from: tabs, excluding: selectedTab)
+            selectedIndex = suggestions.firstIndex { $0.id == previouslySelectedIdentifier } ?? 0
+        } else if !trimmedQuery.isEmpty, suggestions.first.map({ if case .open = $0 { true } else { false } }) == true {
+            rebuild()
+        }
+    }
+
     func clear() {
+        showsRecentTabs = false
         query = ""
         searchSuggestions = []
         suggestions = []
@@ -80,6 +107,7 @@ final class CommandBarModel {
     }
 
     func showLinks(_ links: [PastedLink]) {
+        showsRecentTabs = false
         query = ""
         searchSuggestions = []
         suggestions = [.openLinks(links)]
@@ -88,6 +116,7 @@ final class CommandBarModel {
 
     func showActions(_ actions: [CommandAction]) {
         let previouslySelectedIdentifier = selectedSuggestion?.id
+        showsRecentTabs = false
         query = ""
         searchSuggestions = []
         suggestions = actions.prefix(Self.maximumActionRows).map(CommandSuggestion.action)
@@ -104,6 +133,7 @@ final class CommandBarModel {
             showRecentTabs(from: tabs, excluding: selectedTab)
             return
         }
+        showsRecentTabs = false
         rebuild()
     }
 
@@ -143,7 +173,16 @@ final class CommandBarModel {
             .filter { $0.lowercased() != lowercasedQuery }
             .prefix(Self.maximumSearchSuggestions)
             .map(CommandSuggestion.searchSuggestion)
-        suggestions = [.open(URLInput.interpret(trimmed))] + searchRows + matchingTabs + matchingHistory + matchingArchived
+        let matchingServers = localServers
+            .filter { server in
+                let haystack = "\(server.processName) \(server.port) localhost".lowercased()
+                return tokens.allSatisfy { haystack.contains($0.trimmingCharacters(in: CharacterSet(charactersIn: ":"))) }
+            }
+            .prefix(Self.maximumLocalServerRows)
+            .map(CommandSuggestion.localServer)
+        let openRow: URLInput.Interpretation = LocalDevelopment.portShortcut(trimmed, listeningPorts: Set(localServers.map(\.port)))
+            .map { .address("http://localhost:\($0)") } ?? URLInput.interpret(trimmed)
+        suggestions = [.open(openRow)] + searchRows + matchingTabs + matchingServers + matchingHistory + matchingArchived
         if let previouslySelectedIdentifier, let index = suggestions.firstIndex(where: { $0.id == previouslySelectedIdentifier }) {
             selectedIndex = index
         } else {

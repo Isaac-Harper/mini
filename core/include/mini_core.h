@@ -176,6 +176,10 @@ typedef struct MiniCallbacks {
   // Result of mini_browser_request_source: the main frame's HTML as loaded
   // (CefFrame::GetSource), UTF-8 bytes, not NUL-terminated.
   void (*source_received)(MiniTabId tab, uint64_t request, const uint8_t *source, size_t length);
+  // The main frame's navigation to failed_url failed (CefLoadHandler
+  // OnLoadError). error_code is Chromium's net error, e.g. -102 for
+  // ERR_CONNECTION_REFUSED; -3 (ERR_ABORTED) is sent too.
+  void (*main_frame_load_failed)(MiniTabId tab, int32_t error_code, const char *failed_url);
   void (*browser_closed)(MiniTabId tab);
   void (*all_browsers_closed)(void);
   // Mini was launched again on this profile (CEF's already-running relaunch).

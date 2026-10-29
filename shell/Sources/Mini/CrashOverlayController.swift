@@ -9,7 +9,7 @@ final class CrashOverlayController {
 
     init(shell: ShellController, windowController: MainWindowController) {
         self.shell = shell
-        hostingView = NSHostingView(rootView: CrashOverlayView { [weak shell] in shell?.reloadCrashedTab() })
+        hostingView = NSHostingView(rootView: CrashOverlayView(content: .crashed, reload: {}, retry: {}))
         hostingView.sizingOptions = []
         hostingView.translatesAutoresizingMaskIntoConstraints = false
         hostingView.isHidden = true
@@ -24,7 +24,19 @@ final class CrashOverlayController {
     }
 
     func refresh() {
-        let shouldShow = shell.store.selectedTab?.hasCrashed ?? false
+        let selected = shell.store.selectedTab
+        let content: PageOverlayContent? = if selected?.hasCrashed == true {
+            .crashed
+        } else if let wait = selected?.devServerWait {
+            .waitingForDevServer(port: wait.port, hasGivenUp: wait.hasGivenUp)
+        } else {
+            nil
+        }
+        if let content {
+            hostingView.rootView = CrashOverlayView(content: content, reload: { [weak shell] in shell?.reloadCrashedTab() },
+                                                    retry: { [weak shell] in shell?.retryDevServer() })
+        }
+        let shouldShow = content != nil
         guard shouldShow == hostingView.isHidden else { return }
         hostingView.isHidden = !shouldShow
         if shouldShow {
@@ -33,19 +45,46 @@ final class CrashOverlayController {
     }
 }
 
+enum PageOverlayContent: Equatable {
+    case crashed
+    case waitingForDevServer(port: Int, hasGivenUp: Bool)
+}
+
 struct CrashOverlayView: View {
+    let content: PageOverlayContent
     let reload: () -> Void
+    let retry: () -> Void
 
     var body: some View {
         VStack(spacing: 12) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 28, weight: .regular))
-                .foregroundStyle(.secondary)
-            Text("This page crashed")
-                .font(.system(size: 15, weight: .semibold))
-            Button("Reload", action: reload)
-                .buttonStyle(.glassProminent)
-                .controlSize(.large)
+            switch content {
+            case .crashed:
+                Image(systemName: "exclamationmark.triangle")
+                    .font(.system(size: 28, weight: .regular))
+                    .foregroundStyle(.secondary)
+                Text("This page crashed")
+                    .font(.system(size: 15, weight: .semibold))
+                Button("Reload", action: reload)
+                    .buttonStyle(.glassProminent)
+                    .controlSize(.large)
+            case .waitingForDevServer(let port, false):
+                ProgressView()
+                    .controlSize(.small)
+                Text("Waiting for localhost:\(String(port))")
+                    .font(.system(size: 15, weight: .semibold))
+                Text("The page reloads when the server answers.")
+                    .font(InterfaceFont.body)
+                    .foregroundStyle(.secondary)
+            case .waitingForDevServer(let port, true):
+                Image(systemName: "powerplug")
+                    .font(.system(size: 28, weight: .regular))
+                    .foregroundStyle(.secondary)
+                Text("localhost:\(String(port)) is not answering")
+                    .font(.system(size: 15, weight: .semibold))
+                Button("Try Again", action: retry)
+                    .buttonStyle(.glassProminent)
+                    .controlSize(.large)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(nsColor: .windowBackgroundColor))

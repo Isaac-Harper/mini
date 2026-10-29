@@ -26,6 +26,9 @@ struct CommandSuggestionsView: View {
                 ForEach(SuggestionListEntry.entries(model.suggestions), id: \.suggestion.id) { entry in
                     let index = entry.index
                     let suggestion = entry.suggestion
+                    if suggestion.isLocalServer, entry.previous?.isLocalServer != true {
+                        SuggestionSectionHeader(title: "Local Servers")
+                    }
                     if suggestion.isHistory, entry.previous?.isHistory != true {
                         SuggestionSectionHeader(title: "History")
                     }
@@ -155,6 +158,8 @@ private struct CommandSuggestionRow: View {
             }
         case .openLinks:
             Image(systemName: "square.stack").foregroundStyle(.secondary)
+        case .localServer:
+            Image(systemName: "server.rack").foregroundStyle(.secondary)
         case .action(let action):
             Group {
                 if let image = action.image {
@@ -177,6 +182,7 @@ private struct CommandSuggestionRow: View {
         case .history(let entry): entry.displayTitle
         case .openLinks(let links): "Open \(links.count) Links"
         case .action(let action): action.title
+        case .localServer(let server): server.title
         }
     }
 
@@ -190,6 +196,7 @@ private struct CommandSuggestionRow: View {
         case .history(let entry): URLInput.host(of: entry.url)
         case .openLinks: "Return opens them here, \u{2318}Return in the background, \u{2325}Return nested"
         case .action: nil
+        case .localServer(let server): "localhost:\(String(server.port))"
         }
     }
 
@@ -203,6 +210,7 @@ private struct CommandSuggestionRow: View {
         case .history: "Open"
         case .openLinks: "Open All"
         case .action(let action): action.shortcut
+        case .localServer: "Open"
         }
     }
 }

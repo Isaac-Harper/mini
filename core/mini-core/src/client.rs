@@ -229,6 +229,22 @@ wrap_load_handler! {
             };
         }
 
+        fn on_load_error(
+            &self,
+            _browser: Option<&mut Browser>,
+            frame: Option<&mut Frame>,
+            error_code: Errorcode,
+            _error_text: Option<&CefString>,
+            failed_url: Option<&CefString>,
+        ) {
+            if frame.expect("load error without a frame").is_main() != 1 {
+                return;
+            }
+            let failed_url = c_string(&text(failed_url));
+            let error_code = *error_code.as_ref() as i32;
+            unsafe { (callbacks().main_frame_load_failed)(self.tab, error_code, failed_url.as_ptr()) };
+        }
+
         fn on_load_start(
             &self,
             browser: Option<&mut Browser>,

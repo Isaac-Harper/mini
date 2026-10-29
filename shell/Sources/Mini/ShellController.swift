@@ -16,6 +16,7 @@ final class ShellController: NSObject {
     let undoToast = UndoToastModel()
     let airPlay = AirPlayVideo()
     let soundOutput = SoundOutput()
+    @ObservationIgnored let localServers = LocalServerScanner()
     private(set) var nowPlayingTab: Tab?
     private(set) var eveningTintDate = Date()
     var showsEveningTint = UserDefaults.standard.object(forKey: ShellController.showsEveningTintKey) as? Bool ?? true {
@@ -424,6 +425,7 @@ final class ShellController: NSObject {
     }
 
     func navigate(_ tab: Tab, to url: String) {
+        cancelDevServerWait(of: tab)
         tab.url = url
         if tab.hasBrowser {
             tab.refocusesOnCommit = tab === store.selectedTab
@@ -622,6 +624,7 @@ extension ShellController: TabStoreObserver {
         forgetNowPlaying(tabs)
         for tab in tabs {
             loginFill.close(forTab: tab.id)
+            cancelDevServerWait(of: tab)
         }
     }
 

@@ -180,6 +180,10 @@ final class BrowserEngine {
                 let source = length > 0 && bytes != nil ? String(decoding: UnsafeBufferPointer(start: bytes!, count: length), as: UTF8.self) : ""
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.sourceReceived(identifier, request: request, source: source) }
             },
+            main_frame_load_failed: { identifier, errorCode, failedURL in
+                let failedURL = requiredString(failedURL)
+                MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.mainFrameLoadFailed(identifier, errorCode: errorCode, failedURL: failedURL) }
+            },
             browser_closed: { identifier in
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.browserClosed(identifier) }
             },
