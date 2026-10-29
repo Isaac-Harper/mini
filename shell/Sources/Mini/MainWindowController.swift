@@ -14,6 +14,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
     private var expandedSidebarWidth: CGFloat = 240
     private var sidebarCollapseDetent = DetentChange<Bool>()
     private var sidebarEdgeDetent = DetentEntry<SidebarWidthEdge>()
+    private weak var sidebarSnapEvent: NSEvent?
     private var showsCollapsedControls = false
     private var isToolbarVisible = true
 
@@ -77,13 +78,17 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
         pane.layoutSubtreeIfNeeded()
         let width = sidebarItem.viewController.view.frame.width
         let edge = isCollapsed ? nil : SidebarWidthEdge.of(width: width, minimum: sidebarItem.minimumThickness, maximum: sidebarItem.maximumThickness)
-        let isDirect = isDividerDrag && [.leftMouseDragged, .leftMouseUp].contains(NSApp.currentEvent?.type)
+        let event = NSApp.currentEvent
+        let isDirect = isDividerDrag && [.leftMouseDragged, .leftMouseUp].contains(event?.type)
         let snapped = sidebarCollapseDetent.update(isCollapsed)
         let reachedEdge = sidebarEdgeDetent.update(edge)
+        if snapped {
+            sidebarSnapEvent = event
+        }
         guard isDirect else { return }
         if snapped {
             Haptics.sidebarSnappedCollapsed()
-        } else if reachedEdge {
+        } else if reachedEdge, event !== sidebarSnapEvent {
             Haptics.sidebarReachedWidthLimit()
         }
     }
