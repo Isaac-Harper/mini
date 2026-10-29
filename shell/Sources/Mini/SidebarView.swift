@@ -113,6 +113,7 @@ struct SpaceTabsView: View {
                 PinnedTabsView(shell: shell)
                     .padding(.horizontal, SidebarMetrics.edgeInset)
                     .padding(.bottom, SidebarMetrics.sectionSpacing)
+                    .launchReveal(shell.launchReveal, index: 0)
             }
             ScrollViewReader { proxy in
                 ScrollView {
@@ -123,8 +124,9 @@ struct SpaceTabsView: View {
                         if !savedRows.isEmpty {
                             SavedSectionHeader()
                         }
-                        ForEach(savedRows) { visibleTab in
+                        ForEach(Array(savedRows.enumerated()), id: \.element.id) { position, visibleTab in
                             row(for: visibleTab)
+                                .launchReveal(shell.launchReveal, index: position + 1)
                         }
                         if showsSaveDrop {
                             SaveDropRow(shell: shell)
@@ -132,13 +134,15 @@ struct SpaceTabsView: View {
                         if !savedRows.isEmpty || showsSaveDrop {
                             SavedSectionDivider()
                         }
-                        ForEach(RegularSidebarItem.items(regularRows: rows.filter { !$0.isSaved }, groups: store.dayFoldGroups)) { item in
+                        ForEach(Array(RegularSidebarItem.items(regularRows: rows.filter { !$0.isSaved }, groups: store.dayFoldGroups).enumerated()), id: \.element.id) { position, item in
                             switch item {
                             case .tab(let visibleTab):
                                 row(for: visibleTab)
+                                    .launchReveal(shell.launchReveal, index: savedRows.count + position + 1)
                             case .dayFold(let group):
                                 DayFoldRow(shell: shell, group: group)
                                     .transition(rowTransition)
+                                    .launchReveal(shell.launchReveal, index: savedRows.count + position + 1)
                             }
                         }
                         Color.clear

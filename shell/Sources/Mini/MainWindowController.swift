@@ -151,6 +151,18 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
         sidebarItem.isCollapsed = collapsed
     }
 
+    func hidePageCardUntilRevealed() {
+        webContentController.cardView.alphaValue = 0
+    }
+
+    func revealPageCard(duration: TimeInterval) {
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = duration
+            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            webContentController.cardView.animator().alphaValue = 1
+        }
+    }
+
     func setToolbarVisible(_ visible: Bool) {
         window?.toolbar?.isVisible = visible
         webContentController.setPageFillsWindow(!visible)
@@ -197,7 +209,7 @@ final class WebContentViewController: NSViewController {
     static let cardCornerRadius = CornerMetrics.concentric(outer: CornerMetrics.window, inset: cardInset)
 
     let webAreaView = WebAreaView()
-    private let cardView = PageCardView()
+    let cardView = PageCardView()
     private let emptyStateView = EmptyPageView()
     private var insetConstraints: [NSLayoutConstraint] = []
 

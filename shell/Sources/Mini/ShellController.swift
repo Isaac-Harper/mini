@@ -14,6 +14,7 @@ final class ShellController: NSObject {
     let sidebarDrag = SidebarDragModel()
     let sidebarKeyboard = SidebarKeyboardFocus()
     let undoToast = UndoToastModel()
+    let launchReveal = LaunchReveal()
     let airPlay = AirPlayVideo()
     let soundOutput = SoundOutput()
     @ObservationIgnored let localServers = LocalServerScanner()
@@ -157,6 +158,7 @@ final class ShellController: NSObject {
             return event
         }
         sidebarTabKeyMonitor = installSidebarTabKeyMonitor()
+        if launchReveal.phase == .waiting { windowController.hidePageCardUntilRevealed() }
         showWindow()
         for saved in savedSession.spaces {
             guard let space = spaces.first(where: { $0.id == saved.id }) else { preconditionFailure("Saved space was not created") }
@@ -178,6 +180,12 @@ final class ShellController: NSObject {
         closeTheDayIfNeeded(includingSavedSelections: true)
         observeWakeForClosingTheDay()
         archiveIdleTabs()
+        DispatchQueue.main.async { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                self.launchReveal.play { self.windowController.revealPageCard(duration: $0) }
+            }
+        }
         weather.start()
         applyCachedFavicons()
         faviconCache.prune(keepingPagesAt: allSpaceTabs.flatMap { [$0.url, $0.pinnedURL ?? ""] } + archive.entries.map(\.url))
