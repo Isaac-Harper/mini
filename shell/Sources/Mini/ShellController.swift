@@ -42,6 +42,7 @@ final class ShellController: NSObject {
     @ObservationIgnored private let savedSession: SavedSession
     @ObservationIgnored var pendingSpaceDeletions: [String: Set<MiniTabId>] = [:]
     @ObservationIgnored var pageFullscreen: PageFullscreen?
+    @ObservationIgnored var tabUndoReplacements: [MiniTabId: Tab] = [:]
 
     private static let archiveInterval: TimeInterval = 10 * 60
 
@@ -90,6 +91,7 @@ final class ShellController: NSObject {
         notifications = NotificationsController(shell: self)
         sitePreferences.onNotificationsGranted = { [weak self] in self?.notifications.requestAuthorizationIfNeeded() }
         windowController = MainWindowController(shell: self)
+        tabUndoManager.levelsOfUndo = 100
         commandBar = CommandBarController(shell: self)
         findBar = FindBarController(shell: self)
         sitePrompts = SitePromptController(shell: self, preferences: sitePreferences, windowController: windowController)
@@ -356,21 +358,27 @@ final class ShellController: NSObject {
     func toggleSplitView() {
         guard let selected = store.selectedTab else { return }
         if let split = store.split(containing: selected) {
-            store.unsplit(split)
+            performUndoable("Separate Tabs") { store.unsplit(split) }
         } else if let candidate = store.splitCandidate(for: selected) {
-            store.makeSplit(leading: selected, trailing: candidate)
+            performUndoable("Split View") { store.makeSplit(leading: selected, trailing: candidate) }
         }
     }
 
     func duplicate(_ tab: Tab) {
         guard !tab.url.isEmpty else { return }
-        let copy = store.newTab(url: tab.url, title: tab.title, parent: tab.isPinned ? nil : tab.parent, after: tab)
-        copy.favicon = tab.favicon
-        store.select(copy)
+        performUndoable("Duplicate Tab") {
+            let copy = store.newTab(url: tab.url, title: tab.title, parent: tab.isPinned ? nil : tab.parent, after: tab)
+            copy.favicon = tab.favicon
+            store.select(copy)
+        }
     }
 
     func openLinks(_ links: [PastedLink], inBackground: Bool, nested: Bool) {
         precondition(links.count >= 2, "Opening pasted links needs at least two")
+        performUndoable("Open Links") { openLinksUndoably(links, inBackground: inBackground, nested: nested) }
+    }
+
+    private func openLinksUndoably(_ links: [PastedLink], inBackground: Bool, nested: Bool) {
         let anchor = store.selectedTab
         let parent = anchor?.isPinned == false ? anchor?.parent : nil
         var opened: [Tab] = []
@@ -390,7 +398,7 @@ final class ShellController: NSObject {
 
         func openInSplitView(_ tab: Tab) {
         guard let selected = store.selectedTab, selected !== tab, !selected.isPinned, !tab.isPinned else { return }
-        store.makeSplit(leading: selected, trailing: tab)
+        performUndoable("Split View") { store.makeSplit(leading: selected, trailing: tab) }
     }
 
     private func focusSplitSide(under event: NSEvent) {

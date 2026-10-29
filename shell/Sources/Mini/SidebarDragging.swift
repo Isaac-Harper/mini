@@ -77,7 +77,7 @@ struct TabRowDropDelegate: DropDelegate {
 
     func performDrop(info: DropInfo) -> Bool {
         guard let dragged = model.draggedTab, shell.store.canMove(dragged, relativeTo: tab) else { return false }
-        shell.store.move(dragged, relativeTo: tab, position: dropPosition(info))
+        shell.performUndoable(dragged.isPinned ? "Unpin Tab" : "Move Tab") { shell.store.move(dragged, relativeTo: tab, position: dropPosition(info)) }
         model.end()
         return true
     }
@@ -107,9 +107,9 @@ struct PinnedDropDelegate: DropDelegate {
     func performDrop(info: DropInfo) -> Bool {
         guard let dragged = model.draggedTab, validateDrop(info: info) else { return false }
         if dragged.isPinned {
-            shell.store.movePinned(dragged, to: index)
+            shell.performUndoable("Move Tab") { shell.store.movePinned(dragged, to: index) }
         } else {
-            shell.store.pin(dragged, at: index)
+            shell.performUndoable("Pin Tab") { shell.store.pin(dragged, at: index) }
         }
         model.end()
         return true
@@ -137,7 +137,7 @@ struct TabListEndDropDelegate: DropDelegate {
 
     func performDrop(info: DropInfo) -> Bool {
         guard let dragged = model.draggedTab else { return false }
-        shell.store.moveToEnd(dragged)
+        shell.performUndoable(dragged.isPinned ? "Unpin Tab" : "Move Tab") { shell.store.moveToEnd(dragged) }
         model.end()
         return true
     }

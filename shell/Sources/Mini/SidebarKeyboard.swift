@@ -77,7 +77,7 @@ extension ShellController {
         case 51, 117:
             let remaining = items.filter { $0 !== tab && !$0.isDescendant(of: tab) }
             let next = items[(index + 1)...].first { !$0.isDescendant(of: tab) } ?? items[..<index].last
-            store.close(tab)
+            performUndoable("Close Tab") { store.close(tab) }
             let following = next.flatMap { candidate in remaining.contains { $0 === candidate } ? candidate : nil }
             sidebarKeyboard.focusedTabIdentifier = (following ?? sidebarKeyboardItems.first)?.id
             if sidebarKeyboard.focusedTabIdentifier == nil { returnFocusToPage() }

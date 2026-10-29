@@ -219,6 +219,11 @@ void mini_browser_show_dev_tools(MiniTabId tab);
 void mini_browser_inspect_element(MiniTabId tab, int32_t x, int32_t y);
 // command is a MiniEditCommand, run in the focused frame.
 void mini_browser_edit(MiniTabId tab, int32_t command);
+// Whether the focused element of the tab's page (in any frame) is editable:
+// an input that takes text, a textarea, contenteditable or a designMode
+// document. True when the page has not reported (fail safe: Cmd-Z belongs to
+// the page). A main-frame navigation resets it to unknown.
+bool mini_browser_has_editable_focus(MiniTabId tab);
 void mini_browser_replace_misspelling(MiniTabId tab, const char *word);
 void mini_browser_add_word_to_dictionary(MiniTabId tab, const char *word);
 // Loads the image in the tab's space; image_copied delivers it.

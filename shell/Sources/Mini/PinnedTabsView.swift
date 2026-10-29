@@ -70,8 +70,8 @@ private struct PinnedTabTile: View {
             .onDrop(of: SidebarDragModel.acceptedTypes, delegate: PinnedDropDelegate(shell: shell, index: index))
             .contextMenu {
                 Button("Duplicate Tab") { shell.duplicate(tab) }
-                Button("Unpin Tab") { shell.store.unpin(tab) }
-                Button("Close Tab") { shell.store.close(tab) }
+                Button("Unpin Tab") { shell.performUndoable("Unpin Tab") { shell.store.unpin(tab) } }
+                Button("Close Tab") { shell.performUndoable("Close Tab") { shell.store.close(tab) } }
             }
     }
 }

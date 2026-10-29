@@ -110,7 +110,7 @@ extension ShellController: NSMenuItemValidation {
         } else if commandBar.isOpen {
             commandBar.close(restoringWebFocus: true)
         } else if let tab = store.selectedTab {
-            store.close(tab)
+            performUndoable("Close Tab") { store.close(tab) }
         }
     }
 
@@ -191,11 +191,11 @@ extension ShellController: NSMenuItemValidation {
     }
 
     @objc func indentTab(_ sender: Any?) {
-        if let tab = store.selectedTab { store.indent(tab) }
+        if let tab = store.selectedTab { performUndoable("Indent Tab") { store.indent(tab) } }
     }
 
     @objc func outdentTab(_ sender: Any?) {
-        if let tab = store.selectedTab { store.outdent(tab) }
+        if let tab = store.selectedTab { performUndoable("Outdent Tab") { store.outdent(tab) } }
     }
 
     @objc func toggleTabGroup(_ sender: Any?) {
@@ -208,19 +208,19 @@ extension ShellController: NSMenuItemValidation {
     }
 
     @objc func moveTabUp(_ sender: Any?) {
-        if let tab = store.selectedTab { store.move(tab, by: -1) }
+        if let tab = store.selectedTab { performUndoable("Move Tab") { store.move(tab, by: -1) } }
     }
 
     @objc func moveTabDown(_ sender: Any?) {
-        if let tab = store.selectedTab { store.move(tab, by: 1) }
+        if let tab = store.selectedTab { performUndoable("Move Tab") { store.move(tab, by: 1) } }
     }
 
     @objc func togglePinnedTab(_ sender: Any?) {
         guard let tab = store.selectedTab else { return }
         if tab.isPinned {
-            store.unpin(tab)
+            performUndoable("Unpin Tab") { store.unpin(tab) }
         } else {
-            store.pin(tab)
+            performUndoable("Pin Tab") { store.pin(tab) }
         }
     }
 
@@ -301,6 +301,10 @@ extension ShellController: NSMenuItemValidation {
         switch menuItem.action {
         case #selector(reopenClosedTab(_:)):
             return store.canReopenClosedTab
+        case #selector(undoTabAction(_:)):
+            return tabUndoManager.canUndo
+        case #selector(redoTabAction(_:)):
+            return tabUndoManager.canRedo
         case #selector(closeTab(_:)):
             return keyLittleWindow != nil || commandBar.isOpen || selected != nil
         case #selector(openLittleWindowInMini(_:)):

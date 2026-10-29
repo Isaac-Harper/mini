@@ -172,13 +172,15 @@ extension ShellController {
 
     func openLinkInSplitView(_ url: String, from tab: Tab) {
         guard let tabStore = space(containing: tab.id)?.store, tabStore === store else { return }
-        let opened = store.newTab(url: url, parent: tab.isPinned ? nil : tab)
-        if tab.isPinned {
-            store.select(opened)
-            return
+        performUndoable("Split View") {
+            let opened = store.newTab(url: url, parent: tab.isPinned ? nil : tab)
+            if tab.isPinned {
+                store.select(opened)
+                return
+            }
+            store.makeSplit(leading: tab, trailing: opened)
+            store.select(tab)
         }
-        store.makeSplit(leading: tab, trailing: opened)
-        store.select(tab)
     }
 
     func saveImage(at url: String, from tab: Tab) {

@@ -118,6 +118,7 @@ extension ShellController {
             }
             littleWindow.close()
         }
+        forgetTabUndo(for: space.store)
         closingIdentifiers.formUnion(space.store.removeAll().filter(\.hasBrowser).map(\.id))
         spaces.removeAll { $0 === space }
         pendingSpaceDeletions[space.id] = closingIdentifiers

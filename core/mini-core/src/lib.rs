@@ -4,6 +4,7 @@ mod authentication;
 mod client;
 mod context_menu;
 mod downloads;
+mod editable_focus;
 mod favicon;
 mod horizontal_scroll;
 mod login;
@@ -402,6 +403,11 @@ pub extern "C" fn mini_browser_edit(tab: MiniTabId, command: c_int) {
     if let Some(browser) = created_browser(tab) {
         context_menu::perform_edit(&browser, command);
     }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn mini_browser_has_editable_focus(tab: MiniTabId) -> bool {
+    with_tab(tab, |state| state.editable_focus.has_editable_focus())
 }
 
 #[unsafe(no_mangle)]

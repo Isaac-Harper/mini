@@ -2,6 +2,9 @@ import AppKit
 
 @MainActor
 enum MainMenu {
+    static let undoItemTag = 7_801
+    static let redoItemTag = 7_802
+
     static func make(commands: ShellController) -> NSMenu {
         let mainMenu = NSMenu()
         for submenu in [
@@ -50,8 +53,12 @@ enum MainMenu {
 
     private static func editMenu(_ commands: ShellController) -> NSMenu {
         let menu = NSMenu(title: "Edit")
-        menu.addItem(item("Undo", Selector(("undo:")), "z"))
-        menu.addItem(item("Redo", Selector(("redo:")), "z", [.command, .shift]))
+        let undoItem = item("Undo", Selector(("undo:")), "z")
+        undoItem.tag = undoItemTag
+        menu.addItem(undoItem)
+        let redoItem = item("Redo", Selector(("redo:")), "z", [.command, .shift])
+        redoItem.tag = redoItemTag
+        menu.addItem(redoItem)
         menu.addItem(.separator())
         menu.addItem(item("Cut", #selector(NSText.cut(_:)), "x"))
         menu.addItem(item("Copy", #selector(NSText.copy(_:)), "c"))
@@ -66,6 +73,7 @@ enum MainMenu {
         menu.addItem(item("Find Previous", #selector(ShellController.findPreviousMatch(_:)), "g", [.command, .shift], target: commands))
         menu.addItem(.separator())
         menu.addItem(item("Fill Password", #selector(ShellController.fillPassword(_:)), "\\", target: commands))
+        menu.delegate = commands
         return menu
     }
 

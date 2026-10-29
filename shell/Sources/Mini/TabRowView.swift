@@ -24,7 +24,7 @@ struct TabRowView: View {
             AudioToggleButton(shell: shell, tab: tab)
             if isHovered {
                 Button {
-                    shell.store.close(tab)
+                    shell.performUndoable("Close Tab") { shell.store.close(tab) }
                 } label: {
                     Image(systemName: "xmark")
                         .font(.system(size: 9, weight: .bold))
@@ -53,9 +53,9 @@ struct TabRowView: View {
                 .disabled(!canOpenInSplitView)
             Button("Duplicate Tab") { shell.duplicate(tab) }
                 .disabled(tab.url.isEmpty)
-            Button("Pin Tab") { shell.store.pin(tab) }
+            Button("Pin Tab") { shell.performUndoable("Pin Tab") { shell.store.pin(tab) } }
                 .disabled(tab.url.isEmpty)
-            Button("Close Tab") { shell.store.close(tab) }
+            Button("Close Tab") { shell.performUndoable("Close Tab") { shell.store.close(tab) } }
         }
     }
 
@@ -129,9 +129,9 @@ struct SplitTabRowView: View {
         .onDrag { shell.sidebarDrag.beginDrag(split.leading) }
         .onDrop(of: SidebarDragModel.acceptedTypes, delegate: TabRowDropDelegate(shell: shell, tab: split.leading))
         .contextMenu {
-            Button("Separate Tabs") { shell.store.unsplit(split) }
-            Button("Close \(split.leading.displayTitle)") { shell.store.close(split.leading) }
-            Button("Close \(split.trailing.displayTitle)") { shell.store.close(split.trailing) }
+            Button("Separate Tabs") { shell.performUndoable("Separate Tabs") { shell.store.unsplit(split) } }
+            Button("Close \(split.leading.displayTitle)") { shell.performUndoable("Close Tab") { shell.store.close(split.leading) } }
+            Button("Close \(split.trailing.displayTitle)") { shell.performUndoable("Close Tab") { shell.store.close(split.trailing) } }
         }
     }
 }
@@ -158,7 +158,7 @@ private struct SplitTabHalfView: View {
             AudioToggleButton(shell: shell, tab: tab)
             if isHovered {
                 Button {
-                    shell.store.close(tab)
+                    shell.performUndoable("Close Tab") { shell.store.close(tab) }
                 } label: {
                     Image(systemName: "xmark")
                         .font(.system(size: 9, weight: .bold))

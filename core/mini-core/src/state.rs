@@ -147,6 +147,7 @@ pub struct TabState {
     pub login_form_frames: HashSet<String>,
     pub playing_frames: std::collections::BTreeMap<String, String>,
     pub site_data_observer: Option<Registration>,
+    pub editable_focus: crate::editable_focus::EditableFocus,
 }
 
 pub struct CoreState {

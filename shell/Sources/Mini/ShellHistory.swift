@@ -5,6 +5,10 @@ extension ShellController: NSMenuDelegate {
     private static let recentHistoryCount = 15
 
     func menuNeedsUpdate(_ menu: NSMenu) {
+        if menu.items.contains(where: { $0.tag == MainMenu.undoItemTag }) {
+            updateUndoMenuItems(in: menu)
+            return
+        }
         for item in menu.items where item.tag == Self.recentHistoryTag {
             menu.removeItem(item)
         }

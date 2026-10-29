@@ -4,12 +4,22 @@ import AppKit
 enum MenuKeyEquivalents {
     private static let standardEditActions: Set<Selector> = [
         Selector(("undo:")), Selector(("redo:")),
+        #selector(ShellController.undoTabAction(_:)), #selector(ShellController.redoTabAction(_:)),
         #selector(NSText.cut(_:)), #selector(NSText.copy(_:)), #selector(NSText.paste(_:)),
         #selector(NSTextView.pasteAsPlainText(_:)), #selector(NSText.delete(_:)), #selector(NSText.selectAll(_:)),
     ]
 
     private static let relevantModifiers: NSEvent.ModifierFlags = [.command, .control, .option, .shift]
     private static let tabKeyCode: UInt16 = 48
+
+    static func undoDirection(of event: NSEvent) -> Bool? {
+        guard event.type == .keyDown, key(of: event) == "z" else { return nil }
+        switch event.modifierFlags.intersection(relevantModifiers) {
+        case [.command]: return false
+        case [.command, .shift]: return true
+        default: return nil
+        }
+    }
 
     static func perform(_ event: NSEvent) -> Bool {
         guard event.type == .keyDown, let mainMenu = NSApp.mainMenu else { return false }

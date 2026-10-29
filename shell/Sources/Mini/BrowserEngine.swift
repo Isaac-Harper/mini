@@ -47,14 +47,18 @@ final class BrowserEngine {
                 }
                 return MiniPopupTarget(tab: tab, parent_view: UnsafeMutableRawPointer(bitPattern: hostViewAddress))
             },
-            pre_key_event: { _, eventPointer in
+            pre_key_event: { identifier, eventPointer in
                 guard let eventPointer else { preconditionFailure("pre_key_event without an NSEvent") }
                 let eventAddress = UInt(bitPattern: eventPointer)
                 return MainActor.assumeIsolated {
                     guard let pointer = UnsafeRawPointer(bitPattern: eventAddress) else {
                         preconditionFailure("pre_key_event pointer round trip failed")
                     }
-                    return MenuKeyEquivalents.perform(Unmanaged<NSEvent>.fromOpaque(pointer).takeUnretainedValue())
+                    let event = Unmanaged<NSEvent>.fromOpaque(pointer).takeUnretainedValue()
+                    if let redo = MenuKeyEquivalents.undoDirection(of: event) {
+                        return BrowserEngine.shared.requiredShell.pageUndoKeyPressed(in: identifier, redo: redo)
+                    }
+                    return MenuKeyEquivalents.perform(event)
                 }
             },
             focus_requested: { identifier in

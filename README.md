@@ -74,6 +74,7 @@ To use Mini as your default browser, run `make install` and choose Mini > Set as
 | ⌘O | Move the page in a little window into a tab |
 | ⌘W | Close tab (pinned tabs reset instead) |
 | ⇧⌘T | Reopen closed tab |
+| ⌘Z, ⇧⌘Z | Undo and redo tab actions: close (a whole group comes back in place), move, nest, pin, split, duplicate, opening pasted links. In a text field or editable page area they undo typing instead |
 | ⌃Tab, ⌃⇧Tab, ⌥⌘↓, ⌥⌘↑ | Next and previous tab |
 | ⌘1 to ⌘9 | Select tab (pinned first; ⌘9 is the last) |
 | ⌃1 to ⌃9 | Switch space |
@@ -97,7 +98,7 @@ To use Mini as your default browser, run `make install` and choose Mini > Set as
 
 In the sidebar: click its empty space (or press Tab when nothing has focus) to move the keyboard there. ↑ and ↓ move between pinned tabs and rows, ← and → collapse or expand a group (or go to its parent or first child), Return opens the tab, Delete closes it, and Esc or Tab returns to the page.
 
-Browser shortcuts take priority over the page, so ⌘T or ⌘W work even when a site tries to capture them. Copy, paste, undo and select all always go to the page.
+Browser shortcuts take priority over the page, so ⌘T or ⌘W work even when a site tries to capture them. Copy, paste and select all always go to the page; ⌘Z and ⇧⌘Z go to the page while a text field or other editable element there has focus, and undo tab actions otherwise.
 
 ## Passwords
 

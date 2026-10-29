@@ -317,6 +317,32 @@ final class TabStore {
         return removedTabs
     }
 
+    func restoreArrangement(pinned: [Tab], roots: [Tab], splits restoredSplits: [TabSplit], selecting target: Tab?, removing removedTabs: [Tab], reviving revivedTabs: [Tab]) {
+        for tab in removedTabs {
+            tabsByIdentifier[tab.id] = nil
+        }
+        for tab in revivedTabs {
+            precondition(tabsByIdentifier[tab.id] == nil, "Reviving a tab the store already holds")
+            tabsByIdentifier[tab.id] = tab
+            if let index = closedTabs.lastIndex(where: { $0.url == tab.url }) {
+                closedTabs.remove(at: index)
+            }
+        }
+        pinnedTabs = pinned
+        rootTabs = roots
+        precondition(allTabs.allSatisfy { tabsByIdentifier[$0.id] === $0 }, "Restored arrangement holds a tab the store does not")
+        splits = restoredSplits
+        if let selectedTab, removedTabs.contains(where: { $0 === selectedTab }) {
+            self.selectedTab = nil
+        }
+        if !removedTabs.isEmpty {
+            observer?.tabStore(self, didRemove: removedTabs)
+        }
+        observer?.tabStoreDidChangeSplits(self)
+        select(target ?? selectedTab ?? selectableTabs.first)
+        observer?.tabStoreDidChangeStructure(self)
+    }
+
     private func unload(pinned tab: Tab) {
         guard let pinnedURL = tab.pinnedURL else { preconditionFailure("Unloading a tab that is not pinned") }
         let index = position(of: tab, in: pinnedTabs)
