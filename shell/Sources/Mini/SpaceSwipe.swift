@@ -65,6 +65,7 @@ struct SpaceSwipeStage: View {
                     .opacity(reduceMotion ? 1 - swipe.progress : 1)
                 if let neighbor = swipe.neighbor {
                     SpaceTabsView(shell: shell, space: neighbor)
+                        .tint(Color(nsColor: neighbor.color.accent))
                         .offset(x: reduceMotion ? 0 : swipe.offset + swipe.neighborEdge * width)
                         .opacity(reduceMotion ? swipe.progress : 1)
                         .allowsHitTesting(false)
