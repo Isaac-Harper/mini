@@ -32,7 +32,7 @@ install: bundle
 	rm -rf /Applications/Mini.app
 	ditto build/Mini.app /Applications/Mini.app
 	$(LSREGISTER) -f /Applications/Mini.app
-	open /Applications/Mini.app
+	open -g /Applications/Mini.app
 
 release:
 	@test -n "$(VERSION)" || { echo "usage: make release VERSION=X.Y.Z" >&2; exit 1; }
