@@ -94,7 +94,9 @@ private struct PinnedTabTile: View {
             shell.clearRowSelection()
             shell.store.select(tab)
         }
-        .onDrag { shell.sidebarDrag.beginDrag(tab) }
+        .onDrag { shell.sidebarDrag.beginDrag(tab) } preview: {
+            PinnedTileDragPreview(tab: tab)
+        }
         .onDrop(of: SidebarDragModel.acceptedTypes, delegate: PinnedDropDelegate(shell: shell, index: index))
         .contextMenu {
             Button("Duplicate Tab", systemImage: "plus.square.on.square") { shell.duplicate(tab) }

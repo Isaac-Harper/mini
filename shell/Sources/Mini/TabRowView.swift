@@ -83,7 +83,9 @@ struct TabRowView: View {
             Haptics.controlActivated(.press)
             shell.clickRow(tab)
         }
-        .onDrag { shell.sidebarDrag.beginDrag(tab) }
+        .onDrag { shell.sidebarDrag.beginDrag(tab) } preview: {
+            TabDragPreview(tab: tab, count: shell.groupTabs(including: tab)?.count ?? 1)
+        }
         .onDrop(of: SidebarDragModel.acceptedTypes, delegate: TabRowDropDelegate(shell: shell, tab: tab))
         .contextMenu {
             if let group = shell.groupTabs(including: tab) {
@@ -172,7 +174,9 @@ struct SplitTabRowView: View {
         .overlay { SidebarFocusRing(shell: shell, tab: split.leading, cornerRadius: SidebarMetrics.rowCornerRadius) }
         .reportsSidebarRowFrame(of: split.leading, to: shell.sidebarDrag)
         .contentShape(Rectangle())
-        .onDrag { shell.sidebarDrag.beginDrag(split.leading) }
+        .onDrag { shell.sidebarDrag.beginDrag(split.leading) } preview: {
+            TabDragPreview(tab: split.leading, count: shell.groupTabs(including: split.leading)?.count ?? 2)
+        }
         .onDrop(of: SidebarDragModel.acceptedTypes, delegate: TabRowDropDelegate(shell: shell, tab: split.leading))
         .contextMenu {
             if let group = shell.groupTabs(including: split.leading) {

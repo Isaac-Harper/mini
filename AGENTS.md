@@ -165,6 +165,7 @@ Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 - `TabArchive.swift`: archive policy, idle fade, archive.json. (tabs-and-undo)
 - `CloseTheDay.swift`, `DayFoldRow.swift`, `Sources/MiniRules/DayClosing.swift`: Close the Day (daily fold of untouched tabs into dated groups; pure day and fold rules unit tested) and the group header row. (tabs-and-undo)
 - `SidebarDragging.swift`: sidebar drag and drop. (tabs-and-undo)
+- `TabDragPreview.swift`: drag images for tab rows, multi-selections and pinned tiles. (tabs-and-undo)
 - `TabTearOff.swift`: tear-off preview, tear-off and dock tracking. (tabs-and-undo)
 - `LittleWindowController.swift`: little window. (tabs-and-undo)
 - `Spaces.swift`: `Space`, symbols, cache paths, `TabIdentifierMint`. (spaces-and-session)
