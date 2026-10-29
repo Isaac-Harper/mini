@@ -13,12 +13,11 @@ struct FaviconView: View {
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
     var body: some View {
-        Group {
-            if let image {
-                Image(nsImage: image).resizable().interpolation(.high).transition(.opacity)
-            } else {
-                Image(systemName: "globe").resizable().foregroundStyle(.secondary).transition(.opacity)
-            }
+        ZStack {
+            Image(systemName: "globe").resizable().foregroundStyle(.secondary)
+                .opacity(image == nil ? 1 : 0)
+            Image(nsImage: image ?? NSImage()).resizable().interpolation(.high)
+                .opacity(image == nil ? 0 : 1)
         }
         .animation(fadesIn ? .easeOut(duration: 0.15) : nil, value: image != nil)
         .frame(width: size, height: size)
