@@ -41,7 +41,7 @@ class HoverHighlightButton: NSButton {
     var feedback: ControlFeedback = .press
     var bouncesOnPress = true
 
-    private let symbolView = NSImageView()
+    private let symbolView = SymbolImageView()
 
     func showSymbol(_ image: NSImage, pointSize: CGFloat) {
         symbolView.image = image
@@ -121,4 +121,8 @@ class HoverHighlightButton: NSButton {
         highlightLayer.opacity = highlighted ? 1 : 0
         highlightLayer.add(animation, forKey: "hover")
     }
+}
+
+private final class SymbolImageView: NSImageView {
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
 }
