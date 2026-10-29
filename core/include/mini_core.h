@@ -180,6 +180,12 @@ typedef struct MiniCallbacks {
   // OnLoadError). error_code is Chromium's net error, e.g. -102 for
   // ERR_CONNECTION_REFUSED; -3 (ERR_ABORTED) is sent too.
   void (*main_frame_load_failed)(MiniTabId tab, int32_t error_code, const char *failed_url);
+  // Core Web Vitals of the main frame's document from PerformanceObserver,
+  // numbers only: largest contentful paint, interaction to next paint and
+  // time to first byte in milliseconds (-1 until measured, relative to
+  // activation for prerendered pages) and cumulative layout shift (largest
+  // session window). Sent on changes, at most every 250 ms.
+  void (*page_vitals_changed)(MiniTabId tab, double lcp, double inp, double cls, double ttfb);
   void (*browser_closed)(MiniTabId tab);
   void (*all_browsers_closed)(void);
   // Mini was launched again on this profile (CEF's already-running relaunch).

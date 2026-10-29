@@ -267,6 +267,7 @@ private struct AddressPill: View {
     @State private var isEditing = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var draft = ""
+    @State private var anchor = PillAnchor()
     @FocusState private var isFieldFocused: Bool
 
     var body: some View {
@@ -369,6 +370,12 @@ private struct AddressPill: View {
             .overlay {
                 if isEditing { FocusRing(cornerRadius: nil).transition(.opacity) }
             }
+            .background { PillAnchorRepresentable(anchor: anchor) }
+            .onHover { inside in
+                guard let view = anchor.view, let selected, !isEditing else { return }
+                shell.vitalsPopover.pillHoverChanged(inside, anchor: view, tab: selected)
+            }
+            .onChange(of: selected?.id) { _, _ in shell.vitalsPopover.close() }
         }
     }
 
@@ -384,6 +391,7 @@ private struct AddressPill: View {
     }
 
     private func beginEditing(_ url: String) {
+        shell.vitalsPopover.close()
         draft = url
         withAnimation(.easeOut(duration: 0.15)) { isEditing = true }
         DispatchQueue.main.async { isFieldFocused = true }

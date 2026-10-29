@@ -44,6 +44,7 @@ final class Tab: Identifiable {
     var isPausedFromNowPlaying = false
     var playerPhase = PlayerSlot.Phase.idle
     var themeColor: NSColor?
+    var vitals = WebVitals()
     var idleFade = 1.0
     var dayFold: DayFold?
     @ObservationIgnored var horizontalScrollRoom = HorizontalScrollRoom()

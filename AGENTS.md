@@ -86,6 +86,7 @@ Rust core (`core/`, detail in cef-and-core.md):
 - `src/media.rs`: playing state, media metadata and artwork.
 - `src/theme_color.rs`: theme-color script and parser.
 - `src/horizontal_scroll.rs`: page horizontal scroll room for swipe navigation.
+- `src/vitals.rs`: Core Web Vitals script and report parsing.
 - `src/resource_requests.rs`: ad block request cancelling (IO thread).
 - `src/ad_blocking/`: Brave `adblock` engine, lists, resources, matching.
 - `src/context_menu.rs`: context menu params to Swift and the item ABI calls.
@@ -123,7 +124,8 @@ Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 - `Sources/MiniRules/FaviconTone.swift`: favicon luminance and coverage, and when a backing plate is needed, unit tested. (shell-ui)
 - `Sources/MiniRules/UnreadTitle.swift`, `UnreadBadgeView.swift`: unread counts parsed from titles (pure, unit tested) and the favicon badge. (shell-ui)
 - `Sources/MiniRules/AddressEmphasis.swift`: address pill split around the registrable domain from an injected resolver (the core's public suffix list), unit tested. (shell-ui)
-- `AddressPillBadges.swift`: the pill's caption chips (preview, dev port). (shell-ui)
+- `AddressPillBadges.swift`: the pill's caption chips (preview, dev port, vitals warning dot). (shell-ui)
+- `VitalsPeek.swift`, `Sources/MiniRules/WebVitals.swift`: the pill's Core Web Vitals popover, unit tested thresholds. (shell-ui)
 - `Sources/MiniRules/LocalDevelopment.swift`, `LocalServers.swift`, `DevServerReconnect.swift`: localhost dev tabs, the command bar's local server list from lsof, and the wait-and-reload after connection refused, unit tested rules. (shell-ui)
 - `Sources/MiniRules/PreviewDeployment.swift`, `PreviewSwitching.swift`: preview deployment hosts and the preview/production switch from history, unit tested. (shell-ui)
 - `Sources/MiniRules/EveningTint.swift`: pure evening tint strength curve, in its own target so `Tests/MiniRulesTests` can test it without linking the app. (shell-ui)

@@ -1,5 +1,6 @@
 import AppKit
 import CMiniCore
+import MiniRules
 
 extension ShellController {
     func liveTab(_ identifier: MiniTabId) -> Tab? {
@@ -65,6 +66,9 @@ extension ShellController {
         }
         if isLoading, tab === store.selectedTab, let responder = window.firstResponder as? NSView, responder.isDescendant(of: tab.hostView) {
             tab.refocusesOnCommit = true
+        }
+        if isLoading, !tab.isLoading {
+            tab.vitals = WebVitals()
         }
         tab.isLoading = isLoading
         if tab === store.selectedTab {
@@ -238,6 +242,11 @@ extension ShellController {
             return
         }
         urls.forEach(openExternalURL)
+    }
+
+    func pageVitalsChanged(_ identifier: MiniTabId, vitals: WebVitals) {
+        guard let tab = liveTab(identifier), tab.vitals != vitals else { return }
+        tab.vitals = vitals
     }
 
     func sourceReceived(_ identifier: MiniTabId, request: UInt64, source: String) {

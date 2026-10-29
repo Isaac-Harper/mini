@@ -1,5 +1,6 @@
 import AppKit
 import CMiniCore
+import MiniRules
 
 @MainActor
 final class BrowserEngine {
@@ -183,6 +184,11 @@ final class BrowserEngine {
             main_frame_load_failed: { identifier, errorCode, failedURL in
                 let failedURL = requiredString(failedURL)
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.mainFrameLoadFailed(identifier, errorCode: errorCode, failedURL: failedURL) }
+            },
+            page_vitals_changed: { identifier, lcp, inp, cls, ttfb in
+                MainActor.assumeIsolated {
+                    BrowserEngine.shared.requiredShell.pageVitalsChanged(identifier, vitals: WebVitals(reportedLCP: lcp, inp: inp, cls: cls, ttfb: ttfb))
+                }
             },
             browser_closed: { identifier in
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.browserClosed(identifier) }
