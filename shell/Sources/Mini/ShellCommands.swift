@@ -1,5 +1,6 @@
 import AppKit
 import CMiniCore
+import MiniRules
 
 extension ShellController: NSToolbarItemValidation {
     func validateToolbarItem(_ item: NSToolbarItem) -> Bool {
@@ -386,6 +387,10 @@ extension ShellController: NSMenuItemValidation {
             return keyLittleWindow == nil && selectedWebOrigin != nil
         case #selector(resetPermissionsForSite(_:)):
             return selected.map { sitePreferences.hasPermissionDecisions(forSiteAt: $0.url) } ?? false
+        case #selector(switchPreviewAndProduction(_:)):
+            let isPreview = selected.flatMap { URLInput.host(of: $0.url) }.flatMap(PreviewDeployment.of(host:)) != nil
+            menuItem.title = isPreview ? "Switch to Production" : "Switch to Preview"
+            return keyLittleWindow == nil && selected.flatMap(previewCounterpartURL(of:)) != nil
         case #selector(toggleEveningTint(_:)):
             menuItem.state = showsEveningTint ? .on : .off
             return true

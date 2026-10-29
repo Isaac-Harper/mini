@@ -117,6 +117,8 @@ Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 - `Sources/MiniRules/FaviconTone.swift`: favicon luminance and coverage, and when a backing plate is needed, unit tested. (shell-ui)
 - `Sources/MiniRules/UnreadTitle.swift`, `UnreadBadgeView.swift`: unread counts parsed from titles (pure, unit tested) and the favicon badge. (shell-ui)
 - `Sources/MiniRules/AddressEmphasis.swift`: registrable domain split for the address pill, unit tested. (shell-ui)
+- `AddressPillBadges.swift`: the pill's caption chips (preview). (shell-ui)
+- `Sources/MiniRules/PreviewDeployment.swift`, `PreviewSwitching.swift`: preview deployment hosts and the preview/production switch from history, unit tested. (shell-ui)
 - `Sources/MiniRules/EveningTint.swift`: pure evening tint strength curve, in its own target so `Tests/MiniRulesTests` can test it without linking the app. (shell-ui)
 - `SidebarKeyboard.swift`: sidebar keyboard focus. (shell-ui)
 - `SidebarSelection.swift`, `Sources/MiniRules/RowSelection.swift`: multi-select rows (pure range and toggle rules, unit tested) and the group actions. (tabs-and-undo)

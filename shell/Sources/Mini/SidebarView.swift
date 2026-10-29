@@ -309,6 +309,10 @@ private struct AddressPill: View {
                 .onChange(of: selected?.id) { _, _ in
                     if isEditing { endEditing() }
                 }
+                if let selected, !isEditing {
+                    AddressPillBadges(tab: selected)
+                        .padding(.leading, SidebarMetrics.accessorySpacing)
+                }
                 if let selected, selected.hasLoginForm, selected.hasBrowser {
                     Button {
                         shell.fillPassword(nil)

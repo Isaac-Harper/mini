@@ -19,6 +19,9 @@ enum SidebarMetrics {
     static let addressPillHeight: CGFloat = 32
     static let addressPillTextInset: CGFloat = 12
     static let addressPillButtonWidth: CGFloat = 32
+    static let addressPillChipHeight: CGFloat = 16
+    static let addressPillChipPadding: CGFloat = 6
+    static let addressPillChipMaximumWidth: CGFloat = 104
     static let pinnedTileHeight: CGFloat = 40
     static let pinnedTileSpacing: CGFloat = 8
     static let pinnedTileCornerRadius: CGFloat = 12
