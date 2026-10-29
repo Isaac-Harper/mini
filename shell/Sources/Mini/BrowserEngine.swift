@@ -166,6 +166,10 @@ final class BrowserEngine {
                 let pngData = length > 0 && png != nil ? Data(bytes: png!, count: length) : Data()
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.imageCopied(identifier, pngData: pngData) }
             },
+            media_artwork_changed: { identifier, png, length in
+                let pngData = length > 0 && png != nil ? Data(bytes: png!, count: length) : Data()
+                MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.mediaArtworkChanged(identifier, pngData: pngData) }
+            },
             browser_closed: { identifier in
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.browserClosed(identifier) }
             },

@@ -161,6 +161,11 @@ typedef struct MiniCallbacks {
   // Result of mini_browser_copy_image: PNG bytes, length 0 when the image
   // could not be loaded.
   void (*image_copied)(MiniTabId tab, const uint8_t *png, size_t length);
+  // Artwork of the tab's playing media (mediaSession artwork, largest first,
+  // else the playing video's poster), downloaded by Chromium in the tab's
+  // context; PNG bytes at 2x, at most 128 px. length 0 when there is none.
+  // Pausing keeps the last artwork; a new main-frame document clears it.
+  void (*media_artwork_changed)(MiniTabId tab, const uint8_t *png, size_t length);
   void (*browser_closed)(MiniTabId tab);
   void (*all_browsers_closed)(void);
   // Mini was launched again on this profile (CEF's already-running relaunch).

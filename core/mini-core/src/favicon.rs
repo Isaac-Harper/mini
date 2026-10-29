@@ -88,7 +88,7 @@ wrap_download_image_callback! {
     }
 }
 
-fn png_bytes(image: &Image, scale_factor: f32) -> Vec<u8> {
+pub fn png_bytes(image: &Image, scale_factor: f32) -> Vec<u8> {
     let mut pixel_width = 0;
     let mut pixel_height = 0;
     let Some(png) = image.as_png(

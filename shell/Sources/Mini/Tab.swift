@@ -22,6 +22,10 @@ final class Tab: Identifiable {
     var isPlayingAudio = false
     var isAudioMuted = false
     var mediaTitle = ""
+    var mediaArtwork: NSImage? {
+        didSet { mediaArtworkTint = mediaArtwork.flatMap(DominantColor.of) }
+    }
+    @ObservationIgnored private(set) var mediaArtworkTint: NSColor?
     var isPausedFromNowPlaying = false
     var themeColor: NSColor?
     var idleFade = 1.0

@@ -182,6 +182,11 @@ extension ShellController {
         audioStateChanged(tab, isPlaying: isPlaying, mediaTitle: mediaTitle)
     }
 
+    func mediaArtworkChanged(_ identifier: MiniTabId, pngData: Data) {
+        guard let tab = liveTab(identifier) else { return }
+        tab.mediaArtwork = FaviconCache.image(fromPNG: pngData)
+    }
+
     func loadingProgressChanged(_ identifier: MiniTabId, progress: Double) {
         guard let tab = liveTab(identifier) else { return }
         tab.loadingProgress = progress

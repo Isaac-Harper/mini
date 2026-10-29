@@ -37,6 +37,7 @@ pub struct Callbacks {
     pub horizontal_scroll_reported: unsafe extern "C" fn(MiniTabId, bool, bool),
     pub context_menu_requested: unsafe extern "C" fn(MiniTabId, *const crate::context_menu::MiniContextMenu),
     pub image_copied: unsafe extern "C" fn(MiniTabId, *const u8, usize),
+    pub media_artwork_changed: unsafe extern "C" fn(MiniTabId, *const u8, usize),
     pub browser_closed: unsafe extern "C" fn(MiniTabId),
     pub all_browsers_closed: unsafe extern "C" fn(),
     pub app_relaunched: unsafe extern "C" fn(*const *const c_char, usize),
@@ -123,6 +124,9 @@ impl Callbacks {
             image_copied: table
                 .image_copied
                 .expect("MiniCallbacks.image_copied is null"),
+            media_artwork_changed: table
+                .media_artwork_changed
+                .expect("MiniCallbacks.media_artwork_changed is null"),
             browser_closed: table
                 .browser_closed
                 .expect("MiniCallbacks.browser_closed is null"),
@@ -145,7 +149,9 @@ pub struct TabState {
     pub pending_close: bool,
     pub favicon_generation: u64,
     pub login_form_frames: HashSet<String>,
-    pub playing_frames: std::collections::BTreeMap<String, String>,
+    pub playing_frames: std::collections::BTreeMap<String, crate::media::PlayingFrame>,
+    pub artwork_url: String,
+    pub artwork_generation: u64,
     pub site_data_observer: Option<Registration>,
     pub editable_focus: crate::editable_focus::EditableFocus,
 }

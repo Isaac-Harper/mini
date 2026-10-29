@@ -68,6 +68,7 @@ pub struct MiniCallbacks {
     pub horizontal_scroll_reported: Option<unsafe extern "C" fn(MiniTabId, bool, bool)>,
     pub context_menu_requested: Option<unsafe extern "C" fn(MiniTabId, *const context_menu::MiniContextMenu)>,
     pub image_copied: Option<unsafe extern "C" fn(MiniTabId, *const u8, usize)>,
+    pub media_artwork_changed: Option<unsafe extern "C" fn(MiniTabId, *const u8, usize)>,
     pub browser_closed: Option<unsafe extern "C" fn(MiniTabId)>,
     pub all_browsers_closed: Option<unsafe extern "C" fn()>,
     pub app_relaunched: Option<unsafe extern "C" fn(*const *const c_char, usize)>,
