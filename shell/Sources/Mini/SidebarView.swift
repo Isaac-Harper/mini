@@ -197,6 +197,7 @@ struct SidebarActionRow: View {
         }
         .buttonStyle(.plain)
         .focusable(false)
+        .hapticFeedback(.press)
     }
 }
 
@@ -276,6 +277,7 @@ private struct AddressPill: View {
                     }
                     .buttonStyle(.plain)
                     .focusable(false)
+                    .hapticFeedback(.press)
                     .help("Fill Password")
                 }
                 if let selected, !selected.url.isEmpty {
@@ -294,6 +296,7 @@ private struct AddressPill: View {
                     }
                     .buttonStyle(.plain)
                     .focusable(false)
+                    .hapticFeedback(.press)
                     .help(selected.isLoading ? "Stop" : "Reload")
                 }
             }
@@ -360,7 +363,7 @@ private struct SpaceButton: View {
     private var isCurrent: Bool { shell.currentSpace === space }
 
     var body: some View {
-        SpaceBarIconButton(systemImage: space.symbol, help: space.name, isSelected: isCurrent) {
+        SpaceBarIconButton(systemImage: space.symbol, help: space.name, isSelected: isCurrent, feedback: .toggle) {
             shell.switchToSpace(space)
         }
         .tint(Color(nsColor: space.color.accent))
@@ -386,6 +389,7 @@ private struct SpaceBarIconButton: View {
     let systemImage: String
     let help: String
     var isSelected = false
+    var feedback = ControlFeedback.press
     let action: () -> Void
 
     var body: some View {
@@ -405,6 +409,7 @@ private struct SpaceBarIconButton: View {
         }
         .buttonStyle(.plain)
         .focusable(false)
+        .hapticFeedback(feedback)
         .help(help)
     }
 }

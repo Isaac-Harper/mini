@@ -38,6 +38,13 @@ extension View {
 
 class HoverHighlightButton: NSButton {
     var hoverCornerRadius: CGFloat = SidebarMetrics.rowCornerRadius
+    var feedback: ControlFeedback = .press
+
+    @discardableResult
+    override func sendAction(_ action: Selector?, to target: Any?) -> Bool {
+        Haptics.controlActivated(feedback)
+        return super.sendAction(action, to: target)
+    }
 
     private let highlightLayer = CALayer()
     private var hoverArea: NSTrackingArea?

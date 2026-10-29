@@ -146,6 +146,7 @@ final class WindowControlsCluster {
             preconditionFailure("Missing SF Symbol \(symbolName)")
         }
         let button = HoverHighlightButton(image: image, target: commands, action: action)
+        button.feedback = .toggle
         WindowToolbar.style(button, label)
         return button
     }

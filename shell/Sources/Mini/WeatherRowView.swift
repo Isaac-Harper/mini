@@ -33,6 +33,7 @@ struct WeatherRowView: View {
         }
         .buttonStyle(.plain)
         .focusable(false)
+        .hapticFeedback(.press)
         .onHover { inside in
             guard let view = anchor.view else { return }
             presenter.rowHoverChanged(inside, anchor: view, reading: reading)

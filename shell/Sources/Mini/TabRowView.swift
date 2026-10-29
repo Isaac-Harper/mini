@@ -58,6 +58,7 @@ struct TabRowView: View {
                 }
                 .buttonStyle(.plain)
                 .focusable(false)
+                .hapticFeedback(.press)
                 .help("Close Tab")
             }
         }
@@ -70,7 +71,10 @@ struct TabRowView: View {
         .overlay { SidebarFocusRing(shell: shell, tab: tab, cornerRadius: SidebarMetrics.rowCornerRadius) }
         .reportsSidebarRowFrame(of: tab, to: shell.sidebarDrag)
         .contentShape(Rectangle())
-        .onTapGesture { shell.clickRow(tab) }
+        .onTapGesture {
+            Haptics.controlActivated(.press)
+            shell.clickRow(tab)
+        }
         .onDrag { shell.sidebarDrag.beginDrag(tab) }
         .onDrop(of: SidebarDragModel.acceptedTypes, delegate: TabRowDropDelegate(shell: shell, tab: tab))
         .contextMenu {
@@ -213,6 +217,7 @@ private struct SplitTabHalfView: View {
                 }
                 .buttonStyle(.plain)
                 .focusable(false)
+                .hapticFeedback(.press)
                 .help("Close Tab")
             }
         }
@@ -227,6 +232,9 @@ private struct SplitTabHalfView: View {
         }
         .contentShape(Rectangle())
         .onHover { isHovered = $0 }
-        .onTapGesture { shell.clickRow(tab) }
+        .onTapGesture {
+            Haptics.controlActivated(.press)
+            shell.clickRow(tab)
+        }
     }
 }

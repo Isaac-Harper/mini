@@ -1,5 +1,6 @@
 import AppKit
 import CMiniCore
+import SwiftUI
 
 enum HapticMoment: String {
     case sidebarCollapseSnap
@@ -13,16 +14,37 @@ enum HapticMoment: String {
     case spaceSwipeThreshold
     case tabTornOff
     case littleWindowDocked
+    case press
+    case toggle
+    case snap
 
     var pattern: NSHapticFeedbackManager.FeedbackPattern {
         switch self {
-        case .sidebarWidthLimit, .splitCenter, .splitMinimum, .tabDragTarget, .peekSidebarOpened: .alignment
-        case .sidebarCollapseSnap, .tabDropChangedPlacement, .swipeNavigationThreshold, .spaceSwipeThreshold, .tabTornOff, .littleWindowDocked: .levelChange
+        case .sidebarWidthLimit, .splitCenter, .splitMinimum, .tabDragTarget, .peekSidebarOpened, .snap: .alignment
+        case .sidebarCollapseSnap, .tabDropChangedPlacement, .swipeNavigationThreshold, .spaceSwipeThreshold, .tabTornOff, .littleWindowDocked, .toggle: .levelChange
+        case .press: .generic
         }
     }
 
     var performanceTime: NSHapticFeedbackManager.PerformanceTime {
-        self == .sidebarCollapseSnap ? .now : .drawCompleted
+        switch self {
+        case .sidebarCollapseSnap, .press, .toggle, .snap: .now
+        default: .drawCompleted
+        }
+    }
+}
+
+enum ControlFeedback {
+    case press
+    case toggle
+    case snap
+
+    var moment: HapticMoment {
+        switch self {
+        case .press: .press
+        case .toggle: .toggle
+        case .snap: .snap
+        }
     }
 }
 
@@ -165,10 +187,21 @@ enum Haptics {
     static func tabTornOff() { perform(.tabTornOff) }
     static func littleWindowDocked() { perform(.littleWindowDocked) }
 
+    static func controlActivated(_ feedback: ControlFeedback) {
+        guard NSApp.currentEvent?.type == .leftMouseUp else { return }
+        perform(feedback.moment)
+    }
+
     private static func perform(_ moment: HapticMoment) {
         let duringMomentum = NSApp.currentEvent.map { $0.type == .scrollWheel && $0.momentumPhase != [] } ?? false
         let admitted = gate.admit(at: ProcessInfo.processInfo.systemUptime, duringMomentum: duringMomentum)
         guard admitted else { return }
         NSHapticFeedbackManager.defaultPerformer.perform(moment.pattern, performanceTime: moment.performanceTime)
+    }
+}
+
+extension View {
+    func hapticFeedback(_ feedback: ControlFeedback) -> some View {
+        simultaneousGesture(TapGesture().onEnded { Haptics.controlActivated(feedback) })
     }
 }

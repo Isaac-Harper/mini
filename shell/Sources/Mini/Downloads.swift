@@ -97,6 +97,7 @@ struct DownloadRowView: View {
         }
         .buttonStyle(.plain)
         .focusable(false)
+        .hapticFeedback(.press)
         .help(helpText)
     }
 

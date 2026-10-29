@@ -88,6 +88,7 @@ private struct PinnedTabTile: View {
         .contentShape(shape)
         .help(tab.displayTitle)
         .onTapGesture {
+            Haptics.controlActivated(.press)
             shell.clearRowSelection()
             shell.store.select(tab)
         }

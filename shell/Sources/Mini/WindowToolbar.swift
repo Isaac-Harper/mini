@@ -70,6 +70,7 @@ final class WindowToolbar: NSObject, NSToolbarDelegate {
             preconditionFailure("Missing SF Symbol \(symbolName)")
         }
         let button = HoverHighlightButton(image: image, target: commands, action: action)
+        button.feedback = .toggle
         Self.style(button, label)
         let toolbarItem = NSToolbarItem(itemIdentifier: identifier)
         toolbarItem.label = label

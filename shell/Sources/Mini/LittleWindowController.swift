@@ -253,14 +253,17 @@ final class LittleWindowController: NSWindowController, NSWindowDelegate, NSTool
     }
 
     @objc private func goBack(_ sender: Any?) {
+        Haptics.controlActivated(.press)
         if tab.hasBrowser { mini_browser_go_back(tab.id) }
     }
 
     @objc private func goForward(_ sender: Any?) {
+        Haptics.controlActivated(.press)
         if tab.hasBrowser { mini_browser_go_forward(tab.id) }
     }
 
     @objc private func openInMini(_ sender: Any?) {
+        Haptics.controlActivated(.press)
         shell.promoteLittleWindow(self)
     }
 }

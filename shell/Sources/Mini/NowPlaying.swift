@@ -18,6 +18,7 @@ struct AudioToggleButton: View {
             }
             .buttonStyle(.plain)
             .focusable(false)
+            .hapticFeedback(.toggle)
             .help(tab.isAudioMuted ? "Unmute Tab" : "Mute Tab")
         }
     }
@@ -62,6 +63,7 @@ struct NowPlayingRowView: View {
             }
             .buttonStyle(.plain)
             .focusable(false)
+            .hapticFeedback(.toggle)
             .help(isPlaying ? "Pause" : "Play")
         }
         .padding(.leading, SidebarMetrics.rowLeadingPadding)
@@ -73,7 +75,10 @@ struct NowPlayingRowView: View {
         }
         .hoverHighlight()
         .contentShape(Rectangle())
-        .onTapGesture { shell.reveal(tab) }
+        .onTapGesture {
+            Haptics.controlActivated(.press)
+            shell.reveal(tab)
+        }
     }
 }
 
