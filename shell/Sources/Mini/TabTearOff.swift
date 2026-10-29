@@ -258,8 +258,12 @@ private struct TearOffPreviewView: View {
     let title: String
     let favicon: NSImage?
 
+    private static let cornerRadius: CGFloat = 16
+    private static let pageInset: CGFloat = 4
+    private static let pageCornerRadius = CornerMetrics.concentric(outer: cornerRadius, inset: pageInset)
+
     var body: some View {
-        let shape = RoundedRectangle(cornerRadius: 14, style: .continuous)
+        let shape = RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous)
         VStack(spacing: 0) {
             HStack(spacing: 6) {
                 FaviconView(image: favicon, size: 14)
@@ -273,8 +277,8 @@ private struct TearOffPreviewView: View {
             .frame(maxWidth: .infinity, minHeight: 28)
             Rectangle()
                 .fill(.background.opacity(0.6))
-                .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 12, bottomTrailingRadius: 12, style: .continuous))
-                .padding([.horizontal, .bottom], 4)
+                .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: Self.pageCornerRadius, bottomTrailingRadius: Self.pageCornerRadius, style: .continuous))
+                .padding([.horizontal, .bottom], Self.pageInset)
         }
         .glassEffect(.regular, in: shape)
         .padding(1)

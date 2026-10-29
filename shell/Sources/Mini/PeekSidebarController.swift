@@ -28,7 +28,7 @@ final class PeekSidebarController {
         let content = NSView()
         content.addSubview(hostingView)
         glassView.contentView = content
-        glassView.cornerRadius = 18
+        glassView.cornerRadius = CornerMetrics.concentric(outer: CornerMetrics.window, inset: Self.inset)
         glassView.translatesAutoresizingMaskIntoConstraints = false
         panel.translatesAutoresizingMaskIntoConstraints = false
         panel.addSubview(glassView)

@@ -171,7 +171,7 @@ final class SidebarHostingView: NSHostingView<SidebarView> {
 @MainActor
 final class WebContentViewController: NSViewController {
     static let cardInset: CGFloat = 8
-    static let cardCornerRadius: CGFloat = 10
+    static let cardCornerRadius = CornerMetrics.concentric(outer: CornerMetrics.window, inset: cardInset)
 
     let webAreaView = WebAreaView()
     private let cardView = PageCardView()

@@ -62,3 +62,12 @@ enum InterfaceFont {
     static let controlSymbol = Font.system(size: 12, weight: .medium)
     static let accessorySymbol = Font.system(size: 10, weight: .semibold)
 }
+
+enum CornerMetrics {
+    static let window: CGFloat = 26
+    static let sidebarGlass = concentric(outer: window, inset: SidebarMetrics.edgeInset)
+
+    static func concentric(outer: CGFloat, inset: CGFloat) -> CGFloat {
+        max(0, outer - inset)
+    }
+}

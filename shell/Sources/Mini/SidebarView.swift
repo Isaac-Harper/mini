@@ -36,10 +36,10 @@ struct SidebarView: View {
         }
         .overlay {
             if shell.sidebarDrag.isDockingWindow {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: CornerMetrics.concentric(outer: CornerMetrics.sidebarGlass, inset: SidebarMetrics.accessorySpacing), style: .continuous)
                     .fill(.tint.opacity(0.08))
                     .strokeBorder(.tint.opacity(0.5), lineWidth: 1.5)
-                    .padding(4)
+                    .padding(SidebarMetrics.accessorySpacing)
                     .ignoresSafeArea()
                     .allowsHitTesting(false)
                     .transition(.opacity)
