@@ -42,6 +42,7 @@ struct SavedSpace: Codable {
     let id: String
     let name: String
     let symbol: String
+    let color: SpaceColor?
     let usesDefaultProfile: Bool
     let contents: SavedSpaceContents
 }
@@ -51,8 +52,8 @@ struct SavedSession: Codable {
     let currentSpace: String
 
     static func initial(personalContents: SavedSpaceContents) -> SavedSession {
-        let personal = SavedSpace(id: Space.newIdentifier(), name: "Personal", symbol: "person.fill", usesDefaultProfile: true, contents: personalContents)
-        let work = SavedSpace(id: Space.newIdentifier(), name: "Work", symbol: "briefcase.fill", usesDefaultProfile: false, contents: .empty)
+        let personal = SavedSpace(id: Space.newIdentifier(), name: "Personal", symbol: "person.fill", color: .amber, usesDefaultProfile: true, contents: personalContents)
+        let work = SavedSpace(id: Space.newIdentifier(), name: "Work", symbol: "briefcase.fill", color: .blue, usesDefaultProfile: false, contents: .empty)
         return SavedSession(spaces: [personal, work], currentSpace: personal.id)
     }
 }
@@ -103,7 +104,7 @@ final class SessionStore {
         pendingSave = nil
         let session = SavedSession(
             spaces: spaces.map { space in
-                SavedSpace(id: space.id, name: space.name, symbol: space.symbol, usesDefaultProfile: space.usesDefaultProfile, contents: Self.contents(of: space.store))
+                SavedSpace(id: space.id, name: space.name, symbol: space.symbol, color: space.color, usesDefaultProfile: space.usesDefaultProfile, contents: Self.contents(of: space.store))
             },
             currentSpace: current.id
         )

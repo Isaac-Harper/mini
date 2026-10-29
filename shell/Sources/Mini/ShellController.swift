@@ -58,8 +58,11 @@ final class ShellController: NSObject {
         let session = sessionStore.load()
         savedSession = session
         let identifiers = tabIdentifiers
+        var colors: [SpaceColor] = session.spaces.compactMap(\.color)
         let spaces = session.spaces.map { saved in
-            Space(id: saved.id, name: saved.name, symbol: saved.symbol, usesDefaultProfile: saved.usesDefaultProfile, identifiers: identifiers)
+            let color = saved.color ?? SpaceColor.nextUnused(after: colors)
+            if saved.color == nil { colors.append(color) }
+            return Space(id: saved.id, name: saved.name, symbol: saved.symbol, color: color, usesDefaultProfile: saved.usesDefaultProfile, identifiers: identifiers)
         }
         self.spaces = spaces
         guard let current = spaces.first(where: { $0.id == session.currentSpace }) ?? spaces.first else {
@@ -104,6 +107,7 @@ final class ShellController: NSObject {
         statusBubble = StatusBubbleController(shell: self, windowController: windowController)
         swipeNavigation = SwipeNavigationController(shell: self, windowController: windowController)
         registerSpacesWithEngine()
+        applySpaceAccent()
         for space in spaces {
             space.store.observer = self
         }

@@ -52,6 +52,7 @@ extension ShellController {
             mini_browser_set_focus(previous.id, false)
         }
         currentSpace = space
+        applySpaceAccent()
         if let tab = store.selectedTab {
             tab.hostView.onWebViewAttached = { [weak self, weak tab] in
                 guard let self, let tab else { return }
@@ -88,7 +89,7 @@ extension ShellController {
 
     @discardableResult
     func createSpace(name: String, symbol: String) -> Space {
-        let space = Space(id: Space.newIdentifier(), name: name, symbol: symbol, usesDefaultProfile: false, identifiers: tabIdentifiers)
+        let space = Space(id: Space.newIdentifier(), name: name, symbol: symbol, color: SpaceColor.nextUnused(after: spaces.map(\.color)), usesDefaultProfile: false, identifiers: tabIdentifiers)
         space.store.observer = self
         registerWithEngine(space)
         spaces.append(space)
@@ -100,6 +101,23 @@ extension ShellController {
         space.name = name
         space.symbol = symbol
         scheduleSessionSave()
+    }
+
+    func setColor(_ color: SpaceColor, of space: Space) {
+        space.color = color
+        if space === currentSpace { applySpaceAccent() }
+        scheduleSessionSave()
+    }
+
+    func applySpaceAccent() {
+        windowController.webAreaView.spaceAccent = currentSpace.color.accent
+    }
+
+    @objc func setCurrentSpaceColor(_ sender: NSMenuItem) {
+        guard let rawValue = sender.representedObject as? String, let color = SpaceColor(rawValue: rawValue) else {
+            preconditionFailure("Space color item without a color")
+        }
+        setColor(color, of: currentSpace)
     }
 
     func canDelete(_ space: Space) -> Bool {

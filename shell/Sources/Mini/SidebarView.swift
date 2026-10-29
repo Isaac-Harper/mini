@@ -90,7 +90,8 @@ struct SidebarView: View {
                 .gesture(WindowDragGesture())
                 .simultaneousGesture(TapGesture().onEnded { shell.focusSidebarFromKeyboard() })
         }
-        .background { SiteTintView(color: store.selectedTab?.themeColor) }
+        .background { SiteTintView(spaceColor: shell.currentSpace.color.accent, color: store.selectedTab?.themeColor) }
+        .tint(Color(nsColor: shell.currentSpace.color.accent))
     }
 
     private func row(for visibleTab: VisibleTab) -> some View {
@@ -125,6 +126,15 @@ struct SidebarView: View {
         .animation(.easeInOut(duration: 0.3), value: shell.downloads.visibleDownloads.map(\.id))
         .padding(.horizontal, SidebarMetrics.edgeInset)
         .padding(.bottom, SidebarMetrics.edgeInset)
+    }
+}
+
+struct SelectionHighlight<HighlightShape: Shape>: View {
+    let shape: HighlightShape
+
+    var body: some View {
+        shape.fill(.fill.tertiary)
+            .overlay(shape.fill(.tint.opacity(0.2)))
     }
 }
 
@@ -262,11 +272,19 @@ private struct SpaceButton: View {
         SpaceBarIconButton(systemImage: space.symbol, help: space.name, isSelected: isCurrent) {
             shell.switchToSpace(space)
         }
+        .tint(Color(nsColor: space.color.accent))
         .contextMenu {
             Button("Rename Space\u{2026}") {
                 shell.switchToSpace(space)
                 shell.renameCurrentSpace(nil)
             }
+            Picker("Space Color", selection: Binding(get: { space.color }, set: { shell.setColor($0, of: space) })) {
+                ForEach(SpaceColor.allCases) { color in
+                    Label { Text(color.name) } icon: { Image(nsImage: color.swatch()) }
+                        .tag(color)
+                }
+            }
+            .pickerStyle(.menu)
             Button("Delete Space\u{2026}") { shell.confirmDeletion(of: space) }
                 .disabled(!shell.canDelete(space))
         }
@@ -285,12 +303,12 @@ private struct SpaceBarIconButton: View {
         Button(action: action) {
             Image(systemName: systemImage)
                 .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(isSelected ? .primary : .secondary)
+                .foregroundStyle(isSelected ? AnyShapeStyle(.tint) : AnyShapeStyle(.secondary))
                 .frame(width: 28, height: 24)
                 .background {
                     let shape = RoundedRectangle(cornerRadius: 6, style: .continuous)
                     if isSelected {
-                        shape.fill(.fill.secondary)
+                        SelectionHighlight(shape: shape)
                     } else if isHovered {
                         shape.fill(.fill.quaternary)
                     }

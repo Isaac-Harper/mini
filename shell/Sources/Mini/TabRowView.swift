@@ -95,7 +95,7 @@ struct TabRowView: View {
     private var rowBackground: some View {
         let shape = RoundedRectangle(cornerRadius: SidebarMetrics.rowCornerRadius, style: .continuous)
         if isSelected {
-            shape.fill(.fill.secondary)
+            SelectionHighlight(shape: shape)
         } else if isHovered {
             shape.fill(.fill.quaternary)
         }
@@ -144,7 +144,7 @@ struct SplitTabRowView: View {
         .background {
             let shape = RoundedRectangle(cornerRadius: SidebarMetrics.rowCornerRadius, style: .continuous)
             if isSelected {
-                shape.fill(.fill.secondary)
+                SelectionHighlight(shape: shape)
             } else if isHovered {
                 shape.fill(.fill.quaternary)
             }

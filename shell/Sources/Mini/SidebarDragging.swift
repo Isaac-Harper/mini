@@ -162,8 +162,8 @@ struct TabDropIndicator: View {
                 InsertionLine(depth: depth).frame(maxHeight: .infinity, alignment: .bottom)
             case .inside:
                 RoundedRectangle(cornerRadius: SidebarMetrics.rowCornerRadius, style: .continuous)
-                    .fill(Color.accentColor.opacity(0.18))
-                    .strokeBorder(Color.accentColor.opacity(0.8), lineWidth: 1.5)
+                    .fill(.tint.opacity(0.18))
+                    .strokeBorder(.tint.opacity(0.8), lineWidth: 1.5)
             }
         }
     }
@@ -174,7 +174,7 @@ struct InsertionLine: View {
 
     var body: some View {
         Capsule()
-            .fill(Color.accentColor)
+            .fill(.tint)
             .frame(height: 2)
             .padding(.leading, 4 + CGFloat(depth) * SidebarMetrics.indentation)
             .allowsHitTesting(false)

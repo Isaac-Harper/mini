@@ -29,11 +29,11 @@ private struct PinDropTile: View {
         let shape = RoundedRectangle(cornerRadius: 12, style: .continuous)
         Image(systemName: "pin")
             .font(.system(size: 13, weight: .medium))
-            .foregroundStyle(isTargeted ? Color.accentColor : Color.secondary)
+            .foregroundStyle(isTargeted ? AnyShapeStyle(.tint) : AnyShapeStyle(.secondary))
             .frame(maxWidth: .infinity)
             .frame(height: 40)
-            .background(shape.fill(isTargeted ? Color.accentColor.opacity(0.15) : Color.clear))
-            .overlay(shape.strokeBorder(isTargeted ? Color.accentColor : Color.secondary.opacity(0.5), style: StrokeStyle(lineWidth: 1.5, dash: [4, 3])))
+            .background(shape.fill(isTargeted ? AnyShapeStyle(.tint.opacity(0.15)) : AnyShapeStyle(.clear)))
+            .overlay(shape.strokeBorder(isTargeted ? AnyShapeStyle(.tint) : AnyShapeStyle(.secondary.opacity(0.5)), style: StrokeStyle(lineWidth: 1.5, dash: [4, 3])))
             .help("Drop to Pin")
             .onDrop(of: SidebarDragModel.acceptedTypes, delegate: PinnedDropDelegate(shell: shell, index: index))
     }
@@ -53,13 +53,13 @@ private struct PinnedTabTile: View {
         TabIconView(tab: tab, size: 18)
             .frame(maxWidth: .infinity)
             .frame(height: 40)
-            .glassEffect(isSelected ? .regular.tint(.primary.opacity(0.12)).interactive() : .regular.interactive(), in: shape)
+            .glassEffect(isSelected ? .regular.tint(Color(nsColor: shell.currentSpace.color.accent).opacity(0.22)).interactive() : .regular.interactive(), in: shape)
             .overlay(alignment: .topTrailing) {
                 AudioToggleButton(shell: shell, tab: tab).offset(x: 4, y: -4)
             }
             .overlay(alignment: .leading) {
                 if isDropTarget {
-                    Capsule().fill(Color.accentColor).frame(width: 2).padding(.vertical, 6).offset(x: -5).allowsHitTesting(false)
+                    Capsule().fill(.tint).frame(width: 2).padding(.vertical, 6).offset(x: -5).allowsHitTesting(false)
                 }
             }
             .overlay { SidebarFocusRing(shell: shell, tab: tab, cornerRadius: 12) }

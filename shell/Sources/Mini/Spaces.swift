@@ -18,6 +18,7 @@ final class Space: Identifiable {
     let id: String
     var name: String
     var symbol: String
+    var color: SpaceColor
     let usesDefaultProfile: Bool
     let store: TabStore
 
@@ -26,10 +27,11 @@ final class Space: Identifiable {
         "book.fill", "graduationcap.fill", "gamecontroller.fill", "paintbrush.fill", "hammer.fill", "globe",
     ]
 
-    init(id: String, name: String, symbol: String, usesDefaultProfile: Bool, identifiers: TabIdentifierMint) {
+    init(id: String, name: String, symbol: String, color: SpaceColor, usesDefaultProfile: Bool, identifiers: TabIdentifierMint) {
         self.id = id
         self.name = name
         self.symbol = symbol
+        self.color = color
         self.usesDefaultProfile = usesDefaultProfile
         store = TabStore(identifiers: identifiers)
     }

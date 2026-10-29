@@ -33,11 +33,11 @@ struct SaveDropRow: View {
                 .font(.system(size: 12, weight: .medium))
             Text("Drop to Save")
         }
-        .foregroundStyle(isTargeted ? Color.accentColor : Color.secondary)
+        .foregroundStyle(isTargeted ? AnyShapeStyle(.tint) : AnyShapeStyle(.secondary))
         .frame(maxWidth: .infinity)
         .frame(height: SidebarMetrics.rowHeight)
-        .background(shape.fill(isTargeted ? Color.accentColor.opacity(0.15) : Color.clear))
-        .overlay(shape.strokeBorder(isTargeted ? Color.accentColor : Color.secondary.opacity(0.5), style: StrokeStyle(lineWidth: 1.5, dash: [4, 3])))
+        .background(shape.fill(isTargeted ? AnyShapeStyle(.tint.opacity(0.15)) : AnyShapeStyle(.clear)))
+        .overlay(shape.strokeBorder(isTargeted ? AnyShapeStyle(.tint) : AnyShapeStyle(.secondary.opacity(0.5)), style: StrokeStyle(lineWidth: 1.5, dash: [4, 3])))
         .padding(.top, 4)
         .onDrop(of: SidebarDragModel.acceptedTypes, delegate: SavedEndDropDelegate(shell: shell))
     }

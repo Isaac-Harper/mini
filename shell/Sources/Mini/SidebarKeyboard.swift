@@ -108,7 +108,7 @@ struct SidebarFocusRing: View {
     var body: some View {
         if shell.sidebarKeyboard.focusedTabIdentifier == tab.id {
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .strokeBorder(Color.accentColor, lineWidth: 2)
+                .strokeBorder(.tint, lineWidth: 2)
                 .allowsHitTesting(false)
         }
     }

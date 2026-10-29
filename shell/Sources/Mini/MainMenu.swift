@@ -148,6 +148,16 @@ enum MainMenu {
         menu.addItem(item("New Space\u{2026}", #selector(ShellController.newSpace(_:)), "", target: commands))
         menu.addItem(item("Rename Space\u{2026}", #selector(ShellController.renameCurrentSpace(_:)), "", target: commands))
         menu.addItem(item("Delete Space\u{2026}", #selector(ShellController.deleteCurrentSpace(_:)), "", target: commands))
+        let colorItem = NSMenuItem(title: "Space Color", action: nil, keyEquivalent: "")
+        let colorMenu = NSMenu(title: "Space Color")
+        for color in SpaceColor.allCases {
+            let colorChoice = item(color.name, #selector(ShellController.setCurrentSpaceColor(_:)), "", target: commands)
+            colorChoice.image = color.swatch()
+            colorChoice.representedObject = color.rawValue
+            colorMenu.addItem(colorChoice)
+        }
+        colorItem.submenu = colorMenu
+        menu.addItem(colorItem)
         menu.addItem(.separator())
         for index in 1...9 {
             let selectItem = item("Space \(index)", #selector(ShellController.selectSpaceAtIndex(_:)), "\(index)", [.control], target: commands)

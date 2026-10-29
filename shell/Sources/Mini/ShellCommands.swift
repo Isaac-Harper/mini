@@ -381,6 +381,9 @@ extension ShellController: NSMenuItemValidation {
         case #selector(toggleTabSidebar(_:)):
             menuItem.title = windowController.isSidebarVisible ? "Hide Sidebar" : "Show Sidebar"
             return true
+        case #selector(setCurrentSpaceColor(_:)):
+            menuItem.state = menuItem.representedObject as? String == currentSpace.color.rawValue ? .on : .off
+            return true
         case #selector(deleteCurrentSpace(_:)):
             return canDelete(currentSpace)
         case #selector(selectSpaceAtIndex(_:)):

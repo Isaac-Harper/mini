@@ -290,6 +290,13 @@ final class WebAreaView: NSView {
 
     var onSplitFractionChanged: ((Double, Bool) -> Void)?
 
+    var spaceAccent: NSColor = .controlAccentColor {
+        didSet {
+            progressLine.accent = spaceAccent
+            focusBorder.accent = spaceAccent
+        }
+    }
+
     private let divider = SplitDividerView()
     private let focusBorder = SplitFocusBorderView()
     private let progressLine = LoadingProgressLineView()
@@ -465,8 +472,12 @@ final class LoadingProgressLineView: NSView {
 
     override var wantsUpdateLayer: Bool { true }
 
+    var accent: NSColor = .controlAccentColor {
+        didSet { needsDisplay = true }
+    }
+
     override func updateLayer() {
-        layer?.backgroundColor = NSColor.controlAccentColor.cgColor
+        layer?.backgroundColor = accent.cgColor
     }
 
     override func hitTest(_ point: NSPoint) -> NSView? { nil }
@@ -485,9 +496,13 @@ final class SplitFocusBorderView: NSView {
 
     override var wantsUpdateLayer: Bool { true }
 
+    var accent: NSColor = .controlAccentColor {
+        didSet { needsDisplay = true }
+    }
+
     override func updateLayer() {
         layer?.borderWidth = 2
-        layer?.borderColor = NSColor.controlAccentColor.withAlphaComponent(0.7).cgColor
+        layer?.borderColor = accent.withAlphaComponent(0.7).cgColor
     }
 
     override func hitTest(_ point: NSPoint) -> NSView? { nil }
