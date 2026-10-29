@@ -69,6 +69,12 @@ The build signs with the first Developer ID Application or Apple Development ide
 
 To use Mini as your default browser, run `make install` and choose Mini > Set as Default Browser.
 
+## Proprietary codecs (local builds only)
+
+The stock CEF build plays VP8, VP9, AV1, Opus and other open formats, but not H.264, AAC or MP4. Those formats are covered by patent pools (Via LA for H.264 and AAC), and Chromium only compiles their decoders with `proprietary_codecs=true ffmpeg_branding=Chrome`. Google licenses them for Chrome; a CEF built with them and handed to other people needs its own license. So released builds always use the stock CEF, and the codecs build stays on your own machine.
+
+`scripts/build-cef-codecs.sh` builds CEF from source with the codecs (about three hours on an M5 and about 55 GB of free disk at its peak; the 32 GB Chromium checkout is kept for rebuilds) and installs it to `~/.local/share/cef/156.0.14-codecs/cef_macos_aarch64`. Once that folder exists, `make` and `make install` use it automatically; `MINI_CEF_CODECS=0 make` builds with the stock CEF. `make release` always uses the stock CEF and refuses to publish if the bundled framework has the codecs.
+
 ## Keyboard
 
 | Shortcut | Action |

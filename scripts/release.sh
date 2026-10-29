@@ -22,8 +22,9 @@ git fetch -q --tags origin
 plist_version="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' bundle/Info.plist)"
 [[ "$plist_version" == "$version" ]] || { echo "bundle/Info.plist says $plist_version, not $version." >&2; exit 1; }
 
-MINI_SIGN_IDENTITY="$identity" MINI_TIMESTAMP=1 CONFIG=release scripts/bundle.sh
+MINI_CEF_CODECS=0 CEF_PATH="$HOME/.local/share/cef" MINI_SIGN_IDENTITY="$identity" MINI_TIMESTAMP=1 CONFIG=release scripts/bundle.sh
 codesign --verify --deep --strict --verbose=2 "$app"
+scripts/check-stock-cef.sh "$app"
 
 echo "==> Notarizing"
 mkdir -p "$dist"

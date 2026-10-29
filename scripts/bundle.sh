@@ -3,7 +3,7 @@ set -euo pipefail
 
 repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 config="${CONFIG:-release}"
-export CEF_PATH="${CEF_PATH:-$HOME/.local/share/cef}"
+export CEF_PATH="${CEF_PATH:-$("$repository_root/scripts/cef-path.sh")}"
 default_sign_identity="$(security find-identity -v -p codesigning | awk -F'"' '/Developer ID Application|Apple Development/ { print $2; exit }')"
 sign_identity="${MINI_SIGN_IDENTITY:-${default_sign_identity:--}}"
 if [[ "$sign_identity" == "-" ]]; then
@@ -23,7 +23,12 @@ helper_binary="$repository_root/core/target/$config/mini-helper"
 
 cef_version="$(awk '/^name = "cef-dll-sys"$/ { getline; split($0, parts, "\""); print parts[2] }' "$repository_root/core/Cargo.lock")"
 cef_version="${cef_version#*+}"
-cef_directory="$CEF_PATH/$cef_version/cef_macos_aarch64"
+if [[ -f "$CEF_PATH/archive.json" ]]; then
+  cef_directory="$CEF_PATH"
+else
+  cef_directory="$CEF_PATH/$cef_version/cef_macos_aarch64"
+fi
+echo "==> Using CEF at $cef_directory"
 framework_source="$cef_directory/Chromium Embedded Framework.framework"
 if [[ ! -d "$framework_source" ]]; then
   echo "CEF framework not found at $framework_source" >&2

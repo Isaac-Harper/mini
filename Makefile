@@ -1,5 +1,5 @@
 CONFIG ?= release
-CEF_PATH ?= $(HOME)/.local/share/cef
+CEF_PATH ?= $(shell MINI_CEF_CODECS=$(MINI_CEF_CODECS) scripts/cef-path.sh)
 export CEF_PATH
 
 ifeq ($(CONFIG),release)
