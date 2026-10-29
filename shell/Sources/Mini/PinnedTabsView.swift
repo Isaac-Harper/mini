@@ -40,7 +40,7 @@ private struct PinDropTile: View {
             .frame(height: SidebarMetrics.pinnedTileHeight)
             .background(shape.fill(isTargeted ? AnyShapeStyle(.tint.opacity(0.15)) : AnyShapeStyle(.clear)))
             .overlay(shape.strokeBorder(isTargeted ? AnyShapeStyle(.tint) : AnyShapeStyle(.secondary.opacity(0.5)), style: StrokeStyle(lineWidth: 1.5, dash: [4, 3])))
-            .help("Drop to Pin")
+            .glassTooltip("Drop to Pin")
             .onDrop(of: SidebarDragModel.acceptedTypes, delegate: PinnedDropDelegate(shell: shell, index: index))
     }
 }
@@ -87,7 +87,7 @@ private struct PinnedTabTile: View {
         }
         .overlay { SidebarFocusRing(shell: shell, tab: tab, cornerRadius: SidebarMetrics.pinnedTileCornerRadius) }
         .contentShape(shape)
-        .help(tab.displayTitle)
+        .glassTooltip(tab.displayTitle)
         .onTapGesture {
             Haptics.controlActivated(.press)
             shell.clearRowSelection()

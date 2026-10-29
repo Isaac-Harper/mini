@@ -3,6 +3,7 @@ import SwiftUI
 
 private struct FadingTruncation: ViewModifier {
     let fadeWidth: CGFloat
+    let tooltip: String?
 
     @State private var contentWidth: CGFloat = 0
     @State private var availableWidth: CGFloat = 0
@@ -30,12 +31,13 @@ private struct FadingTruncation: ViewModifier {
                     }
                 }
             }
+            .glassTooltip(overflows ? tooltip ?? "" : "")
     }
 }
 
 extension View {
-    func fadingTruncation(width: CGFloat = SidebarMetrics.titleFadeWidth) -> some View {
-        modifier(FadingTruncation(fadeWidth: width))
+    func fadingTruncation(width: CGFloat = SidebarMetrics.titleFadeWidth, tooltip: String? = nil) -> some View {
+        modifier(FadingTruncation(fadeWidth: width, tooltip: tooltip))
     }
 }
 

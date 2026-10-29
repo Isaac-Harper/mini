@@ -98,7 +98,7 @@ struct DownloadRowView: View {
         .buttonStyle(.plain)
         .focusable(false)
         .hapticFeedback(.press)
-        .help(helpText)
+        .glassTooltip(helpText)
     }
 
     private var symbolName: String {

@@ -19,7 +19,7 @@ struct AudioToggleButton: View {
             .buttonStyle(.plain)
             .focusable(false)
             .hapticFeedback(.toggle)
-            .help(tab.isAudioMuted ? "Unmute Tab" : "Mute Tab")
+            .glassTooltip(tab.isAudioMuted ? "Unmute Tab" : "Mute Tab")
         }
     }
 }
@@ -66,7 +66,7 @@ struct NowPlayingRowView: View {
             .buttonStyle(.plain)
             .focusable(false)
             .hapticFeedback(.toggle)
-            .help(isPlaying ? "Pause" : "Play")
+            .glassTooltip(isPlaying ? "Pause" : "Play")
         }
         .padding(.leading, SidebarMetrics.rowLeadingPadding)
         .padding(.trailing, SidebarMetrics.rowTrailingPadding)

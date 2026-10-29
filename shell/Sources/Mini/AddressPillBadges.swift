@@ -16,7 +16,7 @@ struct AddressPillChip: View {
             .frame(maxWidth: SidebarMetrics.addressPillChipMaximumWidth)
             .background(Capsule().fill(.fill.tertiary))
             .layoutPriority(1)
-            .help(help)
+            .glassTooltip(help)
     }
 }
 

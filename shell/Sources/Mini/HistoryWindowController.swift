@@ -125,7 +125,7 @@ private struct HistoryRowView: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .help("Delete from History")
+            .glassTooltip("Delete from History")
             .opacity(isHovered ? 1 : 0)
         }
         .padding(.vertical, 3)

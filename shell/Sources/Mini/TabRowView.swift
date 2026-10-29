@@ -27,7 +27,7 @@ struct TabRowView: View {
                     .overlay(alignment: .topTrailing) { UnreadBadgeView(tab: tab) }
                     .padding(.trailing, SidebarMetrics.iconSpacing - SidebarMetrics.accessorySpacing)
                 Text(tab.displayTitle)
-                    .fadingTruncation()
+                    .fadingTruncation(tooltip: tab.displayTitle)
                     .foregroundStyle(isSelected ? .primary : .secondary)
             }
             .opacity(isDimmed ? 0.5 : (isSelected || isHovered || tab.isSaved ? 1 : tab.idleFade))
@@ -45,7 +45,7 @@ struct TabRowView: View {
                 }
                 .buttonStyle(.plain)
                 .focusable(false)
-                .help("Back to Saved Page")
+                .glassTooltip("Back to Saved Page")
             }
             if isHovered {
                 Button {
@@ -60,7 +60,7 @@ struct TabRowView: View {
                 .buttonStyle(.plain)
                 .focusable(false)
                 .hapticFeedback(.press)
-                .help("Close Tab")
+                .glassTooltip("Close Tab")
             }
         }
         .padding(.leading, SidebarMetrics.indent(depth: depth))
@@ -201,7 +201,7 @@ private struct SplitTabHalfView: View {
                     .animation(.easeInOut(duration: 0.3), value: tab.isLoading)
                     .overlay(alignment: .topTrailing) { UnreadBadgeView(tab: tab) }
                 Text(tab.displayTitle)
-                    .fadingTruncation()
+                    .fadingTruncation(tooltip: tab.displayTitle)
                     .foregroundStyle(isFocused ? .primary : .secondary)
             }
             .opacity(isPairSelected || isHovered ? 1 : tab.idleFade)
@@ -220,7 +220,7 @@ private struct SplitTabHalfView: View {
                 .buttonStyle(.plain)
                 .focusable(false)
                 .hapticFeedback(.press)
-                .help("Close Tab")
+                .glassTooltip("Close Tab")
             }
         }
         .padding(.horizontal, SidebarMetrics.rowLeadingPadding)

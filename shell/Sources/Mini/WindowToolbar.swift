@@ -57,7 +57,6 @@ final class WindowToolbar: NSObject, NSToolbarDelegate {
         button.menuProvider = { [unowned commands] in commands.historyMenu(forward: forward) }
         let toolbarItem = HistoryToolbarItem(itemIdentifier: identifier)
         toolbarItem.label = label
-        toolbarItem.toolTip = label
         toolbarItem.view = button
         toolbarItem.validation = { [unowned commands] in
             forward ? commands.selectedTabCanGoForward : commands.selectedTabCanGoBack
@@ -74,7 +73,6 @@ final class WindowToolbar: NSObject, NSToolbarDelegate {
         Self.style(button, label)
         let toolbarItem = NSToolbarItem(itemIdentifier: identifier)
         toolbarItem.label = label
-        toolbarItem.toolTip = label
         toolbarItem.view = button
         return toolbarItem
     }
@@ -82,7 +80,7 @@ final class WindowToolbar: NSObject, NSToolbarDelegate {
     static func style(_ button: HoverHighlightButton, _ label: String) {
         guard let image = button.image else { preconditionFailure("Toolbar button without a symbol") }
         button.isBordered = false
-        button.toolTip = label
+        button.tooltip = label
         button.title = ""
         button.showSymbol(image, pointSize: 15)
         button.translatesAutoresizingMaskIntoConstraints = false

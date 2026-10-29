@@ -10,7 +10,7 @@ extension ShellController: NSToolbarItemValidation {
         case #selector(goForwardInHistory(_:)):
             return selectedBrowserTab?.canGoForward ?? false
         case #selector(toggleTabSidebar(_:)):
-            item.toolTip = windowController.isSidebarVisible ? "Hide Sidebar" : "Show Sidebar"
+            (item.view as? HoverHighlightButton)?.tooltip = windowController.isSidebarVisible ? "Hide Sidebar" : "Show Sidebar"
             return true
         default:
             return true

@@ -137,10 +137,11 @@ struct AirPlayButton: View {
         if !tab.mediaVideoURL.isEmpty || shell.airPlay.tab === tab {
             RoutePicker(airPlay: shell.airPlay, tab: tab, activeColor: shell.currentSpace.color.accent)
                 .frame(width: SidebarMetrics.accessorySize, height: SidebarMetrics.accessorySize)
-                .help(shell.airPlay.tab === tab ? "Playing on AirPlay" : "AirPlay Video")
+                .glassTooltip(shell.airPlay.tab === tab ? "Playing on AirPlay" : "AirPlay Video")
         } else {
             SoundOutputMenuButton(deviceName: shell.soundOutput.airPlayDeviceName, activeColor: shell.currentSpace.color.accent)
                 .frame(width: SidebarMetrics.accessorySize, height: SidebarMetrics.accessorySize)
+                .glassTooltip(shell.soundOutput.airPlayDeviceName.map { "Sound plays on \($0)" } ?? "AirPlay")
         }
     }
 }
@@ -168,7 +169,6 @@ private struct SoundOutputMenuButton: NSViewRepresentable {
     func updateNSView(_ button: NSButton, context: Context) {
         context.coordinator.deviceName = deviceName
         button.contentTintColor = deviceName == nil ? .secondaryLabelColor : activeColor
-        button.toolTip = deviceName.map { "Sound plays on \($0)" } ?? "AirPlay"
     }
 
     @MainActor

@@ -266,7 +266,7 @@ private struct AddressPill: View {
                         .foregroundStyle(.secondary)
                         .frame(width: SidebarMetrics.iconSize, height: SidebarMetrics.addressPillHeight)
                         .padding(.leading, SidebarMetrics.addressPillTextInset)
-                        .help("Not Secure: this page is not using HTTPS")
+                        .glassTooltip("Not Secure: this page is not using HTTPS")
                         .accessibilityLabel("Not Secure")
                 }
                 ZStack(alignment: .leading) {
@@ -295,7 +295,7 @@ private struct AddressPill: View {
                         }
                         .buttonStyle(.plain)
                         .focusable(false)
-                        .help(selected?.url ?? "")
+                        .glassTooltip(selected?.url ?? "")
                         .onHover { self.isHovered = $0 }
                         .transition(.opacity)
                     }
@@ -326,7 +326,7 @@ private struct AddressPill: View {
                     .buttonStyle(.plain)
                     .focusable(false)
                     .hapticFeedback(.press)
-                    .help("Fill Password")
+                    .glassTooltip("Fill Password")
                 }
                 if let selected, !selected.url.isEmpty {
                     Button {
@@ -346,7 +346,7 @@ private struct AddressPill: View {
                     .buttonStyle(.plain)
                     .focusable(false)
                     .hapticFeedback(.press)
-                    .help(selected.isLoading ? "Stop" : "Reload")
+                    .glassTooltip(selected.isLoading ? "Stop" : "Reload")
                 }
             }
             .glassEffect(.regular.interactive(), in: Capsule())
@@ -463,7 +463,7 @@ private struct SpaceBarIconButton: View {
         .buttonStyle(.plain)
         .focusable(false)
         .hapticFeedback(feedback)
-        .help(help)
+        .glassTooltip(help)
         .onChange(of: isSelected) { _, selected in
             if selected, !reduceMotion { bounces += 1 }
         }

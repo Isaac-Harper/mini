@@ -36,8 +36,16 @@ extension View {
     }
 }
 
-class HoverHighlightButton: NSButton {
+class HoverHighlightButton: NSButton, TooltipText {
     var hoverCornerRadius: CGFloat = SidebarMetrics.rowCornerRadius
+    var tooltip = "" {
+        didSet {
+            setAccessibilityHelp(tooltip.isEmpty ? nil : tooltip)
+            GlassTooltip.shared.textChanged(for: self, to: tooltip)
+        }
+    }
+
+    var tooltipText: String { tooltip }
     var feedback: ControlFeedback = .press
     var bouncesOnPress = true
 
@@ -105,10 +113,17 @@ class HoverHighlightButton: NSButton {
 
     override func mouseEntered(with event: NSEvent) {
         setHighlighted(isEnabled)
+        GlassTooltip.shared.hoverBegan(over: self, text: tooltip)
     }
 
     override func mouseExited(with event: NSEvent) {
         setHighlighted(false)
+        GlassTooltip.shared.hoverEnded(over: self)
+    }
+
+    override func viewWillMove(toWindow newWindow: NSWindow?) {
+        super.viewWillMove(toWindow: newWindow)
+        if newWindow == nil { GlassTooltip.shared.hoverEnded(over: self) }
     }
 
     func setHighlighted(_ highlighted: Bool) {
