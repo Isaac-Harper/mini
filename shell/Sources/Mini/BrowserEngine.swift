@@ -155,6 +155,9 @@ final class BrowserEngine {
             theme_color_changed: { identifier, rgba in
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.themeColorChanged(identifier, rgba: rgba) }
             },
+            page_background_changed: { identifier, rgba in
+                MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.pageBackgroundChanged(identifier, rgba: rgba) }
+            },
             horizontal_scroll_reported: { identifier, canScrollLeft, canScrollRight in
                 MainActor.assumeIsolated {
                     BrowserEngine.shared.requiredShell.horizontalScrollReported(identifier, room: HorizontalScrollRoom(canScrollLeft: canScrollLeft, canScrollRight: canScrollRight))

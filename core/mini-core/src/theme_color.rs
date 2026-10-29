@@ -21,6 +21,13 @@ if(media&&!query(media).matches)continue;var color=normalize((metas[index].getAt
 function report(){scheduled=false;var color=current();if(!ready&&!color)return;if(color===last)return;last=color;
 signal(token+':theme:'+frameId+':'+JSON.stringify(color));}
 function schedule(){if(scheduled)return;scheduled=true;setTimeout(report,100);}
+function opaque(value){var color=value?normalize(value):'';return color.charAt(0)==='#'?color:'';}
+function background(){var elements=[document.body,document.documentElement];
+for(var index=0;index<elements.length;index++){if(!elements[index])continue;var color=opaque(getComputedStyle(elements[index]).backgroundColor);if(color)return color;}
+var theme=opaque(current());if(theme)return theme;
+return (getComputedStyle(document.documentElement).colorScheme||'').indexOf('dark')>=0?'':'#ffffff';}
+function reportBackground(){var color=background();if(color)signal(token+':background:'+frameId+':'+JSON.stringify(color));}
+if(document.readyState==='complete')setTimeout(reportBackground,0);else window.addEventListener('load',reportBackground);
 new MutationObserver(schedule).observe(document,{childList:true,subtree:true,attributes:true,attributeFilter:['content','media','name']});
 document.addEventListener('DOMContentLoaded',function(){ready=true;report();});
 query('(prefers-color-scheme: dark)');
@@ -37,6 +44,10 @@ pub fn script(frame: &Frame, token: &str) -> String {
 }
 
 pub fn handle_signal(tab: MiniTabId, browser: &Browser, rest: &str) -> bool {
+    if let Some(rest) = rest.strip_prefix(":background:") {
+        handle_background(tab, browser, rest);
+        return true;
+    }
     let Some(rest) = rest.strip_prefix(":theme:") else {
         return false;
     };
@@ -53,6 +64,22 @@ pub fn handle_signal(tab: MiniTabId, browser: &Browser, rest: &str) -> bool {
         unsafe { (callbacks().theme_color_changed)(tab, packed_color(&color)) };
     }
     true
+}
+
+fn handle_background(tab: MiniTabId, browser: &Browser, rest: &str) {
+    let Some((frame_id, payload)) = rest.split_once(':') else {
+        return;
+    };
+    let is_main_frame = browser
+        .frame_by_identifier(Some(&CefString::from(frame_id)))
+        .is_some_and(|frame| frame.is_main() == 1);
+    let Ok(color) = serde_json::from_str::<String>(payload) else {
+        return;
+    };
+    let packed = packed_color(&color);
+    if is_main_frame && packed & 0xff == 0xff {
+        unsafe { (callbacks().page_background_changed)(tab, packed) };
+    }
 }
 
 fn packed_color(color: &str) -> u32 {

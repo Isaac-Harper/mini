@@ -153,6 +153,10 @@ typedef struct MiniCallbacks {
   // document is parsed and again whenever the meta tags or the color scheme
   // change.
   void (*theme_color_changed)(MiniTabId tab, uint32_t rgba);
+  // The main frame's opaque background as 0xRRGGBBFF, sent once after the
+  // load event: the computed body background, else the html element's, else
+  // the theme-color, else white unless the page's color-scheme is dark.
+  void (*page_background_changed)(MiniTabId tab, uint32_t rgba);
   // Sent from any frame at the start of every wheel gesture and when a
   // horizontal wheel's scroll room changes: whether the element under the
   // pointer (or one of its ancestors, or the document) can still scroll left
@@ -224,7 +228,8 @@ void mini_space_destroy(const char *space);
 
 // Browser creation is asynchronous. Calls for a tab whose browser is not
 // created yet are applied once it is (latest url wins, focus/hidden replayed).
-void mini_browser_create(MiniTabId tab, void *parent_view, const char *url, const char *space);
+// background_rgb (0xRRGGBB) is what the browser shows until its first paint.
+void mini_browser_create(MiniTabId tab, void *parent_view, const char *url, const char *space, uint32_t background_rgb);
 void mini_browser_load_url(MiniTabId tab, const char *url);
 void mini_browser_go_back(MiniTabId tab);
 void mini_browser_go_forward(MiniTabId tab);

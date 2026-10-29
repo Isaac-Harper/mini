@@ -53,8 +53,7 @@ extension ShellController {
             mini_browser_set_hidden(tab.id, false)
         case .none:
             tab.browserState = .created
-            let hostViewPointer = Unmanaged.passUnretained(tab.hostView).toOpaque()
-            tab.url.withCString { url in space.id.withCString { mini_browser_create(tab.id, hostViewPointer, url, $0) } }
+            startBrowser(for: tab, url: tab.url, spaceIdentifier: space.id)
         case .pendingPopup:
             break
         }

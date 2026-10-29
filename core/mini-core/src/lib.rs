@@ -69,6 +69,7 @@ pub struct MiniCallbacks {
     pub fullscreen_mode_changed: Option<unsafe extern "C" fn(MiniTabId, bool)>,
     pub loading_progress_changed: Option<unsafe extern "C" fn(MiniTabId, f64)>,
     pub theme_color_changed: Option<unsafe extern "C" fn(MiniTabId, u32)>,
+    pub page_background_changed: Option<unsafe extern "C" fn(MiniTabId, u32)>,
     pub horizontal_scroll_reported: Option<unsafe extern "C" fn(MiniTabId, bool, bool)>,
     pub context_menu_requested: Option<unsafe extern "C" fn(MiniTabId, *const context_menu::MiniContextMenu)>,
     pub image_copied: Option<unsafe extern "C" fn(MiniTabId, *const u8, usize)>,
@@ -224,6 +225,7 @@ pub extern "C" fn mini_browser_create(
     parent_view: *mut c_void,
     url: *const c_char,
     space: *const c_char,
+    background_rgb: u32,
 ) {
     assert_ne!(tab, 0, "tab id 0 is reserved");
     let url = borrowed_text(url, "url");
@@ -249,7 +251,10 @@ pub extern "C" fn mini_browser_create(
         Some(&window_info),
         Some(&mut client),
         Some(&CefString::from(url)),
-        Some(&BrowserSettings::default()),
+        Some(&BrowserSettings {
+            background_color: 0xff00_0000 | (background_rgb & 0x00ff_ffff),
+            ..Default::default()
+        }),
         None,
         Some(&mut request_context),
     );

@@ -84,7 +84,7 @@ Rust core (`core/`, detail in cef-and-core.md):
 - `src/notifications.rs`: Web Notifications shim.
 - `src/editable_focus.rs`: editable-focus script and rule.
 - `src/media.rs`: playing state, media metadata and artwork.
-- `src/theme_color.rs`: theme-color script and parser.
+- `src/theme_color.rs`: theme-color and page background script and parser.
 - `src/horizontal_scroll.rs`: page horizontal scroll room for swipe navigation.
 - `src/vitals.rs`: Core Web Vitals script and report parsing.
 - `src/response_headers.rs`: the main-frame response's edge headers for the edge badge.
@@ -158,6 +158,7 @@ Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 - `NotificationsController.swift`: macOS notification delivery. (shell-ui)
 - `SitePreferences.swift`: per-origin permissions, ad block exemptions, zoom levels. (shell-ui)
 - `FaviconCache.swift`: per-host favicon cache. (shell-ui)
+- `SiteBackgroundCache.swift`, `Sources/MiniRules/SiteBackgrounds.swift`: per-host page background shown before first paint. (shell-ui)
 - `DefaultBrowser.swift`: default-browser registration. (shell-ui)
 - `Tab.swift`: tab node. (tabs-and-undo)
 - `TabStore.swift`: pinned tabs, tab tree, selection, splits. (tabs-and-undo)

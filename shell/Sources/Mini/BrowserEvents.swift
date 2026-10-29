@@ -219,6 +219,11 @@ extension ShellController {
         }
     }
 
+    func pageBackgroundChanged(_ identifier: MiniTabId, rgba: UInt32) {
+        guard let tab = liveTab(identifier) else { return }
+        siteBackgrounds.record(rgba, forPageAt: tab.url)
+    }
+
     func themeColorChanged(_ identifier: MiniTabId, rgba: UInt32) {
         guard let tab = liveTab(identifier) else { return }
         let alpha = CGFloat(rgba & 0xff) / 255

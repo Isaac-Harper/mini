@@ -31,6 +31,7 @@ final class ShellController: NSObject {
     @ObservationIgnored let sitePreferences: SitePreferences
     @ObservationIgnored let archive: ArchiveStore
     @ObservationIgnored let faviconCache: FaviconCache
+    @ObservationIgnored let siteBackgrounds: SiteBackgroundCache
     @ObservationIgnored let history: HistoryLibrary
     @ObservationIgnored var historyWindow: HistoryWindowController?
     @ObservationIgnored private var archiveTimer: Timer?
@@ -70,8 +71,10 @@ final class ShellController: NSObject {
     private static let showsEveningTintKey = "ShowsEveningTint"
     private static let closesDayAutomaticallyKey = "ClosesDayAutomatically"
 
-    init(sessionStore: SessionStore, sitePreferences: SitePreferences, archive: ArchiveStore, faviconCache: FaviconCache, history: HistoryLibrary, rootCacheDirectory: URL) {
+    init(sessionStore: SessionStore, sitePreferences: SitePreferences, archive: ArchiveStore, faviconCache: FaviconCache, siteBackgrounds: SiteBackgroundCache, history: HistoryLibrary,
+         rootCacheDirectory: URL) {
         self.faviconCache = faviconCache
+        self.siteBackgrounds = siteBackgrounds
         self.history = history
         self.sessionStore = sessionStore
         self.sitePreferences = sitePreferences
@@ -363,8 +366,7 @@ final class ShellController: NSObject {
         littleWindow.window?.makeKeyAndOrderFront(nil)
         if createsBrowser, !url.isEmpty {
             tab.browserState = .created
-            let hostViewPointer = Unmanaged.passUnretained(tab.hostView).toOpaque()
-            url.withCString { url in space.id.withCString { mini_browser_create(tab.id, hostViewPointer, url, $0) } }
+            startBrowser(for: tab, url: url, spaceIdentifier: space.id)
         }
         return littleWindow
     }
@@ -455,9 +457,14 @@ final class ShellController: NSObject {
         guard tab.browserState == .none, !tab.url.isEmpty else { return }
         tab.browserState = .created
         tab.needsInitialFocus = true
+        startBrowser(for: tab, url: tab.url, spaceIdentifier: space(containingTab: tab).id)
+    }
+
+    func startBrowser(for tab: Tab, url: String, spaceIdentifier: String) {
         let hostViewPointer = Unmanaged.passUnretained(tab.hostView).toOpaque()
-        let spaceIdentifier = space(containingTab: tab).id
-        tab.url.withCString { url in spaceIdentifier.withCString { mini_browser_create(tab.id, hostViewPointer, url, $0) } }
+        let background = siteBackgrounds.rgb(forPageAt: url, appearance: window.effectiveAppearance)
+        tab.hostView.setBackdrop(rgb: background)
+        url.withCString { url in spaceIdentifier.withCString { mini_browser_create(tab.id, hostViewPointer, url, $0, background) } }
     }
 
     private func space(containingTab tab: Tab) -> Space {
