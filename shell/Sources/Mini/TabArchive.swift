@@ -15,6 +15,7 @@ enum ArchivePolicy {
         let identifier: MiniTabId
         let lastSelectedAt: Date
         let isSelected: Bool
+        let isSaved: Bool
         let children: [Candidate]
     }
 
@@ -32,7 +33,7 @@ enum ArchivePolicy {
         for child in candidate.children where !collect(child, now: now, into: &archived) {
             everyChildArchived = false
         }
-        guard everyChildArchived, !candidate.isSelected,
+        guard everyChildArchived, !candidate.isSelected, !candidate.isSaved,
               now.timeIntervalSince(candidate.lastSelectedAt) >= idleThreshold
         else { return false }
         archived.append(candidate.identifier)

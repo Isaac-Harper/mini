@@ -56,7 +56,7 @@ final class BrowserEngine {
                     }
                     let event = Unmanaged<NSEvent>.fromOpaque(pointer).takeUnretainedValue()
                     if let redo = MenuKeyEquivalents.undoDirection(of: event) {
-                        return BrowserEngine.shared.requiredShell.pageUndoKeyPressed(in: identifier, redo: redo)
+                        return BrowserEngine.shared.requiredShell.pageUndoKeyPressed(event, in: identifier, redo: redo)
                     }
                     return MenuKeyEquivalents.perform(event)
                 }

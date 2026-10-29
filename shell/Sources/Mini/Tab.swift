@@ -10,6 +10,8 @@ final class Tab: Identifiable {
     var title: String
     var favicon: NSImage?
     var pinnedURL: String?
+    var savedURL: String?
+    @ObservationIgnored var savedTitle = ""
     var isLoading = false
     @ObservationIgnored var loadingProgress = 1.0
     var canGoBack = false
@@ -47,6 +49,13 @@ final class Tab: Identifiable {
     var hasBrowser: Bool { browserState == .created }
 
     var isPinned: Bool { pinnedURL != nil }
+
+    var isSaved: Bool { savedURL != nil }
+
+    var hasLeftSavedURL: Bool {
+        guard let savedURL else { return false }
+        return !url.isEmpty && url != savedURL
+    }
 
     var displayTitle: String {
         if !title.isEmpty { return title }

@@ -9,19 +9,38 @@ struct TabRowView: View {
 
     private var isSelected: Bool { shell.store.selectedTab === tab }
 
+    private var isDimmed: Bool { tab.isSaved && !isSelected && !tab.hasBrowser }
+
     var body: some View {
         HStack(spacing: 4) {
             disclosure
-            TabIconView(tab: tab, size: 16)
-                .opacity(tab.isLoading ? 0.4 : 1)
-                .animation(.easeInOut(duration: 0.3), value: tab.isLoading)
-                .padding(.trailing, 4)
-            Text(tab.displayTitle)
-                .lineLimit(1)
-                .truncationMode(.tail)
-                .foregroundStyle(isSelected ? .primary : .secondary)
+            Group {
+                TabIconView(tab: tab, size: 16)
+                    .opacity(tab.isLoading ? 0.4 : 1)
+                    .animation(.easeInOut(duration: 0.3), value: tab.isLoading)
+                    .padding(.trailing, 4)
+                Text(tab.displayTitle)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .foregroundStyle(isSelected ? .primary : .secondary)
+            }
+            .opacity(isDimmed ? 0.5 : 1)
             Spacer(minLength: 0)
             AudioToggleButton(shell: shell, tab: tab)
+            if let savedURL = tab.savedURL, tab.hasLeftSavedURL {
+                Button {
+                    shell.navigate(tab, to: savedURL)
+                } label: {
+                    Image(systemName: "arrow.uturn.backward")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 16, height: 16)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .focusable(false)
+                .help("Back to Saved Page")
+            }
             if isHovered {
                 Button {
                     shell.performUndoable("Close Tab") { shell.store.close(tab) }
@@ -55,7 +74,15 @@ struct TabRowView: View {
                 .disabled(tab.url.isEmpty)
             Button("Pin Tab") { shell.performUndoable("Pin Tab") { shell.store.pin(tab) } }
                 .disabled(tab.url.isEmpty)
-            Button("Close Tab") { shell.performUndoable("Close Tab") { shell.store.close(tab) } }
+            if tab.isSaved {
+                Button("Remove from Saved") { shell.performUndoable("Remove from Saved") { shell.store.unsave(tab) } }
+                Divider()
+                Button("Delete") { shell.performUndoable("Delete Tab") { shell.store.remove(tab) } }
+            } else {
+                Button("Save Tab") { shell.performUndoable("Save Tab") { shell.store.save(tab) } }
+                    .disabled(!shell.store.canSave(tab))
+                Button("Close Tab") { shell.performUndoable("Close Tab") { shell.store.close(tab) } }
+            }
         }
     }
 

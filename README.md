@@ -10,6 +10,7 @@ Mini is an open source exploration project: a personal, minimal browser built to
 - The address pill shows the site's host; hover it for the full address. Plain http pages (other than localhost) get a small Not Secure mark
 - While a page loads its tab shows a spinner and a thin accent line runs along the top of the page
 - Vertical sidebar with nested tabs (a tree), pinned tabs as favicon tiles; drag rows to reorder, onto a row to nest, or onto the pinned area to pin
+- Three kinds of tabs: pinned tiles, saved tabs and regular tabs. Saved tabs sit in their own "Saved" section under the pins, can nest, are never auto-archived, and ⌘W only unloads one back to its saved page (the dimmed row stays; a small arrow on the row goes back to the saved page after you navigate away). "Remove from Saved" or "Delete" in the row's menu let go of one for real. Drag between sections to change a tab's kind; regular tabs idle for 12 hours are archived
 - Links opened from other apps open in a little floating window with back, forward and an Open in Mini button (⌘O) that moves the live page into a tab
 - Spaces (Personal and Work to start), each with its own tabs, pins and its own cookies and logins; switch with the buttons at the bottom of the sidebar or ⌃1 to ⌃9
 - Split view: two tabs side by side with a draggable divider, shown as one joined row in the sidebar
@@ -72,15 +73,16 @@ To use Mini as your default browser, run `make install` and choose Mini > Set as
 | ⌥⌘T | New child tab |
 | ⌘L | Edit the current address |
 | ⌘O | Move the page in a little window into a tab |
-| ⌘W | Close tab (pinned tabs reset instead) |
+| ⌘W | Close tab (pinned and saved tabs reset to their page instead) |
 | ⇧⌘T | Reopen closed tab |
-| ⌘Z, ⇧⌘Z | Undo and redo tab actions: close (a whole group comes back in place), move, nest, pin, split, duplicate, opening pasted links. In a text field or editable page area they undo typing instead |
+| ⌘Z, ⇧⌘Z | Undo and redo tab actions: close (a whole group comes back in place), move, nest, pin, save, split, duplicate, opening pasted links. In a text field or editable page area they undo typing instead |
 | ⌃Tab, ⌃⇧Tab, ⌥⌘↓, ⌥⌘↑ | Next and previous tab |
 | ⌘1 to ⌘9 | Select tab (pinned first; ⌘9 is the last) |
 | ⌃1 to ⌃9 | Switch space |
 | ⌥⌘→, ⌥⌘← | Indent and outdent |
 | ⌥⌘\ | Collapse or expand a group |
 | ⌃⌘P | Pin or unpin tab |
+| ⌘D | Save or unsave tab |
 | ⇧⌘D | Duplicate tab (opens right below it) |
 | ⌃⇧↑, ⌃⇧↓ | Move the tab up or down among its siblings |
 | ⌃⌘S | Show or hide the sidebar |

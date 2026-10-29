@@ -71,6 +71,7 @@ private struct PinnedTabTile: View {
             .contextMenu {
                 Button("Duplicate Tab") { shell.duplicate(tab) }
                 Button("Unpin Tab") { shell.performUndoable("Unpin Tab") { shell.store.unpin(tab) } }
+                Button("Save Tab") { shell.performUndoable("Save Tab") { shell.store.save(tab) } }
                 Button("Close Tab") { shell.performUndoable("Close Tab") { shell.store.close(tab) } }
             }
     }

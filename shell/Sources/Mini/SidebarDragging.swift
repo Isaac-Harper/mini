@@ -10,6 +10,7 @@ final class SidebarDragModel {
     enum Target: Equatable {
         case row(MiniTabId, TabDropPosition)
         case pinned(Int)
+        case savedEnd
         case end
     }
 
@@ -44,6 +45,10 @@ final class SidebarDragModel {
 
     var isDraggingUnpinnedTab: Bool {
         draggedTab.map { !$0.isPinned && !$0.url.isEmpty } ?? false
+    }
+
+    var isDraggingUnsavedTab: Bool {
+        draggedTab.map { !$0.isSaved && !$0.url.isEmpty } ?? false
     }
 }
 

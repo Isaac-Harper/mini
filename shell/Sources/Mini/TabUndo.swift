@@ -10,6 +10,8 @@ struct TabArrangementSnapshot {
         let title: String
         let favicon: NSImage?
         let pinnedURL: String?
+        let savedURL: String?
+        let savedTitle: String
         let isCollapsed: Bool
         let children: [Node]
 
@@ -19,6 +21,8 @@ struct TabArrangementSnapshot {
             title = tab.title
             favicon = tab.favicon
             pinnedURL = tab.pinnedURL
+            savedURL = tab.savedURL
+            savedTitle = tab.savedTitle
             isCollapsed = tab.isCollapsed
             children = tab.children.map(Node.init)
         }
@@ -26,7 +30,7 @@ struct TabArrangementSnapshot {
         var subtree: [Node] { [self] + children.flatMap(\.subtree) }
 
         var signature: String {
-            "\(tab.id)|\(pinnedURL ?? "")|\(isCollapsed)(\(children.map(\.signature).joined(separator: ",")))"
+            "\(tab.id)|\(pinnedURL ?? "")|\(savedURL ?? "")|\(isCollapsed)(\(children.map(\.signature).joined(separator: ",")))"
         }
     }
 
@@ -38,21 +42,23 @@ struct TabArrangementSnapshot {
     }
 
     let pinned: [Node]
+    let savedRoots: [Node]
     let roots: [Node]
     let splits: [Split]
     let selected: Tab?
 
     init(of store: TabStore) {
         pinned = store.pinnedTabs.map(Node.init)
+        savedRoots = store.savedRootTabs.map(Node.init)
         roots = store.rootTabs.map(Node.init)
         splits = store.splits.map { Split(leading: $0.leading, trailing: $0.trailing, fraction: $0.fraction) }
         selected = store.selectedTab
     }
 
-    var nodes: [Node] { (pinned + roots).flatMap(\.subtree) }
+    var nodes: [Node] { (pinned + savedRoots + roots).flatMap(\.subtree) }
 
     var signature: String {
-        let tree = (pinned + roots).map(\.signature).joined(separator: ";")
+        let tree = [pinned, savedRoots, roots].map { $0.map(\.signature).joined(separator: ";") }.joined(separator: "/")
         let pairs = splits.map { "\($0.leading.id)-\($0.trailing.id)" }.joined(separator: ",")
         return tree + "#" + pairs
     }
@@ -76,11 +82,6 @@ final class TabUndoRecord {
 }
 
 extension ShellController {
-    var tabUndoManager: UndoManager {
-        guard let undoManager = window.undoManager else { preconditionFailure("Main window has no undo manager") }
-        return undoManager
-    }
-
     func performUndoable(_ actionName: String, _ action: () -> Void) {
         let store = self.store
         let before = TabArrangementSnapshot(of: store)
@@ -94,8 +95,12 @@ extension ShellController {
         tabUndoManager.removeAllActions(withTarget: store)
     }
 
+    private var mainWindowTakesCommands: Bool {
+        NSApp.keyWindow.map { $0 === window } ?? true
+    }
+
     var undoRoutesToTabs: Bool {
-        guard window.isKeyWindow, !isOverlayActive else { return false }
+        guard mainWindowTakesCommands, !isOverlayActive else { return false }
         let responder = window.firstResponder
         if responder is NSText { return false }
         if let view = responder as? NSView, let tab = displayedTabs.first(where: { view.isDescendant(of: $0.hostView) }) {
@@ -104,8 +109,9 @@ extension ShellController {
         return true
     }
 
-    func pageUndoKeyPressed(in identifier: MiniTabId, redo: Bool) -> Bool {
-        guard window.isKeyWindow, !isOverlayActive,
+    func pageUndoKeyPressed(_ event: NSEvent, in identifier: MiniTabId, redo: Bool) -> Bool {
+        pageUndoKeyTimestamp = event.timestamp
+        guard mainWindowTakesCommands, !isOverlayActive,
               let tab = store.tab(withIdentifier: identifier), displayedTabs.contains(where: { $0 === tab }),
               tab.hasBrowser, !mini_browser_has_editable_focus(identifier)
         else { return false }
@@ -140,21 +146,30 @@ extension ShellController {
     }
 
     @objc func undoTabAction(_ sender: Any?) {
+        guard !isRedispatchedPageUndoKey else { return }
         tabUndoManager.undo()
     }
 
     @objc func redoTabAction(_ sender: Any?) {
+        guard !isRedispatchedPageUndoKey else { return }
         tabUndoManager.redo()
+    }
+
+    private var isRedispatchedPageUndoKey: Bool {
+        guard let event = NSApp.currentEvent, event.type == .keyDown, let pageUndoKeyTimestamp else { return false }
+        return event.timestamp == pageUndoKeyTimestamp
     }
 
     private func register(_ record: TabUndoRecord, in store: TabStore) {
         let undoManager = tabUndoManager
+        undoManager.beginUndoGrouping()
         undoManager.registerUndo(withTarget: store) { [weak self] store in
             MainActor.assumeIsolated {
                 self?.apply(record, in: store)
             }
         }
         undoManager.setActionName(record.actionName)
+        undoManager.endUndoGrouping()
     }
 
     private func apply(_ record: TabUndoRecord, in store: TabStore) {
@@ -186,7 +201,9 @@ extension ShellController {
             (tab: tab,
              wasPinned: tab.isPinned,
              parent: tab.parent.flatMap { targetLive.contains(ObjectIdentifier($0)) ? $0 : nil },
-             index: tab.isPinned ? (store.pinnedTabs.firstIndex { $0 === tab } ?? 0) : ((tab.parent?.children ?? store.rootTabs).firstIndex { $0 === tab } ?? 0))
+             index: tab.isPinned
+                 ? (store.pinnedTabs.firstIndex { $0 === tab } ?? 0)
+                 : ((tab.parent?.children ?? (tab.isSaved ? store.savedRootTabs : store.rootTabs)).firstIndex { $0 === tab } ?? 0))
         }
 
         var resolved: [MiniTabId: Tab] = [:]
@@ -204,6 +221,8 @@ extension ShellController {
             }
             resolved[node.tab.id] = tab
             tab.pinnedURL = node.pinnedURL
+            tab.savedURL = node.savedURL
+            tab.savedTitle = node.savedTitle
             tab.isCollapsed = node.isCollapsed
             tab.children = node.children.map(build)
             for child in tab.children {
@@ -212,8 +231,9 @@ extension ShellController {
             return tab
         }
         var pinned = target.pinned.map(build)
+        var savedRoots = target.savedRoots.map(build)
         var roots = target.roots.map(build)
-        for tab in pinned + roots {
+        for tab in pinned + savedRoots + roots {
             tab.parent = nil
         }
         for tab in extras {
@@ -227,10 +247,20 @@ extension ShellController {
             } else if let parent = placement.parent {
                 tab.parent = parent
                 parent.children.insert(tab, at: min(placement.index, parent.children.count))
+            } else if tab.isSaved {
+                tab.parent = nil
+                savedRoots.insert(tab, at: min(placement.index, savedRoots.count))
             } else {
                 tab.parent = nil
                 roots.insert(tab, at: min(placement.index, roots.count))
             }
+        }
+        for tab in savedRoots.flatMap(\.subtree) where tab.savedURL == nil {
+            tab.savedURL = tab.url
+            tab.savedTitle = tab.title
+        }
+        for tab in roots.flatMap(\.subtree) {
+            tab.savedURL = nil
         }
         var splits = target.splits.compactMap { split -> TabSplit? in
             guard let leading = resolved[split.leading.id], let trailing = resolved[split.trailing.id],
@@ -244,6 +274,7 @@ extension ShellController {
         }
         store.restoreArrangement(
             pinned: pinned,
+            savedRoots: savedRoots,
             roots: roots,
             splits: splits,
             selecting: target.selected.flatMap { resolved[$0.id] },

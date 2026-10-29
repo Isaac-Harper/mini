@@ -224,6 +224,15 @@ extension ShellController: NSMenuItemValidation {
         }
     }
 
+    @objc func toggleSavedTab(_ sender: Any?) {
+        guard let tab = store.selectedTab else { return }
+        if tab.isSaved {
+            performUndoable("Unsave Tab") { store.unsave(tab) }
+        } else {
+            performUndoable("Save Tab") { store.save(tab) }
+        }
+    }
+
     private static let pictureInPictureScript = "javascript:void((function(){if(document.pictureInPictureElement){document.exitPictureInPicture().catch(function(){});return;}var documents=[document];Array.prototype.forEach.call(document.querySelectorAll('iframe'),function(frame){try{if(frame.contentDocument)documents.push(frame.contentDocument);}catch(error){}});var videos=[];documents.forEach(function(candidate){videos=videos.concat(Array.prototype.slice.call(candidate.querySelectorAll('video')));});var playing=videos.filter(function(video){return !video.paused&&!video.ended&&video.readyState>2;});var pool=playing.length?playing:videos;var largest=pool.sort(function(first,second){return second.clientWidth*second.clientHeight-first.clientWidth*first.clientHeight;})[0];if(largest)largest.requestPictureInPicture().catch(function(){});})())"
 
     @objc func togglePictureInPicture(_ sender: Any?) {
@@ -342,6 +351,9 @@ extension ShellController: NSMenuItemValidation {
             return selected != nil
         case #selector(duplicateSelectedTab(_:)):
             return !(selected?.url.isEmpty ?? true)
+        case #selector(toggleSavedTab(_:)):
+            menuItem.title = selected?.isSaved == true ? "Unsave Tab" : "Save Tab"
+            return selected.map { $0.isSaved || store.canSave($0) } ?? false
         case #selector(togglePinnedTab(_:)):
             menuItem.title = selected?.isPinned == true ? "Unpin Tab" : "Pin Tab"
             return selected.map { $0.isPinned || !$0.url.isEmpty } ?? false

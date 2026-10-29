@@ -37,15 +37,23 @@ struct SidebarView: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(spacing: 0) {
-                        ForEach(store.visibleTabs) { visibleTab in
-                            Group {
-                                if let split = visibleTab.split {
-                                    SplitTabRowView(shell: shell, split: split, depth: visibleTab.depth)
-                                } else {
-                                    TabRowView(shell: shell, tab: visibleTab.tab, depth: visibleTab.depth)
-                                }
-                            }
-                            .transition(rowTransition)
+                        let rows = store.visibleTabs
+                        let savedRows = rows.filter(\.isSaved)
+                        let showsSaveDrop = shell.sidebarDrag.isDraggingUnsavedTab
+                        if !savedRows.isEmpty {
+                            SavedSectionHeader()
+                        }
+                        ForEach(savedRows) { visibleTab in
+                            row(for: visibleTab)
+                        }
+                        if showsSaveDrop {
+                            SaveDropRow(shell: shell)
+                        }
+                        if !savedRows.isEmpty || showsSaveDrop {
+                            SavedSectionDivider()
+                        }
+                        ForEach(rows.filter { !$0.isSaved }) { visibleTab in
+                            row(for: visibleTab)
                         }
                         Color.clear
                             .frame(height: SidebarMetrics.rowHeight * 2)
@@ -83,6 +91,17 @@ struct SidebarView: View {
                 .simultaneousGesture(TapGesture().onEnded { shell.focusSidebarFromKeyboard() })
         }
         .background { SiteTintView(color: store.selectedTab?.themeColor) }
+    }
+
+    private func row(for visibleTab: VisibleTab) -> some View {
+        Group {
+            if let split = visibleTab.split {
+                SplitTabRowView(shell: shell, split: split, depth: visibleTab.depth)
+            } else {
+                TabRowView(shell: shell, tab: visibleTab.tab, depth: visibleTab.depth)
+            }
+        }
+        .transition(rowTransition)
     }
 
     private var footer: some View {

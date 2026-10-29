@@ -20,6 +20,7 @@ struct VisibleTab: Identifiable {
     let tab: Tab
     let depth: Int
     let split: TabSplit?
+    let isSaved: Bool
     var id: MiniTabId { tab.id }
 }
 
@@ -51,6 +52,7 @@ final class TabSplit {
 @Observable
 final class TabStore {
     private(set) var pinnedTabs: [Tab] = []
+    private(set) var savedRootTabs: [Tab] = []
     private(set) var rootTabs: [Tab] = []
     private(set) var selectedTab: Tab?
     private(set) var splits: [TabSplit] = []
@@ -72,8 +74,11 @@ final class TabStore {
     var visibleTabs: [VisibleTab] {
         var rows: [VisibleTab] = []
         var emittedSplits: Set<ObjectIdentifier> = []
+        for tab in savedRootTabs {
+            appendVisibleSubtree(of: tab, depth: 0, saved: true, to: &rows, emittedSplits: &emittedSplits)
+        }
         for tab in rootTabs {
-            appendVisibleSubtree(of: tab, depth: 0, to: &rows, emittedSplits: &emittedSplits)
+            appendVisibleSubtree(of: tab, depth: 0, saved: false, to: &rows, emittedSplits: &emittedSplits)
         }
         return rows
     }
@@ -83,8 +88,12 @@ final class TabStore {
     }
 
     var allTabs: [Tab] {
-        pinnedTabs + rootTabs.flatMap(\.subtree)
+        pinnedTabs + treeTabs
     }
+
+    var treeRoots: [Tab] { savedRootTabs + rootTabs }
+
+    var treeTabs: [Tab] { treeRoots.flatMap(\.subtree) }
 
     var canReopenClosedTab: Bool { !closedTabs.isEmpty }
 
@@ -98,7 +107,7 @@ final class TabStore {
 
     func splitCandidate(for tab: Tab) -> Tab? {
         guard !tab.isPinned else { return nil }
-        return rootTabs.flatMap(\.subtree)
+        return treeTabs
             .filter { $0 !== tab }
             .max { $0.lastSelectedAt < $1.lastSelectedAt }
     }
@@ -126,9 +135,19 @@ final class TabStore {
     }
 
     @discardableResult
-    func newTab(url: String, title: String = "", parent: Tab?, after sibling: Tab? = nil) -> Tab {
+    func newTab(url: String, title: String = "", parent: Tab?, after sibling: Tab? = nil, savedURL: String? = nil, savedTitle: String? = nil) -> Tab {
         let tab = makeTab(url: url, title: title)
-        if parent?.isPinned == true || sibling?.isPinned == true {
+        if let parent, parent.isSaved {
+            tab.savedURL = savedURL ?? url
+            tab.savedTitle = savedTitle ?? title
+        } else if parent == nil, let savedURL {
+            tab.savedURL = savedURL
+            tab.savedTitle = savedTitle ?? title
+            insert(tab, into: nil, at: savedRootTabs.count)
+            observer?.tabStoreDidChangeStructure(self)
+            return tab
+        }
+        if parent?.isPinned == true || (parent == nil && (sibling?.isPinned == true || sibling?.isSaved == true)) {
             insert(tab, into: nil, at: 0)
             observer?.tabStoreDidChangeStructure(self)
             return tab
@@ -148,7 +167,7 @@ final class TabStore {
     func adopt(_ tab: Tab, after sibling: Tab?) {
         precondition(tabsByIdentifier[tab.id] == nil, "Adopting a tab the store already holds")
         tabsByIdentifier[tab.id] = tab
-        let index = sibling.map { $0.isPinned ? 0 : position(of: $0, in: rootTabs) + 1 } ?? rootTabs.count
+        let index = sibling.map { $0.isPinned || $0.isSaved ? 0 : position(of: $0, in: rootTabs) + 1 } ?? rootTabs.count
         insert(tab, into: nil, at: index)
         observer?.tabStoreDidChangeStructure(self)
     }
@@ -168,13 +187,14 @@ final class TabStore {
             unsplit(split)
         }
         let parent = tab.parent
-        let index = position(of: tab, in: children(of: parent))
+        let index = position(of: tab, in: siblings(of: tab))
         detach(tab)
         for (offset, child) in tab.children.enumerated() {
             insert(child, into: parent, at: index + offset)
         }
         tab.children = []
         tab.isCollapsed = false
+        tab.savedURL = nil
         tab.pinnedURL = tab.url
         pinnedTabs.insert(tab, at: min(pinnedIndex ?? pinnedTabs.count, pinnedTabs.count))
         observer?.tabStoreDidChangeStructure(self)
@@ -195,11 +215,12 @@ final class TabStore {
     func move(_ tab: Tab, relativeTo target: Tab, position dropPosition: TabDropPosition) {
         guard canMove(tab, relativeTo: target) else { return }
         detachForMove(tab)
+        setSaved(target.isSaved, throughout: tab)
         switch dropPosition {
         case .before:
-            insert(tab, into: target.parent, at: position(of: target, in: children(of: target.parent)))
+            insert(tab, into: target.parent, at: position(of: target, in: siblings(of: target)))
         case .after:
-            insert(tab, into: target.parent, at: position(of: target, in: children(of: target.parent)) + 1)
+            insert(tab, into: target.parent, at: position(of: target, in: siblings(of: target)) + 1)
         case .inside:
             insert(tab, into: target, at: target.children.count)
             target.isCollapsed = false
@@ -209,8 +230,36 @@ final class TabStore {
 
     func moveToEnd(_ tab: Tab) {
         detachForMove(tab)
+        setSaved(false, throughout: tab)
         insert(tab, into: nil, at: rootTabs.count)
         observer?.tabStoreDidChangeStructure(self)
+    }
+
+    func canSave(_ tab: Tab) -> Bool {
+        !tab.isSaved && !tab.url.isEmpty
+    }
+
+    func save(_ tab: Tab) {
+        guard canSave(tab) else { return }
+        detachForMove(tab)
+        setSaved(true, throughout: tab)
+        insert(tab, into: nil, at: savedRootTabs.count)
+        observer?.tabStoreDidChangeStructure(self)
+    }
+
+    func unsave(_ tab: Tab) {
+        guard tab.isSaved else { return }
+        detach(tab)
+        setSaved(false, throughout: tab)
+        insert(tab, into: nil, at: 0)
+        observer?.tabStoreDidChangeStructure(self)
+    }
+
+    private func setSaved(_ saved: Bool, throughout tab: Tab) {
+        for member in tab.subtree where member.isSaved != saved {
+            member.savedURL = saved ? member.url : nil
+            member.savedTitle = saved ? member.title : ""
+        }
     }
 
     func move(_ tab: Tab, by offset: Int) {
@@ -221,7 +270,7 @@ final class TabStore {
             pinnedTabs.swapAt(index, destination)
         } else {
             let parent = tab.parent
-            let siblings = children(of: parent)
+            let siblings = siblings(of: tab)
             let index = position(of: tab, in: siblings)
             let destination = index + offset
             guard siblings.indices.contains(destination) else { return }
@@ -268,9 +317,16 @@ final class TabStore {
     func close(_ tab: Tab) {
         if tab.isPinned {
             unload(pinned: tab)
-            return
+        } else if tab.isSaved {
+            unload(saved: tab)
+        } else {
+            remove(tab)
         }
-        let siblings = children(of: tab.parent)
+    }
+
+    func remove(_ tab: Tab) {
+        precondition(!tab.isPinned, "Removing a pinned tab; close resets it")
+        let siblings = siblings(of: tab)
         let index = position(of: tab, in: siblings)
         var replacement: Tab?
         let closesSelection = selectedTab.map { $0 === tab || $0.isDescendant(of: tab) } ?? false
@@ -308,6 +364,7 @@ final class TabStore {
         let removedTabs = allTabs
         selectedTab = nil
         pinnedTabs = []
+        savedRootTabs = []
         rootTabs = []
         splits = []
         tabsByIdentifier = [:]
@@ -317,7 +374,7 @@ final class TabStore {
         return removedTabs
     }
 
-    func restoreArrangement(pinned: [Tab], roots: [Tab], splits restoredSplits: [TabSplit], selecting target: Tab?, removing removedTabs: [Tab], reviving revivedTabs: [Tab]) {
+    func restoreArrangement(pinned: [Tab], savedRoots: [Tab], roots: [Tab], splits restoredSplits: [TabSplit], selecting target: Tab?, removing removedTabs: [Tab], reviving revivedTabs: [Tab]) {
         for tab in removedTabs {
             tabsByIdentifier[tab.id] = nil
         }
@@ -329,6 +386,7 @@ final class TabStore {
             }
         }
         pinnedTabs = pinned
+        savedRootTabs = savedRoots
         rootTabs = roots
         precondition(allTabs.allSatisfy { tabsByIdentifier[$0.id] === $0 }, "Restored arrangement holds a tab the store does not")
         splits = restoredSplits
@@ -362,8 +420,43 @@ final class TabStore {
             } else if index > 0 {
                 select(pinnedTabs[index - 1])
             } else {
-                select(rootTabs.first)
+                select(treeRoots.first)
             }
+        }
+        observer?.tabStoreDidChangeStructure(self)
+    }
+
+    private func unload(saved tab: Tab) {
+        guard let savedURL = tab.savedURL else { preconditionFailure("Unloading a tab that is not saved") }
+        let freshTab = makeTab(url: savedURL, title: tab.url == savedURL ? tab.title : tab.savedTitle)
+        freshTab.savedURL = savedURL
+        freshTab.savedTitle = tab.savedTitle
+        freshTab.favicon = tab.url == savedURL ? tab.favicon : nil
+        freshTab.isCollapsed = tab.isCollapsed
+        freshTab.lastSelectedAt = tab.lastSelectedAt
+        let parent = tab.parent
+        let index = position(of: tab, in: siblings(of: tab))
+        detach(tab)
+        insert(freshTab, into: parent, at: index)
+        freshTab.children = tab.children
+        for child in freshTab.children {
+            child.parent = freshTab
+        }
+        tab.children = []
+        tabsByIdentifier[tab.id] = nil
+        let splitCount = splits.count
+        splits.removeAll { $0.contains(tab) }
+        let closesSelection = selectedTab === tab
+        if closesSelection {
+            selectedTab = nil
+        }
+        observer?.tabStore(self, didRemove: [tab])
+        if closesSelection {
+            let selectable = selectableTabs.filter { $0 !== freshTab }
+            select(selectable.first { !$0.isSaved } ?? selectable.first ?? freshTab)
+        }
+        if splits.count != splitCount {
+            observer?.tabStoreDidChangeSplits(self)
         }
         observer?.tabStoreDidChangeStructure(self)
     }
@@ -379,7 +472,7 @@ final class TabStore {
     func outdent(_ tab: Tab) {
         guard let parent = tab.parent else { return }
         detach(tab)
-        let index = position(of: parent, in: children(of: parent.parent)) + 1
+        let index = position(of: parent, in: siblings(of: parent)) + 1
         insert(tab, into: parent.parent, at: index)
         observer?.tabStoreDidChangeStructure(self)
     }
@@ -438,22 +531,26 @@ final class TabStore {
         return tab
     }
 
-    private func appendVisibleSubtree(of tab: Tab, depth: Int, to rows: inout [VisibleTab], emittedSplits: inout Set<ObjectIdentifier>) {
+    private func appendVisibleSubtree(of tab: Tab, depth: Int, saved: Bool, to rows: inout [VisibleTab], emittedSplits: inout Set<ObjectIdentifier>) {
         if let split = split(containing: tab) {
             if emittedSplits.insert(ObjectIdentifier(split)).inserted {
-                rows.append(VisibleTab(tab: tab, depth: depth, split: split))
+                rows.append(VisibleTab(tab: tab, depth: depth, split: split, isSaved: saved))
             }
         } else {
-            rows.append(VisibleTab(tab: tab, depth: depth, split: nil))
+            rows.append(VisibleTab(tab: tab, depth: depth, split: nil, isSaved: saved))
         }
         guard !tab.isCollapsed else { return }
         for child in tab.children {
-            appendVisibleSubtree(of: child, depth: depth + 1, to: &rows, emittedSplits: &emittedSplits)
+            appendVisibleSubtree(of: child, depth: depth + 1, saved: saved, to: &rows, emittedSplits: &emittedSplits)
         }
     }
 
     private func children(of parent: Tab?) -> [Tab] {
         parent?.children ?? rootTabs
+    }
+
+    private func siblings(of tab: Tab) -> [Tab] {
+        tab.parent?.children ?? (tab.isSaved ? savedRootTabs : rootTabs)
     }
 
     private func position(of tab: Tab, in siblings: [Tab]) -> Int {
@@ -465,15 +562,17 @@ final class TabStore {
 
     private func previousSibling(of tab: Tab) -> Tab? {
         guard !tab.isPinned else { return nil }
-        let siblings = children(of: tab.parent)
+        let siblings = siblings(of: tab)
         let index = position(of: tab, in: siblings)
         return index > 0 ? siblings[index - 1] : nil
     }
 
     private func detach(_ tab: Tab) {
-        let index = position(of: tab, in: children(of: tab.parent))
+        let index = position(of: tab, in: siblings(of: tab))
         if let parent = tab.parent {
             parent.children.remove(at: index)
+        } else if tab.isSaved {
+            savedRootTabs.remove(at: index)
         } else {
             rootTabs.remove(at: index)
         }
@@ -484,6 +583,8 @@ final class TabStore {
         tab.parent = parent
         if let parent {
             parent.children.insert(tab, at: index)
+        } else if tab.isSaved {
+            savedRootTabs.insert(tab, at: index)
         } else {
             rootTabs.insert(tab, at: index)
         }

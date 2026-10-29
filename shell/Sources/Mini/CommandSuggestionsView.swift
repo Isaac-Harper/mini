@@ -55,10 +55,18 @@ private struct CommandSuggestionRow: View {
         HStack(spacing: 12) {
             icon.frame(width: 18, height: 18)
             VStack(alignment: .leading, spacing: 1) {
-                Text(title)
-                    .font(.system(size: 13))
-                    .lineLimit(1)
-                    .truncationMode(.tail)
+                HStack(spacing: 5) {
+                    Text(title)
+                        .font(.system(size: 13))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                    if case .switchToTab(let tab) = suggestion, tab.isSaved {
+                        Image(systemName: "bookmark.fill")
+                            .font(.system(size: 9))
+                            .foregroundStyle(.secondary)
+                            .accessibilityLabel("Saved")
+                    }
+                }
                 if let detail {
                     Text(detail)
                         .font(.system(size: 11))

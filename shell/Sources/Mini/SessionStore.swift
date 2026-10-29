@@ -1,12 +1,20 @@
 import Foundation
 
 struct SavedSpaceContents: Codable {
+    enum TabKind: String, Codable {
+        case regular
+        case saved
+    }
+
     struct SavedTab: Codable {
         let url: String
         let title: String
         let isCollapsed: Bool
         let children: [SavedTab]
         let lastSelectedAt: Date?
+        let kind: TabKind?
+        let savedURL: String?
+        let savedTitle: String?
     }
 
     struct SavedPinnedTab: Codable {
@@ -111,7 +119,7 @@ final class SessionStore {
     private static func contents(of store: TabStore) -> SavedSpaceContents {
         let selected = store.selectedTab
         return SavedSpaceContents(
-            tabs: store.rootTabs.map(savedTab),
+            tabs: store.treeRoots.map(savedTab),
             selectedPath: selected.flatMap { $0.isPinned ? nil : path(of: $0, in: store) },
             pinnedTabs: store.pinnedTabs.map { tab in
                 guard let pinnedURL = tab.pinnedURL else { preconditionFailure("Pinned list holds an unpinned tab") }
@@ -150,11 +158,11 @@ final class SessionStore {
             store.select(store.selectableTabs.first)
             return
         }
-        store.select(Self.tab(at: selectedPath, in: store, stoppingAtMissingIndex: true) ?? store.rootTabs.first)
+        store.select(Self.tab(at: selectedPath, in: store, stoppingAtMissingIndex: true) ?? store.treeRoots.first)
     }
 
     private static func tab(at path: [Int], in store: TabStore, stoppingAtMissingIndex: Bool = false) -> Tab? {
-        var siblings = store.rootTabs
+        var siblings = store.treeRoots
         var found: Tab?
         for index in path {
             guard siblings.indices.contains(index) else { return stoppingAtMissingIndex ? found : nil }
@@ -165,7 +173,8 @@ final class SessionStore {
     }
 
     private func restore(_ savedTab: SavedSpaceContents.SavedTab, parent: Tab?, into store: TabStore) {
-        let tab = store.newTab(url: savedTab.url, title: savedTab.title, parent: parent)
+        let savedURL = savedTab.kind == .saved || parent?.isSaved == true ? savedTab.savedURL ?? savedTab.url : nil
+        let tab = store.newTab(url: savedTab.url, title: savedTab.title, parent: parent, savedURL: savedURL, savedTitle: savedTab.savedTitle)
         for child in savedTab.children {
             restore(child, parent: tab, into: store)
         }
@@ -179,7 +188,10 @@ final class SessionStore {
             title: tab.title,
             isCollapsed: tab.isCollapsed,
             children: tab.children.map(savedTab),
-            lastSelectedAt: tab.lastSelectedAt
+            lastSelectedAt: tab.lastSelectedAt,
+            kind: tab.isSaved ? .saved : .regular,
+            savedURL: tab.savedURL,
+            savedTitle: tab.isSaved ? tab.savedTitle : nil
         )
     }
 
@@ -187,7 +199,7 @@ final class SessionStore {
         var path: [Int] = []
         var current = tab
         while true {
-            let siblings = current.parent?.children ?? store.rootTabs
+            let siblings = current.parent?.children ?? store.treeRoots
             guard let index = siblings.firstIndex(where: { $0 === current }) else {
                 preconditionFailure("Selected tab is missing from the tree")
             }

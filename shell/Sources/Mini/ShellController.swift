@@ -43,6 +43,8 @@ final class ShellController: NSObject {
     @ObservationIgnored var pendingSpaceDeletions: [String: Set<MiniTabId>] = [:]
     @ObservationIgnored var pageFullscreen: PageFullscreen?
     @ObservationIgnored var tabUndoReplacements: [MiniTabId: Tab] = [:]
+    @ObservationIgnored let tabUndoManager = UndoManager()
+    @ObservationIgnored var pageUndoKeyTimestamp: TimeInterval?
 
     private static let archiveInterval: TimeInterval = 10 * 60
 
@@ -92,6 +94,7 @@ final class ShellController: NSObject {
         sitePreferences.onNotificationsGranted = { [weak self] in self?.notifications.requestAuthorizationIfNeeded() }
         windowController = MainWindowController(shell: self)
         tabUndoManager.levelsOfUndo = 100
+        tabUndoManager.groupsByEvent = false
         commandBar = CommandBarController(shell: self)
         findBar = FindBarController(shell: self)
         sitePrompts = SitePromptController(shell: self, preferences: sitePreferences, windowController: windowController)
@@ -157,10 +160,11 @@ final class ShellController: NSObject {
                 identifier: tab.id,
                 lastSelectedAt: tab.lastSelectedAt,
                 isSelected: tab === selected || tab === splitPartner || tab.isPlayingAudio,
+                isSaved: tab.isSaved,
                 children: tab.children.map(candidate)
             )
         }
-        let identifiers = ArchivePolicy.tabsToArchive(in: store.rootTabs.map(candidate), now: now)
+        let identifiers = ArchivePolicy.tabsToArchive(in: store.treeRoots.map(candidate), now: now)
         var archived: [ArchivedTab] = []
         for identifier in identifiers {
             guard let tab = store.tab(withIdentifier: identifier) else { continue }
