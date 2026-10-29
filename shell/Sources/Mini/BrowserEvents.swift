@@ -236,6 +236,10 @@ extension ShellController {
         urls.forEach(openExternalURL)
     }
 
+    func sourceReceived(_ identifier: MiniTabId, request: UInt64, source: String) {
+        SourceWindowController.sourceReceived(request: request, source: source)
+    }
+
     func browserClosed(_ identifier: MiniTabId) {
         if let tab = closingTabs.removeValue(forKey: identifier) {
             tab.hostView.removeFromSuperview()

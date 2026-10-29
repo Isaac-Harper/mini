@@ -92,6 +92,7 @@ Rust core (`core/`, detail in cef-and-core.md):
 - `src/registrable_domain.rs`: registrable domain from the public suffix list (`psl`), unit tested.
 - `src/navigation.rs`: session history visitor and `history.go` offsets.
 - `src/downloads.rs`: download destination naming and progress.
+- `src/page_source.rs`: main-frame source for View Source.
 
 Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 
@@ -142,6 +143,7 @@ Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 - `LoginFillController.swift`, `LoginFillCardView.swift`: password fill card. (shell-ui)
 - `PageContextMenu.swift`: native page context menu. (shell-ui)
 - `NavigationHistory.swift`: back/forward history menus. (shell-ui)
+- `SourceWindowController.swift`, `Sources/MiniRules/SourceHighlighting.swift`: View Source window and its HTML/CSS/JS tokenizer, unit tested. (shell-ui)
 - `SwipeNavigationController.swift`: two-finger swipe back and forward. (shell-ui)
 - `ShellFullscreen.swift`: page fullscreen. (shell-ui)
 - `NotificationsController.swift`: macOS notification delivery. (shell-ui)

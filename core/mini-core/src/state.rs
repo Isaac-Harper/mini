@@ -39,6 +39,7 @@ pub struct Callbacks {
     pub image_copied: unsafe extern "C" fn(MiniTabId, *const u8, usize),
     pub media_artwork_changed: unsafe extern "C" fn(MiniTabId, *const u8, usize),
     pub video_handed_off: unsafe extern "C" fn(MiniTabId, *const c_char, f64),
+    pub source_received: unsafe extern "C" fn(MiniTabId, u64, *const u8, usize),
     pub browser_closed: unsafe extern "C" fn(MiniTabId),
     pub all_browsers_closed: unsafe extern "C" fn(),
     pub app_relaunched: unsafe extern "C" fn(*const *const c_char, usize),
@@ -131,6 +132,9 @@ impl Callbacks {
             video_handed_off: table
                 .video_handed_off
                 .expect("MiniCallbacks.video_handed_off is null"),
+            source_received: table
+                .source_received
+                .expect("MiniCallbacks.source_received is null"),
             browser_closed: table
                 .browser_closed
                 .expect("MiniCallbacks.browser_closed is null"),

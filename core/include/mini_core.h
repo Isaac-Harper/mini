@@ -173,6 +173,9 @@ typedef struct MiniCallbacks {
   // Result of mini_browser_hand_off_video: the page paused its video playing
   // video_url, which was at position seconds.
   void (*video_handed_off)(MiniTabId tab, const char *video_url, double position);
+  // Result of mini_browser_request_source: the main frame's HTML as loaded
+  // (CefFrame::GetSource), UTF-8 bytes, not NUL-terminated.
+  void (*source_received)(MiniTabId tab, uint64_t request, const uint8_t *source, size_t length);
   void (*browser_closed)(MiniTabId tab);
   void (*all_browsers_closed)(void);
   // Mini was launched again on this profile (CEF's already-running relaunch).
@@ -252,6 +255,9 @@ void mini_browser_exit_fullscreen(MiniTabId tab);
 // caches, service workers) for origin (scheme://host[:port]) in the tab's
 // space, then reloads the tab.
 void mini_browser_clear_site_data(MiniTabId tab, const char *origin);
+// Fetches the main frame's source from the renderer, no network request;
+// source_received delivers it with the same request number.
+void mini_browser_request_source(MiniTabId tab, uint64_t request);
 // Opens the native print panel for the page.
 void mini_browser_print(MiniTabId tab);
 void mini_browser_close(MiniTabId tab);

@@ -11,6 +11,7 @@ mod login;
 mod media;
 mod navigation;
 mod notifications;
+mod page_source;
 mod permissions;
 mod registrable_domain;
 mod resource_requests;
@@ -71,6 +72,7 @@ pub struct MiniCallbacks {
     pub image_copied: Option<unsafe extern "C" fn(MiniTabId, *const u8, usize)>,
     pub media_artwork_changed: Option<unsafe extern "C" fn(MiniTabId, *const u8, usize)>,
     pub video_handed_off: Option<unsafe extern "C" fn(MiniTabId, *const c_char, f64)>,
+    pub source_received: Option<unsafe extern "C" fn(MiniTabId, u64, *const u8, usize)>,
     pub browser_closed: Option<unsafe extern "C" fn(MiniTabId)>,
     pub all_browsers_closed: Option<unsafe extern "C" fn()>,
     pub app_relaunched: Option<unsafe extern "C" fn(*const *const c_char, usize)>,
@@ -478,6 +480,13 @@ pub extern "C" fn mini_browser_clear_site_data(tab: MiniTabId, origin: *const c_
     let origin = borrowed_text(origin, "origin");
     if let Some(browser) = created_browser(tab) {
         site_data::clear(tab, &browser, origin);
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn mini_browser_request_source(tab: MiniTabId, request: u64) {
+    if let Some(browser) = created_browser(tab) {
+        page_source::request(tab, &browser, request);
     }
 }
 

@@ -118,14 +118,17 @@ extension ShellController: NSMenuItemValidation {
     }
 
     @objc func showFindBar(_ sender: Any?) {
+        if let source = SourceWindowController.keyController { return source.performFind(.showFindInterface) }
         findBar.open()
     }
 
     @objc func findNextMatch(_ sender: Any?) {
+        if let source = SourceWindowController.keyController { return source.performFind(.nextMatch) }
         findBar.findAgain(forward: true)
     }
 
     @objc func findPreviousMatch(_ sender: Any?) {
+        if let source = SourceWindowController.keyController { return source.performFind(.previousMatch) }
         findBar.findAgain(forward: false)
     }
 
@@ -183,6 +186,10 @@ extension ShellController: NSMenuItemValidation {
 
     @objc func showDeveloperTools(_ sender: Any?) {
         if let tab = commandBrowserTab { mini_browser_show_dev_tools(tab.id) }
+    }
+
+    @objc func viewSource(_ sender: Any?) {
+        if let tab = commandBrowserTab { SourceWindowController.show(sourceOf: tab) }
     }
 
     @objc func printPage(_ sender: Any?) {
@@ -367,10 +374,12 @@ extension ShellController: NSMenuItemValidation {
             return keyLittleWindow != nil
         case #selector(newChildTab(_:)):
             return selected != nil
-        case #selector(fillPassword(_:)), #selector(showFindBar(_:)), #selector(findNextMatch(_:)), #selector(findPreviousMatch(_:)):
+        case #selector(showFindBar(_:)), #selector(findNextMatch(_:)), #selector(findPreviousMatch(_:)):
+            return SourceWindowController.keyController != nil || mainWindowBrowserTab != nil
+        case #selector(fillPassword(_:)):
             return mainWindowBrowserTab != nil
         case #selector(reloadPage(_:)), #selector(zoomInPage(_:)), #selector(zoomOutPage(_:)),
-             #selector(actualSizePage(_:)), #selector(showDeveloperTools(_:)), #selector(printPage(_:)):
+             #selector(actualSizePage(_:)), #selector(showDeveloperTools(_:)), #selector(printPage(_:)), #selector(viewSource(_:)):
             return commandBrowserTab != nil
         case #selector(stopLoading(_:)):
             return commandBrowserTab?.isLoading ?? false

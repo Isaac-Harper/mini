@@ -100,6 +100,7 @@ final class PageContextMenu: NSObject {
             add(to: menu, "Back", symbol: "chevron.left", enabled: tab.canGoBack) { [tab] in mini_browser_go_back(tab.id) }
             add(to: menu, "Forward", symbol: "chevron.right", enabled: tab.canGoForward) { [tab] in mini_browser_go_forward(tab.id) }
             add(to: menu, "Reload", symbol: "arrow.clockwise") { [tab] in mini_browser_reload(tab.id) }
+            add(to: menu, "View Source", symbol: "chevron.left.forwardslash.chevron.right") { [tab] in SourceWindowController.show(sourceOf: tab) }
             menu.addItem(.separator())
         }
         let point = request.location

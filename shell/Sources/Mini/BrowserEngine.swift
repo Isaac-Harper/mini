@@ -176,6 +176,10 @@ final class BrowserEngine {
                 let url = requiredString(url)
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.videoHandedOff(identifier, url: url, position: position) }
             },
+            source_received: { identifier, request, bytes, length in
+                let source = length > 0 && bytes != nil ? String(decoding: UnsafeBufferPointer(start: bytes!, count: length), as: UTF8.self) : ""
+                MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.sourceReceived(identifier, request: request, source: source) }
+            },
             browser_closed: { identifier in
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.browserClosed(identifier) }
             },
