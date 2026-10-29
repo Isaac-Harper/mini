@@ -181,6 +181,11 @@ final class ShellController: NSObject {
             store.close(tab)
         }
         archive.add(archived)
+        for tab in store.allTabs {
+            let isActive = tab === selected || tab === splitPartner || tab.isPlayingAudio
+            let fade = isActive || tab.isSaved || tab.isPinned ? 1 : ArchivePolicy.idleOpacity(idleFor: now.timeIntervalSince(tab.lastSelectedAt))
+            if tab.idleFade != fade { tab.idleFade = fade }
+        }
     }
 
     func applyCachedFavicons() {

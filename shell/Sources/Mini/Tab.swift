@@ -24,6 +24,7 @@ final class Tab: Identifiable {
     var mediaTitle = ""
     var isPausedFromNowPlaying = false
     var themeColor: NSColor?
+    var idleFade = 1.0
     @ObservationIgnored var horizontalScrollRoom = HorizontalScrollRoom()
 
     @ObservationIgnored weak var parent: Tab?

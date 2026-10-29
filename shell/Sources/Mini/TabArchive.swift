@@ -10,6 +10,14 @@ struct ArchivedTab: Codable, Equatable {
 
 enum ArchivePolicy {
     static let idleThreshold: TimeInterval = 12 * 60 * 60
+    static let fadeStart: TimeInterval = 6 * 60 * 60
+    static let fadedOpacity = 0.5
+
+    static func idleOpacity(idleFor idle: TimeInterval) -> Double {
+        guard idle > fadeStart else { return 1 }
+        let fraction = min((idle - fadeStart) / (idleThreshold - fadeStart), 1)
+        return 1 - fraction * (1 - fadedOpacity)
+    }
 
     struct Candidate {
         let identifier: MiniTabId

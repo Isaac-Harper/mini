@@ -28,7 +28,7 @@ struct TabRowView: View {
                     .truncationMode(.tail)
                     .foregroundStyle(isSelected ? .primary : .secondary)
             }
-            .opacity(isDimmed ? 0.5 : 1)
+            .opacity(isDimmed ? 0.5 : (isSelected || isHovered || tab.isSaved ? 1 : tab.idleFade))
             Spacer(minLength: 0)
             AudioToggleButton(shell: shell, tab: tab)
             if let savedURL = tab.savedURL, tab.hasLeftSavedURL {
@@ -186,13 +186,16 @@ private struct SplitTabHalfView: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            TabIconView(tab: tab, size: 16)
-                .opacity(tab.isLoading ? 0.4 : 1)
-                .animation(.easeInOut(duration: 0.3), value: tab.isLoading)
-            Text(tab.displayTitle)
-                .lineLimit(1)
-                .truncationMode(.tail)
-                .foregroundStyle(isFocused ? .primary : .secondary)
+            Group {
+                TabIconView(tab: tab, size: 16)
+                    .opacity(tab.isLoading ? 0.4 : 1)
+                    .animation(.easeInOut(duration: 0.3), value: tab.isLoading)
+                Text(tab.displayTitle)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .foregroundStyle(isFocused ? .primary : .secondary)
+            }
+            .opacity(isPairSelected || isHovered ? 1 : tab.idleFade)
             Spacer(minLength: 0)
             AudioToggleButton(shell: shell, tab: tab)
             if isHovered {

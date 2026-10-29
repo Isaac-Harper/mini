@@ -23,7 +23,7 @@ Mini is an open source exploration project: a personal, minimal browser built to
 - Native permission prompts for camera, microphone, location and the rest
 - Session restore with lazy tabs, so launch stays fast
 - History per space: recent pages in the History menu, a searchable History window (⌘Y), and frecency-ranked matches in the command bar
-- Tabs left unselected for 12 hours archive themselves; find them again in the command bar
+- Tabs left unselected for 12 hours archive themselves (they fade gently from 6 hours on, back to full on hover); find them again in the command bar
 - Downloads progress in the sidebar; click to cancel, or to show the file in Finder
 - A crashed page shows a Reload button instead of a blank tab
 - Web notifications appear as macOS notifications after you allow them for a site (View > Allow Notifications from This Site turns them on or off); clicking one returns you to its tab

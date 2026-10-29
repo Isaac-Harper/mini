@@ -310,6 +310,7 @@ final class TabStore {
         let previous = selectedTab
         selectedTab = tab
         tab?.lastSelectedAt = Date()
+        tab?.idleFade = 1
         observer?.tabStore(self, didSelect: tab, previous: previous)
         observer?.tabStoreDidChangeStructure(self)
     }
