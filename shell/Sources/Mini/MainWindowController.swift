@@ -392,12 +392,14 @@ final class WebAreaView: NSView {
         let fraction = CGFloat(tab.loadingProgress)
         guard isSameTab, !progressLine.isHidden, fraction > progressFraction else {
             progressFraction = fraction
+            progressLine.setGlowing(false)
             progressLine.alphaValue = 1
             progressLine.isHidden = false
             progressLine.frame = progressFrame(fraction: fraction)
             return
         }
         progressFraction = fraction
+        progressLine.setGlowing(false)
         progressLine.alphaValue = 1
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.2
@@ -409,25 +411,36 @@ final class WebAreaView: NSView {
     private func finishLoadingProgress(animated: Bool) {
         guard animated else {
             progressFraction = 0
+            progressLine.setGlowing(false)
             progressLine.isHidden = true
             return
         }
         progressFraction = 1
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = 0.2
+            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
             progressLine.animator().frame = progressFrame(fraction: 1)
         }, completionHandler: {
             MainActor.assumeIsolated {
-                NSAnimationContext.runAnimationGroup({ context in
-                    context.duration = 0.25
-                    self.progressLine.animator().alphaValue = 0
-                }, completionHandler: {
+                guard self.progressFraction == 1 else { return }
+                self.progressLine.setGlowing(true)
+                DispatchQueue.main.asyncAfter(deadline: .now() + LoadingProgressLineView.glowHold) {
                     MainActor.assumeIsolated {
-                        guard self.progressFraction == 1, self.progressLine.alphaValue == 0 else { return }
-                        self.progressFraction = 0
-                        self.progressLine.isHidden = true
+                        guard self.progressFraction == 1 else { return }
+                        self.progressLine.setGlowing(false)
+                        NSAnimationContext.runAnimationGroup({ context in
+                            context.duration = 0.25
+                            context.timingFunction = CAMediaTimingFunction(name: .easeIn)
+                            self.progressLine.animator().alphaValue = 0
+                        }, completionHandler: {
+                            MainActor.assumeIsolated {
+                                guard self.progressFraction == 1, self.progressLine.alphaValue == 0 else { return }
+                                self.progressFraction = 0
+                                self.progressLine.isHidden = true
+                            }
+                        })
                     }
-                })
+                }
             }
         })
     }
@@ -496,6 +509,24 @@ final class SplitDividerView: NSView {
 
 final class LoadingProgressLineView: NSView {
     static let thickness: CGFloat = 2
+    static let glowHold: TimeInterval = 0.15
+
+    private var isGlowing = false
+
+    func setGlowing(_ glowing: Bool) {
+        guard glowing != isGlowing, let layer else { return }
+        isGlowing = glowing
+        layer.masksToBounds = false
+        layer.shadowColor = accent.cgColor
+        layer.shadowRadius = 3
+        layer.shadowOffset = .zero
+        let opacity: Float = glowing ? 0.9 : 0
+        let animation = CABasicAnimation(keyPath: "shadowOpacity")
+        animation.fromValue = layer.presentation()?.shadowOpacity ?? layer.shadowOpacity
+        animation.duration = glowing ? 0.08 : 0.25
+        layer.shadowOpacity = opacity
+        layer.add(animation, forKey: "glow")
+    }
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
