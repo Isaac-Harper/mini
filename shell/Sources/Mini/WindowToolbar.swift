@@ -53,8 +53,7 @@ final class WindowToolbar: NSObject, NSToolbarDelegate {
             preconditionFailure("Missing SF Symbol \(symbolName)")
         }
         let button = HistoryButton(image: image, target: commands, action: action)
-        button.bezelStyle = .toolbar
-        button.toolTip = label
+        Self.style(button, label)
         button.menuProvider = { [unowned commands] in commands.historyMenu(forward: forward) }
         let toolbarItem = HistoryToolbarItem(itemIdentifier: identifier)
         toolbarItem.label = label
@@ -70,13 +69,26 @@ final class WindowToolbar: NSObject, NSToolbarDelegate {
         guard let image = NSImage(systemSymbolName: symbolName, accessibilityDescription: label) else {
             preconditionFailure("Missing SF Symbol \(symbolName)")
         }
+        let button = HoverHighlightButton(image: image, target: commands, action: action)
+        Self.style(button, label)
         let toolbarItem = NSToolbarItem(itemIdentifier: identifier)
         toolbarItem.label = label
         toolbarItem.toolTip = label
-        toolbarItem.image = image
-        toolbarItem.isBordered = true
-        toolbarItem.target = commands
-        toolbarItem.action = action
+        toolbarItem.view = button
         return toolbarItem
     }
+
+    static func style(_ button: HoverHighlightButton, _ label: String) {
+        button.isBordered = false
+        button.toolTip = label
+        button.contentTintColor = .secondaryLabelColor
+        button.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 15, weight: .regular)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            button.widthAnchor.constraint(equalToConstant: WindowToolbar.buttonSize.width),
+            button.heightAnchor.constraint(equalToConstant: WindowToolbar.buttonSize.height),
+        ])
+    }
+
+    static let buttonSize = NSSize(width: 32, height: 28)
 }

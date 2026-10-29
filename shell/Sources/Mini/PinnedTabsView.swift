@@ -74,6 +74,7 @@ private struct PinnedTabTile: View {
         }
         .frame(maxWidth: .infinity)
         .frame(height: SidebarMetrics.pinnedTileHeight)
+        .hoverHighlight(cornerRadius: SidebarMetrics.pinnedTileCornerRadius, suppressed: isSelected)
         .glassEffect(.regular.interactive(), in: shape)
         .overlay(alignment: .topTrailing) {
             AudioToggleButton(shell: shell, tab: tab).offset(x: 4, y: -4)

@@ -27,7 +27,6 @@ struct NowPlayingRowView: View {
     let shell: ShellController
     let tab: Tab
 
-    @State private var isHovered = false
 
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @Environment(\.colorSchemeContrast) private var contrast
@@ -71,12 +70,9 @@ struct NowPlayingRowView: View {
         .background {
             shape.fill(tint)
                 .animation(.easeInOut(duration: 0.4), value: tint)
-            if isHovered {
-                shape.fill(.fill.quaternary)
-            }
         }
+        .hoverHighlight()
         .contentShape(Rectangle())
-        .onHover { isHovered = $0 }
         .onTapGesture { shell.reveal(tab) }
     }
 }

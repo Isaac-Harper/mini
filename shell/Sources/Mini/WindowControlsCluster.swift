@@ -32,8 +32,6 @@ final class WindowControlsCluster {
             NSLayoutConstraint.activate([
                 button.centerXAnchor.constraint(equalTo: content.leadingAnchor, constant: centerX - Self.frame.minX),
                 button.centerYAnchor.constraint(equalTo: content.centerYAnchor),
-                button.widthAnchor.constraint(equalToConstant: 32),
-                button.heightAnchor.constraint(equalToConstant: 28),
             ])
         }
         glassView.cornerRadius = Self.frame.height / 2
@@ -143,15 +141,12 @@ final class WindowControlsCluster {
         }
     }
 
-    private static func button(_ label: String, _ symbolName: String, _ action: Selector, commands: ShellController) -> NSButton {
+    private static func button(_ label: String, _ symbolName: String, _ action: Selector, commands: ShellController) -> HoverHighlightButton {
         guard let image = NSImage(systemSymbolName: symbolName, accessibilityDescription: label) else {
             preconditionFailure("Missing SF Symbol \(symbolName)")
         }
-        let button = NSButton(image: image, target: commands, action: action)
-        button.isBordered = false
-        button.toolTip = label
-        button.contentTintColor = .secondaryLabelColor
-        button.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 15, weight: .regular)
+        let button = HoverHighlightButton(image: image, target: commands, action: action)
+        WindowToolbar.style(button, label)
         return button
     }
 
@@ -160,10 +155,7 @@ final class WindowControlsCluster {
             preconditionFailure("Missing SF Symbol \(symbolName)")
         }
         let button = HistoryButton(image: image, target: commands, action: action)
-        button.isBordered = false
-        button.toolTip = label
-        button.contentTintColor = .secondaryLabelColor
-        button.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 15, weight: .regular)
+        WindowToolbar.style(button, label)
         button.menuProvider = { [unowned commands] in commands.historyMenu(forward: forward) }
         return button
     }

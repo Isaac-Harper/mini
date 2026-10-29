@@ -182,7 +182,6 @@ struct GroupTabMenu: View {
 struct RowHighlight: View {
     let isSelected: Bool
     let isInGroup: Bool
-    let isHovered: Bool
     var cornerRadius = SidebarMetrics.rowCornerRadius
 
     @Environment(\.selectionNamespace) private var namespace
@@ -198,8 +197,6 @@ struct RowHighlight: View {
                 }
             } else if isInGroup {
                 shape.fill(.tint.opacity(0.12))
-            } else if isHovered {
-                shape.fill(.fill.quaternary)
             }
         }
     }

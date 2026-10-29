@@ -70,7 +70,7 @@ final class HistoryJump: NSObject {
     }
 }
 
-final class HistoryButton: NSButton {
+final class HistoryButton: HoverHighlightButton {
     var menuProvider: (() -> NSMenu)?
 
     private static let longPressDelay: TimeInterval = 0.4

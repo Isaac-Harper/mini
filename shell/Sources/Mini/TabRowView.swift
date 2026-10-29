@@ -64,12 +64,12 @@ struct TabRowView: View {
         .padding(.leading, SidebarMetrics.indent(depth: depth))
         .padding(.trailing, SidebarMetrics.rowTrailingPadding)
         .frame(height: SidebarMetrics.rowHeight)
-        .background { RowHighlight(isSelected: isSelected, isInGroup: isInGroup, isHovered: isHovered) }
+        .background { RowHighlight(isSelected: isSelected, isInGroup: isInGroup) }
+        .hoverHighlight(suppressed: isSelected || isInGroup, isHovered: $isHovered)
         .overlay { TabDropIndicator(shell: shell, tab: tab, depth: depth) }
         .overlay { SidebarFocusRing(shell: shell, tab: tab, cornerRadius: SidebarMetrics.rowCornerRadius) }
         .reportsSidebarRowFrame(of: tab, to: shell.sidebarDrag)
         .contentShape(Rectangle())
-        .onHover { isHovered = $0 }
         .onTapGesture { shell.clickRow(tab) }
         .onDrag { shell.sidebarDrag.beginDrag(tab) }
         .onDrop(of: SidebarDragModel.acceptedTypes, delegate: TabRowDropDelegate(shell: shell, tab: tab))
@@ -130,8 +130,6 @@ struct SplitTabRowView: View {
     let split: TabSplit
     let depth: Int
 
-    @State private var isHovered = false
-
     @Environment(\.sidebarStore) private var sidebarStore
 
     private var store: TabStore { sidebarStore ?? shell.store }
@@ -152,12 +150,12 @@ struct SplitTabRowView: View {
         .padding(.leading, SidebarMetrics.indent(depth: depth))
         .padding(.trailing, SidebarMetrics.rowLeadingPadding)
         .frame(height: SidebarMetrics.rowHeight)
-        .background { RowHighlight(isSelected: isSelected, isInGroup: store.rowSelection.contains(split.leading.id), isHovered: isHovered) }
+        .background { RowHighlight(isSelected: isSelected, isInGroup: store.rowSelection.contains(split.leading.id)) }
+        .hoverHighlight(suppressed: isSelected || store.rowSelection.contains(split.leading.id))
         .overlay { TabDropIndicator(shell: shell, tab: split.leading, depth: depth) }
         .overlay { SidebarFocusRing(shell: shell, tab: split.leading, cornerRadius: SidebarMetrics.rowCornerRadius) }
         .reportsSidebarRowFrame(of: split.leading, to: shell.sidebarDrag)
         .contentShape(Rectangle())
-        .onHover { isHovered = $0 }
         .onDrag { shell.sidebarDrag.beginDrag(split.leading) }
         .onDrop(of: SidebarDragModel.acceptedTypes, delegate: TabRowDropDelegate(shell: shell, tab: split.leading))
         .contextMenu {

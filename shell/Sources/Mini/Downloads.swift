@@ -67,7 +67,6 @@ struct DownloadRowView: View {
     let download: DownloadProgress
     let activate: () -> Void
 
-    @State private var isHovered = false
 
     var body: some View {
         Button(action: activate) {
@@ -93,16 +92,11 @@ struct DownloadRowView: View {
             .padding(.horizontal, SidebarMetrics.footerRowPadding)
             .padding(.vertical, SidebarMetrics.downloadVerticalPadding)
             .frame(minHeight: SidebarMetrics.rowHeight)
-            .background {
-                if isHovered {
-                    RoundedRectangle(cornerRadius: SidebarMetrics.rowCornerRadius, style: .continuous).fill(.fill.quaternary)
-                }
-            }
+            .hoverHighlight()
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .focusable(false)
-        .onHover { isHovered = $0 }
         .help(helpText)
     }
 

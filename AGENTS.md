@@ -111,6 +111,7 @@ Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 - `PeekSidebarController.swift`: peek sidebar from the left edge. (shell-ui)
 - `SidebarView.swift`, `TabRowView.swift`, `PinnedTabsView.swift`: SwiftUI sidebar, rows, tiles, address pill, space buttons. (shell-ui)
 - `FadingTruncation.swift`: faded title ends for SwiftUI text and the little window field. (shell-ui)
+- `HoverHighlight.swift`: the shared hover highlight for SwiftUI and AppKit controls. (shell-ui)
 - `InterfaceMetrics.swift`: every sidebar and command bar metric on the 4pt grid, and the shared fonts. (shell-ui)
 - `SiteTintView.swift`: sidebar tint from space color, page theme color and the evening tint. (shell-ui)
 - `Sources/MiniRules/FaviconTone.swift`: favicon luminance and coverage, and when a backing plate is needed, unit tested. (shell-ui)

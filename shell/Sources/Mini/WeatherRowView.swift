@@ -5,7 +5,6 @@ struct WeatherRowView: View {
     let presenter: WeatherPopoverPresenter
     let action: () -> Void
 
-    @State private var isHovered = false
     @State private var anchor = WeatherAnchor()
 
     private var condition: WeatherCondition { WeatherCondition.forCode(reading.code, isDay: reading.isDay) }
@@ -28,18 +27,13 @@ struct WeatherRowView: View {
             }
             .padding(.horizontal, SidebarMetrics.footerRowPadding)
             .frame(height: SidebarMetrics.rowHeight)
-            .background {
-                if isHovered {
-                    RoundedRectangle(cornerRadius: SidebarMetrics.rowCornerRadius, style: .continuous).fill(.fill.quaternary)
-                }
-            }
+            .hoverHighlight()
             .background { WeatherAnchorRepresentable(anchor: anchor) }
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .focusable(false)
         .onHover { inside in
-            isHovered = inside
             guard let view = anchor.view else { return }
             presenter.rowHoverChanged(inside, anchor: view, reading: reading)
         }

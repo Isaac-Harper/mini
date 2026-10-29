@@ -178,8 +178,6 @@ struct SidebarActionRow: View {
     let systemImage: String
     let action: () -> Void
 
-    @State private var isHovered = false
-
     var body: some View {
         Button(action: action) {
             HStack(spacing: SidebarMetrics.iconSpacing) {
@@ -194,16 +192,11 @@ struct SidebarActionRow: View {
             .foregroundStyle(.secondary)
             .padding(.horizontal, SidebarMetrics.footerRowPadding)
             .frame(height: SidebarMetrics.rowHeight)
-            .background {
-                if isHovered {
-                    RoundedRectangle(cornerRadius: SidebarMetrics.rowCornerRadius, style: .continuous).fill(.fill.quaternary)
-                }
-            }
+            .hoverHighlight()
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .focusable(false)
-        .onHover { isHovered = $0 }
     }
 }
 
@@ -395,8 +388,6 @@ private struct SpaceBarIconButton: View {
     var isSelected = false
     let action: () -> Void
 
-    @State private var isHovered = false
-
     var body: some View {
         Button(action: action) {
             Image(systemName: systemImage)
@@ -407,15 +398,13 @@ private struct SpaceBarIconButton: View {
                     let shape = RoundedRectangle(cornerRadius: SidebarMetrics.rowCornerRadius, style: .continuous)
                     if isSelected {
                         SelectionHighlight(shape: shape)
-                    } else if isHovered {
-                        shape.fill(.fill.quaternary)
                     }
                 }
+                .hoverHighlight(suppressed: isSelected)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .focusable(false)
         .help(help)
-        .onHover { isHovered = $0 }
     }
 }
