@@ -71,11 +71,11 @@ struct DownloadRowView: View {
 
     var body: some View {
         Button(action: activate) {
-            HStack(spacing: 8) {
+            HStack(spacing: SidebarMetrics.iconSpacing) {
                 Image(systemName: symbolName)
-                    .font(.system(size: 13))
-                    .frame(width: 16)
-                VStack(alignment: .leading, spacing: 4) {
+                    .font(InterfaceFont.rowSymbol)
+                    .frame(width: SidebarMetrics.iconSize)
+                VStack(alignment: .leading, spacing: SidebarMetrics.accessorySpacing) {
                     Text(download.fileName)
                         .lineLimit(1)
                         .truncationMode(.middle)
@@ -90,8 +90,9 @@ struct DownloadRowView: View {
                 Spacer(minLength: 0)
             }
             .foregroundStyle(.secondary)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 6)
+            .padding(.horizontal, SidebarMetrics.footerRowPadding)
+            .padding(.vertical, SidebarMetrics.downloadVerticalPadding)
+            .frame(minHeight: SidebarMetrics.rowHeight)
             .background {
                 if isHovered {
                     RoundedRectangle(cornerRadius: SidebarMetrics.rowCornerRadius, style: .continuous).fill(.fill.quaternary)

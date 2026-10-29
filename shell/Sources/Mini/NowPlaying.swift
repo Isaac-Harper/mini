@@ -11,9 +11,9 @@ struct AudioToggleButton: View {
                 shell.setMuted(!tab.isAudioMuted, for: tab)
             } label: {
                 Image(systemName: tab.isAudioMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(InterfaceFont.accessorySymbol)
                     .foregroundStyle(.secondary)
-                    .frame(width: 16, height: 16)
+                    .frame(width: SidebarMetrics.accessorySize, height: SidebarMetrics.accessorySize)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -40,7 +40,7 @@ struct NowPlayingRowView: View {
 
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: SidebarMetrics.rowCornerRadius, style: .continuous)
-        HStack(spacing: 8) {
+        HStack(spacing: SidebarMetrics.iconSpacing) {
             NowPlayingArtworkView(artwork: tab.mediaArtwork, favicon: tab.favicon)
             Text(tab.mediaTitle.isEmpty ? tab.displayTitle : tab.mediaTitle)
                 .lineLimit(1)
@@ -51,17 +51,17 @@ struct NowPlayingRowView: View {
                 shell.togglePlayback(of: tab)
             } label: {
                 Image(systemName: tab.isPlayingAudio ? "pause.fill" : "play.fill")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(InterfaceFont.controlSymbol)
                     .foregroundStyle(.secondary)
-                    .frame(width: 20, height: 20)
+                    .frame(width: SidebarMetrics.accessorySize, height: SidebarMetrics.accessorySize)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .focusable(false)
             .help(tab.isPlayingAudio ? "Pause" : "Play")
         }
-        .padding(.leading, 3)
-        .padding(.trailing, 8)
+        .padding(.leading, SidebarMetrics.rowLeadingPadding)
+        .padding(.trailing, SidebarMetrics.rowTrailingPadding)
         .frame(height: SidebarMetrics.rowHeight)
         .background {
             shape.fill(tint)
@@ -80,10 +80,10 @@ private struct NowPlayingArtworkView: View {
     let artwork: NSImage?
     let favicon: NSImage?
 
-    private static let side: CGFloat = 22
+    private static let side = SidebarMetrics.artworkSize
 
     var body: some View {
-        let shape = RoundedRectangle(cornerRadius: 5, style: .continuous)
+        let shape = RoundedRectangle(cornerRadius: SidebarMetrics.rowCornerRadius - SidebarMetrics.rowLeadingPadding, style: .continuous)
         ZStack {
             if let artwork {
                 Image(nsImage: artwork)
@@ -95,7 +95,7 @@ private struct NowPlayingArtworkView: View {
                     .transition(.opacity)
             } else {
                 shape.fill(.fill.quaternary)
-                FaviconView(image: favicon, size: 14)
+                FaviconView(image: favicon, size: SidebarMetrics.iconSize - 4)
             }
         }
         .frame(width: Self.side, height: Self.side)

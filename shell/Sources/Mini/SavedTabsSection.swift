@@ -3,11 +3,11 @@ import SwiftUI
 struct SavedSectionHeader: View {
     var body: some View {
         Text("Saved")
-            .font(.system(size: 11, weight: .medium))
+            .font(InterfaceFont.sectionHeader)
             .foregroundStyle(.tertiary)
-            .padding(.leading, 8)
+            .padding(.leading, SidebarMetrics.footerRowPadding)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .frame(height: 20)
+            .frame(height: SidebarMetrics.sectionHeaderHeight)
     }
 }
 
@@ -16,8 +16,8 @@ struct SavedSectionDivider: View {
         Rectangle()
             .fill(.separator)
             .frame(height: 1)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 6)
+            .padding(.horizontal, SidebarMetrics.footerRowPadding)
+            .frame(height: SidebarMetrics.sectionDividerHeight)
     }
 }
 
@@ -28,9 +28,9 @@ struct SaveDropRow: View {
 
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: SidebarMetrics.rowCornerRadius, style: .continuous)
-        HStack(spacing: 8) {
+        HStack(spacing: SidebarMetrics.iconSpacing) {
             Image(systemName: "bookmark")
-                .font(.system(size: 12, weight: .medium))
+                .font(InterfaceFont.controlSymbol)
             Text("Drop to Save")
         }
         .foregroundStyle(isTargeted ? AnyShapeStyle(.tint) : AnyShapeStyle(.secondary))
@@ -38,7 +38,7 @@ struct SaveDropRow: View {
         .frame(height: SidebarMetrics.rowHeight)
         .background(shape.fill(isTargeted ? AnyShapeStyle(.tint.opacity(0.15)) : AnyShapeStyle(.clear)))
         .overlay(shape.strokeBorder(isTargeted ? AnyShapeStyle(.tint) : AnyShapeStyle(.secondary.opacity(0.5)), style: StrokeStyle(lineWidth: 1.5, dash: [4, 3])))
-        .padding(.top, 4)
+        .padding(.top, SidebarMetrics.accessorySpacing)
         .onDrop(of: SidebarDragModel.acceptedTypes, delegate: SavedEndDropDelegate(shell: shell))
     }
 }

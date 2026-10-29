@@ -47,7 +47,7 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
             return self.pasteLinks(text)
         }
 
-        iconView.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 17, weight: .regular)
+        iconView.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: CommandBarMetrics.fieldIconPointSize, weight: .regular)
         iconView.contentTintColor = .secondaryLabelColor
         updateIcon()
 
@@ -59,19 +59,19 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
         content.addSubview(field)
         content.addSubview(suggestionsView)
         NSLayoutConstraint.activate([
-            iconView.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 20),
-            iconView.widthAnchor.constraint(equalToConstant: 20),
+            iconView.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: CommandBarMetrics.fieldInset),
+            iconView.widthAnchor.constraint(equalToConstant: CommandBarMetrics.fieldIconWidth),
             iconView.centerYAnchor.constraint(equalTo: field.centerYAnchor),
-            field.leadingAnchor.constraint(equalTo: iconView.trailingAnchor, constant: 12),
-            field.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -20),
-            field.topAnchor.constraint(equalTo: content.topAnchor, constant: 16),
+            field.leadingAnchor.constraint(equalTo: iconView.trailingAnchor, constant: CommandBarMetrics.fieldIconSpacing),
+            field.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -CommandBarMetrics.fieldInset),
+            field.topAnchor.constraint(equalTo: content.topAnchor, constant: CommandBarMetrics.fieldTopInset),
             suggestionsView.leadingAnchor.constraint(equalTo: content.leadingAnchor),
             suggestionsView.trailingAnchor.constraint(equalTo: content.trailingAnchor),
-            suggestionsView.topAnchor.constraint(equalTo: field.bottomAnchor, constant: 12),
-            suggestionsView.bottomAnchor.constraint(equalTo: content.bottomAnchor, constant: -4),
+            suggestionsView.topAnchor.constraint(equalTo: field.bottomAnchor, constant: CommandBarMetrics.suggestionsTopSpacing),
+            suggestionsView.bottomAnchor.constraint(equalTo: content.bottomAnchor, constant: -CommandBarMetrics.suggestionsBottomInset),
         ])
 
-        glassView.cornerRadius = 20
+        glassView.cornerRadius = CommandBarMetrics.cornerRadius
         glassView.style = .regular
         glassView.tintColor = NSColor.windowBackgroundColor.withAlphaComponent(0.55)
         let backing = CommandBarBackingView()
@@ -325,7 +325,7 @@ private final class CommandBarBackingView: NSView {
     override var wantsUpdateLayer: Bool { true }
 
     override func updateLayer() {
-        layer?.cornerRadius = 20
+        layer?.cornerRadius = CommandBarMetrics.cornerRadius
         layer?.cornerCurve = .continuous
         layer?.backgroundColor = NSColor.windowBackgroundColor.withAlphaComponent(Self.opacity).cgColor
     }

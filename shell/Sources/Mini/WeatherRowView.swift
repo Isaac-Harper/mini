@@ -15,18 +15,18 @@ struct WeatherRowView: View {
             presenter.close()
             action()
         } label: {
-            HStack(spacing: 8) {
+            HStack(spacing: SidebarMetrics.iconSpacing) {
                 Image(systemName: condition.symbolName)
                     .symbolRenderingMode(.multicolor)
-                    .font(.system(size: 13))
-                    .frame(width: 16)
+                    .font(InterfaceFont.rowSymbol)
+                    .frame(width: SidebarMetrics.iconSize)
                 Text(WeatherFormat.degrees(reading.temperature))
                     .foregroundStyle(.primary)
                 Text("\(WeatherFormat.degrees(reading.high)) / \(WeatherFormat.degrees(reading.low))")
                     .foregroundStyle(.secondary)
                 Spacer(minLength: 0)
             }
-            .padding(.horizontal, 8)
+            .padding(.horizontal, SidebarMetrics.footerRowPadding)
             .frame(height: SidebarMetrics.rowHeight)
             .background {
                 if isHovered {

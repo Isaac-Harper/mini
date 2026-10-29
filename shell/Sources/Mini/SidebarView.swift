@@ -1,13 +1,6 @@
 import CMiniCore
 import SwiftUI
 
-enum SidebarMetrics {
-    static let rowHeight: CGFloat = 28
-    static let rowCornerRadius: CGFloat = 8
-    static let edgeInset: CGFloat = 8
-    static let indentation: CGFloat = 16
-}
-
 extension EnvironmentValues {
     @Entry var sidebarStore: TabStore? = nil
 }
@@ -22,13 +15,13 @@ struct SidebarView: View {
         VStack(alignment: .leading, spacing: 0) {
             AddressPill(shell: shell)
                 .padding(.horizontal, SidebarMetrics.edgeInset)
-                .padding(.top, 4)
-                .padding(.bottom, 12)
+                .padding(.top, SidebarMetrics.topPadding)
+                .padding(.bottom, SidebarMetrics.sectionSpacing)
             SpaceSwipeStage(shell: shell)
             Spacer(minLength: 0)
             footer
         }
-        .font(.system(size: 13))
+        .font(InterfaceFont.body)
         .animation(.easeInOut(duration: 0.2), value: shell.currentSpace.id)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background {
@@ -73,7 +66,7 @@ struct SidebarView: View {
                 shell.commandBar.open(mode: .newTab)
             }
             SpaceBar(shell: shell)
-                .padding(.top, 6)
+                .padding(.top, SidebarMetrics.spaceBarTopPadding)
         }
         .animation(.easeInOut(duration: 0.3), value: shell.downloads.visibleDownloads.map(\.id))
         .padding(.horizontal, SidebarMetrics.edgeInset)
@@ -102,7 +95,7 @@ struct SpaceTabsView: View {
             if !store.pinnedTabs.isEmpty || shell.sidebarDrag.isDraggingUnpinnedTab {
                 PinnedTabsView(shell: shell)
                     .padding(.horizontal, SidebarMetrics.edgeInset)
-                    .padding(.bottom, 12)
+                    .padding(.bottom, SidebarMetrics.sectionSpacing)
             }
             ScrollViewReader { proxy in
                 ScrollView {
@@ -180,17 +173,17 @@ struct SidebarActionRow: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 8) {
+            HStack(spacing: SidebarMetrics.iconSpacing) {
                 Image(systemName: systemImage)
-                    .font(.system(size: 13, weight: .regular))
-                    .frame(width: 16)
+                    .font(InterfaceFont.rowSymbol)
+                    .frame(width: SidebarMetrics.iconSize)
                 Text(title)
                     .lineLimit(1)
                     .truncationMode(.middle)
                 Spacer(minLength: 0)
             }
             .foregroundStyle(.secondary)
-            .padding(.horizontal, 8)
+            .padding(.horizontal, SidebarMetrics.footerRowPadding)
             .frame(height: SidebarMetrics.rowHeight)
             .background {
                 if isHovered {
@@ -215,15 +208,14 @@ private struct AddressPill: View {
         let host = selected.flatMap { URLInput.host(of: $0.url) }
         let showsFullAddress = isHovered && host != nil
         let isInsecure = selected.map { URLInput.isInsecure($0.url) } ?? false
-        GlassEffectContainer(spacing: 8) {
+        GlassEffectContainer(spacing: SidebarMetrics.edgeInset) {
             HStack(spacing: 0) {
                 if isInsecure {
                     Image(systemName: "lock.slash")
-                        .font(.system(size: 11, weight: .medium))
+                        .font(InterfaceFont.controlSymbol)
                         .foregroundStyle(.secondary)
-                        .padding(.leading, 12)
-                        .padding(.trailing, -6)
-                        .frame(height: 32)
+                        .frame(width: SidebarMetrics.iconSize, height: SidebarMetrics.addressPillHeight)
+                        .padding(.leading, SidebarMetrics.addressPillTextInset)
                         .help("Not Secure: this page is not using HTTPS")
                         .accessibilityLabel("Not Secure")
                 }
@@ -235,8 +227,8 @@ private struct AddressPill: View {
                         .truncationMode(.middle)
                         .foregroundStyle(host == nil ? .tertiary : .secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.leading, 12)
-                        .frame(height: 32)
+                        .padding(.leading, isInsecure ? SidebarMetrics.accessorySpacing : SidebarMetrics.addressPillTextInset)
+                        .frame(height: SidebarMetrics.addressPillHeight)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -248,9 +240,9 @@ private struct AddressPill: View {
                         shell.fillPassword(nil)
                     } label: {
                         Image(systemName: "key.fill")
-                            .font(.system(size: 12, weight: .medium))
+                            .font(InterfaceFont.controlSymbol)
                             .foregroundStyle(.secondary)
-                            .frame(width: 28, height: 32)
+                            .frame(width: SidebarMetrics.addressPillButtonWidth, height: SidebarMetrics.addressPillHeight)
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
@@ -266,9 +258,9 @@ private struct AddressPill: View {
                         }
                     } label: {
                         Image(systemName: selected.isLoading ? "xmark" : "arrow.clockwise")
-                            .font(.system(size: 12, weight: .medium))
+                            .font(InterfaceFont.controlSymbol)
                             .foregroundStyle(.secondary)
-                            .frame(width: 32, height: 32)
+                            .frame(width: SidebarMetrics.addressPillButtonWidth, height: SidebarMetrics.addressPillHeight)
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
@@ -285,7 +277,7 @@ private struct SpaceBar: View {
     let shell: ShellController
 
     var body: some View {
-        HStack(spacing: 2) {
+        HStack(spacing: SidebarMetrics.spaceButtonSpacing) {
             ForEach(shell.spaces) { space in
                 SpaceButton(shell: shell, space: space)
             }
@@ -335,11 +327,11 @@ private struct SpaceBarIconButton: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: systemImage)
-                .font(.system(size: 12, weight: .medium))
+                .font(InterfaceFont.controlSymbol)
                 .foregroundStyle(isSelected ? AnyShapeStyle(.tint) : AnyShapeStyle(.secondary))
-                .frame(width: 28, height: 24)
+                .frame(width: SidebarMetrics.spaceButtonSize.width, height: SidebarMetrics.spaceButtonSize.height)
                 .background {
-                    let shape = RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    let shape = RoundedRectangle(cornerRadius: SidebarMetrics.rowCornerRadius, style: .continuous)
                     if isSelected {
                         SelectionHighlight(shape: shape)
                     } else if isHovered {

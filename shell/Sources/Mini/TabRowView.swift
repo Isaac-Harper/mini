@@ -16,13 +16,13 @@ struct TabRowView: View {
     private var isDimmed: Bool { tab.isSaved && !isSelected && !tab.hasBrowser }
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: SidebarMetrics.accessorySpacing) {
             disclosure
             Group {
-                TabIconView(tab: tab, size: 16)
+                TabIconView(tab: tab, size: SidebarMetrics.iconSize)
                     .opacity(tab.isLoading ? 0.4 : 1)
                     .animation(.easeInOut(duration: 0.3), value: tab.isLoading)
-                    .padding(.trailing, 4)
+                    .padding(.trailing, SidebarMetrics.iconSpacing - SidebarMetrics.accessorySpacing)
                 Text(tab.displayTitle)
                     .lineLimit(1)
                     .truncationMode(.tail)
@@ -36,9 +36,9 @@ struct TabRowView: View {
                     shell.navigate(tab, to: savedURL)
                 } label: {
                     Image(systemName: "arrow.uturn.backward")
-                        .font(.system(size: 9, weight: .bold))
+                        .font(InterfaceFont.accessorySymbol)
                         .foregroundStyle(.secondary)
-                        .frame(width: 16, height: 16)
+                        .frame(width: SidebarMetrics.accessorySize, height: SidebarMetrics.accessorySize)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -50,9 +50,9 @@ struct TabRowView: View {
                     shell.performUndoable("Close Tab") { shell.store.close(tab) }
                 } label: {
                     Image(systemName: "xmark")
-                        .font(.system(size: 9, weight: .bold))
+                        .font(InterfaceFont.accessorySymbol)
                         .foregroundStyle(.secondary)
-                        .frame(width: 16, height: 16)
+                        .frame(width: SidebarMetrics.accessorySize, height: SidebarMetrics.accessorySize)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -60,8 +60,8 @@ struct TabRowView: View {
                 .help("Close Tab")
             }
         }
-        .padding(.leading, 4 + CGFloat(depth) * SidebarMetrics.indentation)
-        .padding(.trailing, 6)
+        .padding(.leading, SidebarMetrics.indent(depth: depth))
+        .padding(.trailing, SidebarMetrics.rowTrailingPadding)
         .frame(height: SidebarMetrics.rowHeight)
         .background { rowBackground }
         .overlay { TabDropIndicator(shell: shell, tab: tab, depth: depth) }
@@ -109,14 +109,14 @@ struct TabRowView: View {
     @ViewBuilder
     private var disclosure: some View {
         if tab.children.isEmpty {
-            Color.clear.frame(width: 12, height: 12)
+            Color.clear.frame(width: SidebarMetrics.disclosureSize, height: SidebarMetrics.disclosureSize)
         } else {
             Image(systemName: "chevron.right")
-                .font(.system(size: 10, weight: .semibold))
+                .font(InterfaceFont.accessorySymbol)
                 .foregroundStyle(.tertiary)
                 .rotationEffect(.degrees(tab.isCollapsed ? 0 : 90))
                 .animation(.easeOut(duration: 0.15), value: tab.isCollapsed)
-                .frame(width: 12, height: 12)
+                .frame(width: SidebarMetrics.disclosureSize, height: SidebarMetrics.disclosureSize)
                 .contentShape(Rectangle())
                 .onTapGesture { shell.store.toggleCollapse(tab) }
         }
@@ -139,16 +139,16 @@ struct SplitTabRowView: View {
     }
 
     var body: some View {
-        HStack(spacing: 2) {
-            Color.clear.frame(width: 12, height: 12)
+        HStack(spacing: SidebarMetrics.accessorySpacing) {
+            Color.clear.frame(width: SidebarMetrics.disclosureSize, height: SidebarMetrics.disclosureSize)
             SplitTabHalfView(shell: shell, tab: split.leading, isPairSelected: isSelected)
             Rectangle()
                 .fill(.separator)
-                .frame(width: 1, height: 14)
+                .frame(width: 1, height: SidebarMetrics.iconSize)
             SplitTabHalfView(shell: shell, tab: split.trailing, isPairSelected: isSelected)
         }
-        .padding(.leading, 4 + CGFloat(depth) * SidebarMetrics.indentation)
-        .padding(.trailing, 2)
+        .padding(.leading, SidebarMetrics.indent(depth: depth))
+        .padding(.trailing, SidebarMetrics.rowLeadingPadding)
         .frame(height: SidebarMetrics.rowHeight)
         .background {
             let shape = RoundedRectangle(cornerRadius: SidebarMetrics.rowCornerRadius, style: .continuous)
@@ -187,9 +187,9 @@ private struct SplitTabHalfView: View {
     private var isFocused: Bool { store.selectedTab === tab }
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: SidebarMetrics.accessorySpacing) {
             Group {
-                TabIconView(tab: tab, size: 16)
+                TabIconView(tab: tab, size: SidebarMetrics.iconSize)
                     .opacity(tab.isLoading ? 0.4 : 1)
                     .animation(.easeInOut(duration: 0.3), value: tab.isLoading)
                 Text(tab.displayTitle)
@@ -205,9 +205,9 @@ private struct SplitTabHalfView: View {
                     shell.performUndoable("Close Tab") { shell.store.close(tab) }
                 } label: {
                     Image(systemName: "xmark")
-                        .font(.system(size: 9, weight: .bold))
+                        .font(InterfaceFont.accessorySymbol)
                         .foregroundStyle(.secondary)
-                        .frame(width: 16, height: 16)
+                        .frame(width: SidebarMetrics.accessorySize, height: SidebarMetrics.accessorySize)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -215,13 +215,13 @@ private struct SplitTabHalfView: View {
                 .help("Close Tab")
             }
         }
-        .padding(.horizontal, 4)
+        .padding(.horizontal, SidebarMetrics.rowLeadingPadding)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background {
             if isPairSelected && isFocused {
-                RoundedRectangle(cornerRadius: SidebarMetrics.rowCornerRadius - 2, style: .continuous)
+                RoundedRectangle(cornerRadius: SidebarMetrics.rowCornerRadius - SidebarMetrics.rowLeadingPadding, style: .continuous)
                     .fill(.fill.tertiary)
-                    .padding(.vertical, 3)
+                    .padding(.vertical, SidebarMetrics.rowLeadingPadding)
             }
         }
         .contentShape(Rectangle())

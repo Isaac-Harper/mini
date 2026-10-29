@@ -40,8 +40,8 @@ struct CommandSuggestionsView: View {
                     }
                 }
             }
-            .padding(.horizontal, 8)
-            .padding(.bottom, 8)
+            .padding(.horizontal, CommandBarMetrics.contentInset)
+            .padding(.bottom, CommandBarMetrics.contentInset)
         }
     }
 }
@@ -51,12 +51,12 @@ private struct SuggestionSectionHeader: View {
 
     var body: some View {
         Text(title)
-            .font(.system(size: 11, weight: .semibold))
+            .font(InterfaceFont.sectionHeader)
             .foregroundStyle(.tertiary)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 12)
-            .padding(.top, 8)
-            .padding(.bottom, 4)
+            .padding(.horizontal, CommandBarMetrics.rowPadding)
+            .padding(.top, CommandBarMetrics.contentInset)
+            .padding(.bottom, CommandBarMetrics.suggestionsBottomInset)
     }
 }
 
@@ -66,39 +66,39 @@ private struct CommandSuggestionRow: View {
     let faviconLookup: (String) -> NSImage?
 
     var body: some View {
-        HStack(spacing: 12) {
-            icon.frame(width: 18, height: 18)
-            VStack(alignment: .leading, spacing: 1) {
-                HStack(spacing: 5) {
+        HStack(spacing: CommandBarMetrics.rowIconSpacing) {
+            icon.frame(width: CommandBarMetrics.rowIconSize, height: CommandBarMetrics.rowIconSize)
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: SidebarMetrics.accessorySpacing) {
                     Text(title)
-                        .font(.system(size: 13))
+                        .font(InterfaceFont.body)
                         .lineLimit(1)
                         .truncationMode(.tail)
                     if case .switchToTab(let tab) = suggestion, tab.isSaved {
                         Image(systemName: "bookmark.fill")
-                            .font(.system(size: 9))
+                            .font(InterfaceFont.accessorySymbol)
                             .foregroundStyle(.secondary)
                             .accessibilityLabel("Saved")
                     }
                 }
                 if let detail {
                     Text(detail)
-                        .font(.system(size: 11))
+                        .font(InterfaceFont.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .truncationMode(.middle)
                 }
             }
-            Spacer(minLength: 12)
+            Spacer(minLength: CommandBarMetrics.rowPadding)
             Text(hint)
-                .font(.system(size: 11))
+                .font(InterfaceFont.caption)
                 .foregroundStyle(.tertiary)
         }
-        .padding(.horizontal, 12)
-        .frame(height: 36)
+        .padding(.horizontal, CommandBarMetrics.rowPadding)
+        .frame(height: CommandBarMetrics.rowHeight)
         .background {
             if isSelected {
-                RoundedRectangle(cornerRadius: 12, style: .continuous).fill(.fill.secondary)
+                RoundedRectangle(cornerRadius: CommandBarMetrics.cornerRadius - CommandBarMetrics.contentInset, style: .continuous).fill(.fill.secondary)
             }
         }
     }
@@ -107,7 +107,7 @@ private struct CommandSuggestionRow: View {
     private var icon: some View {
         switch suggestion {
         case .switchToTab(let tab):
-            FaviconView(image: tab.favicon, size: 16)
+            FaviconView(image: tab.favicon, size: CommandBarMetrics.rowIconSize)
         case .open(.address):
             Image(systemName: "globe").foregroundStyle(.secondary)
         case .open(.search):
@@ -116,13 +116,13 @@ private struct CommandSuggestionRow: View {
             Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
         case .history(let entry):
             if let favicon = faviconLookup(entry.url) {
-                FaviconView(image: favicon, size: 16)
+                FaviconView(image: favicon, size: CommandBarMetrics.rowIconSize)
             } else {
                 Image(systemName: "clock").foregroundStyle(.secondary)
             }
         case .archived(let entry):
             if let favicon = faviconLookup(entry.url) {
-                FaviconView(image: favicon, size: 16)
+                FaviconView(image: favicon, size: CommandBarMetrics.rowIconSize)
             } else {
                 Image(systemName: "archivebox").foregroundStyle(.secondary)
             }
@@ -177,30 +177,30 @@ private struct PastedLinkPreviews: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             ForEach(links.prefix(Self.maximumRows)) { link in
-                HStack(spacing: 10) {
-                    FaviconView(image: faviconLookup(link.url), size: 14)
+                HStack(spacing: CommandBarMetrics.previewIconSpacing) {
+                    FaviconView(image: faviconLookup(link.url), size: CommandBarMetrics.previewIconSize)
                     Text(link.title ?? URLInput.host(of: link.url) ?? link.url)
                         .font(.system(size: 12))
                         .lineLimit(1)
                         .truncationMode(.tail)
-                    Spacer(minLength: 8)
+                    Spacer(minLength: CommandBarMetrics.previewIconSpacing)
                     Text(URLInput.host(of: link.url) ?? "")
-                        .font(.system(size: 11))
+                        .font(InterfaceFont.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
-                .frame(height: 24)
+                .frame(height: CommandBarMetrics.previewRowHeight)
             }
             if links.count > Self.maximumRows {
                 Text("+\(links.count - Self.maximumRows) more")
-                    .font(.system(size: 11))
+                    .font(InterfaceFont.caption)
                     .foregroundStyle(.tertiary)
-                    .frame(height: 22)
+                    .frame(height: CommandBarMetrics.previewRowHeight)
             }
         }
-        .padding(.leading, 42)
-        .padding(.trailing, 12)
-        .padding(.bottom, 4)
+        .padding(.leading, CommandBarMetrics.rowPadding + CommandBarMetrics.rowIconSize + CommandBarMetrics.rowIconSpacing)
+        .padding(.trailing, CommandBarMetrics.rowPadding)
+        .padding(.bottom, CommandBarMetrics.suggestionsBottomInset)
         .allowsHitTesting(false)
     }
 }

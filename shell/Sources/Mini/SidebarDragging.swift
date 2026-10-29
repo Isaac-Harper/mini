@@ -218,7 +218,7 @@ struct InsertionLine: View {
         Capsule()
             .fill(.tint)
             .frame(height: 2)
-            .padding(.leading, 4 + CGFloat(depth) * SidebarMetrics.indentation)
+            .padding(.leading, SidebarMetrics.indent(depth: depth))
             .allowsHitTesting(false)
     }
 }
