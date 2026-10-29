@@ -61,58 +61,59 @@ final class PageContextMenu: NSObject {
             for suggestion in request.suggestions {
                 add(to: menu, suggestion) { [tab] in suggestion.withCString { mini_browser_replace_misspelling(tab.id, $0) } }
             }
-            add(to: menu, "Learn Spelling") { [tab, request] in request.misspelledWord.withCString { mini_browser_add_word_to_dictionary(tab.id, $0) } }
+            add(to: menu, "Learn Spelling", symbol: "text.book.closed") { [tab, request] in request.misspelledWord.withCString { mini_browser_add_word_to_dictionary(tab.id, $0) } }
             menu.addItem(.separator())
         }
         if request.has(MINI_CONTEXT_LINK), !request.linkURL.isEmpty {
             let url = request.linkURL
-            add(to: menu, "Open Link in New Tab") { [shell, tab] in shell.openLinkInNewTab(url, from: tab) }
-            add(to: menu, "Open Link in Split View", enabled: isMainWindowTab) { [shell, tab] in shell.openLinkInSplitView(url, from: tab) }
-            add(to: menu, "Copy Link") { Self.copyToPasteboard(url) }
+            add(to: menu, "Open Link in New Tab", symbol: "plus.square.on.square") { [shell, tab] in shell.openLinkInNewTab(url, from: tab) }
+            add(to: menu, "Open Link in Split View", symbol: "rectangle.split.2x1", enabled: isMainWindowTab) { [shell, tab] in shell.openLinkInSplitView(url, from: tab) }
+            add(to: menu, "Copy Link", symbol: "link") { Self.copyToPasteboard(url) }
             menu.addItem(.separator())
         }
         if request.has(MINI_CONTEXT_IMAGE), !request.imageURL.isEmpty {
             let url = request.imageURL
-            add(to: menu, "Open Image in New Tab") { [shell, tab] in shell.openLinkInNewTab(url, from: tab) }
-            add(to: menu, "Copy Image") { [tab] in url.withCString { mini_browser_copy_image(tab.id, $0) } }
-            add(to: menu, "Save Image As\u{2026}") { [shell, tab] in shell.saveImage(at: url, from: tab) }
+            add(to: menu, "Open Image in New Tab", symbol: "photo") { [shell, tab] in shell.openLinkInNewTab(url, from: tab) }
+            add(to: menu, "Copy Image", symbol: "doc.on.doc") { [tab] in url.withCString { mini_browser_copy_image(tab.id, $0) } }
+            add(to: menu, "Save Image As\u{2026}", symbol: "square.and.arrow.down") { [shell, tab] in shell.saveImage(at: url, from: tab) }
             menu.addItem(.separator())
         }
         if request.has(MINI_CONTEXT_EDITABLE) {
-            addEdit(to: menu, "Cut", MINI_EDIT_CUT, MINI_EDIT_CAN_CUT)
-            addEdit(to: menu, "Copy", MINI_EDIT_COPY, MINI_EDIT_CAN_COPY)
-            addEdit(to: menu, "Paste", MINI_EDIT_PASTE, MINI_EDIT_CAN_PASTE)
-            addEdit(to: menu, "Select All", MINI_EDIT_SELECT_ALL, MINI_EDIT_CAN_SELECT_ALL)
+            addEdit(to: menu, "Cut", symbol: "scissors", MINI_EDIT_CUT, MINI_EDIT_CAN_CUT)
+            addEdit(to: menu, "Copy", symbol: "doc.on.doc", MINI_EDIT_COPY, MINI_EDIT_CAN_COPY)
+            addEdit(to: menu, "Paste", symbol: "doc.on.clipboard", MINI_EDIT_PASTE, MINI_EDIT_CAN_PASTE)
+            addEdit(to: menu, "Select All", symbol: "checkmark.circle", MINI_EDIT_SELECT_ALL, MINI_EDIT_CAN_SELECT_ALL)
             menu.addItem(.separator())
         }
         let selection = request.selectionText.trimmingCharacters(in: .whitespacesAndNewlines)
         if request.has(MINI_CONTEXT_SELECTION), !request.has(MINI_CONTEXT_LINK), !selection.isEmpty {
             if !request.has(MINI_CONTEXT_EDITABLE) {
-                addEdit(to: menu, "Copy", MINI_EDIT_COPY, MINI_EDIT_CAN_COPY)
+                addEdit(to: menu, "Copy", symbol: "doc.on.doc", MINI_EDIT_COPY, MINI_EDIT_CAN_COPY)
             }
-            add(to: menu, "Look Up \u{201C}\(Self.abbreviated(selection))\u{201D}") { [weak self] in self?.lookUp(selection) }
-            add(to: menu, "Search for \u{201C}\(Self.abbreviated(selection))\u{201D}") { [shell, tab] in
+            add(to: menu, "Look Up \u{201C}\(Self.abbreviated(selection))\u{201D}", symbol: "character.book.closed") { [weak self] in self?.lookUp(selection) }
+            add(to: menu, "Search for \u{201C}\(Self.abbreviated(selection))\u{201D}", symbol: "magnifyingglass") { [shell, tab] in
                 shell.openLinkInNewTab(URLInput.Interpretation.search(selection).url, from: tab)
             }
             menu.addItem(.separator())
         }
         if !request.has(MINI_CONTEXT_LINK), !request.has(MINI_CONTEXT_IMAGE), !request.has(MINI_CONTEXT_SELECTION), !request.has(MINI_CONTEXT_EDITABLE) {
-            add(to: menu, "Back", enabled: tab.canGoBack) { [tab] in mini_browser_go_back(tab.id) }
-            add(to: menu, "Forward", enabled: tab.canGoForward) { [tab] in mini_browser_go_forward(tab.id) }
-            add(to: menu, "Reload") { [tab] in mini_browser_reload(tab.id) }
+            add(to: menu, "Back", symbol: "chevron.left", enabled: tab.canGoBack) { [tab] in mini_browser_go_back(tab.id) }
+            add(to: menu, "Forward", symbol: "chevron.right", enabled: tab.canGoForward) { [tab] in mini_browser_go_forward(tab.id) }
+            add(to: menu, "Reload", symbol: "arrow.clockwise") { [tab] in mini_browser_reload(tab.id) }
             menu.addItem(.separator())
         }
         let point = request.location
-        add(to: menu, "Inspect Element") { [tab] in mini_browser_inspect_element(tab.id, Int32(point.x), Int32(point.y)) }
+        add(to: menu, "Inspect Element", symbol: "hammer") { [tab] in mini_browser_inspect_element(tab.id, Int32(point.x), Int32(point.y)) }
         return menu
     }
 
-    private func addEdit(to menu: NSMenu, _ title: String, _ command: MiniEditCommand, _ capability: MiniEditCapability) {
-        add(to: menu, title, enabled: request.can(capability)) { [tab] in mini_browser_edit(tab.id, Int32(command.rawValue)) }
+    private func addEdit(to menu: NSMenu, _ title: String, symbol: String, _ command: MiniEditCommand, _ capability: MiniEditCapability) {
+        add(to: menu, title, symbol: symbol, enabled: request.can(capability)) { [tab] in mini_browser_edit(tab.id, Int32(command.rawValue)) }
     }
 
-    private func add(to menu: NSMenu, _ title: String, enabled: Bool = true, action: @escaping () -> Void) {
+    private func add(to menu: NSMenu, _ title: String, symbol: String? = nil, enabled: Bool = true, action: @escaping () -> Void) {
         let item = NSMenuItem(title: title, action: #selector(performItem(_:)), keyEquivalent: "")
+        item.image = symbol.map(MainMenu.symbolImage)
         item.target = self
         item.tag = actions.count
         item.isEnabled = enabled

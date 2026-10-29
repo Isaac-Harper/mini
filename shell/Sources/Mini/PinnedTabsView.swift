@@ -96,9 +96,11 @@ private struct PinnedTabTile: View {
         .onDrag { shell.sidebarDrag.beginDrag(tab) }
         .onDrop(of: SidebarDragModel.acceptedTypes, delegate: PinnedDropDelegate(shell: shell, index: index))
         .contextMenu {
-            Button("Duplicate Tab") { shell.duplicate(tab) }
-            Button("Unpin Tab") { shell.performUndoable("Unpin Tab") { shell.store.unpin(tab) } }
-            Button("Save Tab") { shell.performUndoable("Save Tab") { shell.store.save(tab) } }
+            Button("Duplicate Tab", systemImage: "plus.square.on.square") { shell.duplicate(tab) }
+            Divider()
+            Button("Unpin Tab", systemImage: "pin.slash") { shell.performUndoable("Unpin Tab") { shell.store.unpin(tab) } }
+            Button("Save Tab", systemImage: "bookmark") { shell.performUndoable("Save Tab") { shell.store.save(tab) } }
+            Divider()
             Button("Close Tab") { shell.performUndoable("Close Tab") { shell.store.close(tab) } }
         }
     }

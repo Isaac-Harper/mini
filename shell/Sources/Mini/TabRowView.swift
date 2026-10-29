@@ -89,18 +89,19 @@ struct TabRowView: View {
 
     @ViewBuilder
     private var menu: some View {
-        Button("Open in Split View") { shell.openInSplitView(tab) }
+        Button("Open in Split View", systemImage: "rectangle.split.2x1") { shell.openInSplitView(tab) }
             .disabled(!canOpenInSplitView)
-        Button("Duplicate Tab") { shell.duplicate(tab) }
+        Button("Duplicate Tab", systemImage: "plus.square.on.square") { shell.duplicate(tab) }
             .disabled(tab.url.isEmpty)
-        Button("Pin Tab") { shell.performUndoable("Pin Tab") { shell.store.pin(tab) } }
+        Divider()
+        Button("Pin Tab", systemImage: "pin") { shell.performUndoable("Pin Tab") { shell.store.pin(tab) } }
             .disabled(tab.url.isEmpty)
         if tab.isSaved {
-            Button("Remove from Saved") { shell.performUndoable("Remove from Saved") { shell.store.unsave(tab) } }
+            Button("Remove from Saved", systemImage: "bookmark.slash") { shell.performUndoable("Remove from Saved") { shell.store.unsave(tab) } }
             Divider()
             Button("Delete") { shell.performUndoable("Delete Tab") { shell.store.remove(tab) } }
         } else {
-            Button("Save Tab") { shell.performUndoable("Save Tab") { shell.store.save(tab) } }
+            Button("Save Tab", systemImage: "bookmark") { shell.performUndoable("Save Tab") { shell.store.save(tab) } }
                 .disabled(!shell.store.canSave(tab))
             Divider()
             Button("Archive Tab") { shell.archiveTabs([tab]) }
@@ -174,7 +175,8 @@ struct SplitTabRowView: View {
 
     @ViewBuilder
     private var splitMenu: some View {
-        Button("Separate Tabs") { shell.performUndoable("Separate Tabs") { shell.store.unsplit(split) } }
+        Button("Separate Tabs", systemImage: "rectangle.split.2x1.slash") { shell.performUndoable("Separate Tabs") { shell.store.unsplit(split) } }
+        Divider()
         Button("Close \(split.leading.displayTitle)") { shell.performUndoable("Close Tab") { shell.store.close(split.leading) } }
         Button("Close \(split.trailing.displayTitle)") { shell.performUndoable("Close Tab") { shell.store.close(split.trailing) } }
     }

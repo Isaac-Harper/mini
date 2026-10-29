@@ -19,6 +19,7 @@ Detail for the Swift shell: coordinator, keys and menus, window and page card, s
 - `MenuKeyEquivalents.swift`: matches `pre_key_event` NSEvents to main-menu items, excluding standard edit actions and the tab undo actions; `undoDirection` spots Cmd-Z / Shift-Cmd-Z, which `BrowserEngine` hands to `pageUndoKeyPressed` instead.
 - `MainMenu.swift`: the main menu, built in code.
 - Hidden menu items need `allowsKeyEquivalentWhenHidden = true` to keep their shortcut (used for Cmd-+ and Opt-Cmd-Up/Down).
+- Menu icons and order (macOS 26 style): every main menu item and every context menu item (tab row, split row, pinned tile, multi-selection, page, link, image, selection, space button) carries an SF Symbol (`MainMenu.item(..., symbol:)` and `MainMenu.symbolImage`, which fails loudly on a missing name; SwiftUI menus use `Button(_:systemImage:)` and a `Label` for the Space Color picker), except destructive items, which stay plain text: Close, Delete, Archive, Clear, Reset. Context menus group in one order with a separator between groups: Open (Open in Split View, Duplicate, Open Link/Image in New Tab), then Edit and Copy (Cut, Copy, Paste, Copy Link, Look Up, Search, Rename), then Organize (Pin, Save, Remove from Saved, Separate, Space Color, Save Image), then the destructive items last. The page menu's Back/Forward/Reload and Inspect Element keep their own trailing sections; spelling suggestions stay plain. The main menu keeps the standard macOS menu order with each destructive item at the end of its menu or group.
 
 ## Window and page card
 

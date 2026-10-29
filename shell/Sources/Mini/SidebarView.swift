@@ -417,17 +417,20 @@ private struct SpaceButton: View {
         }
         .tint(Color(nsColor: space.color.accent))
         .contextMenu {
-            Button("Rename Space\u{2026}") {
+            Button("Rename Space\u{2026}", systemImage: "pencil") {
                 shell.switchToSpace(space)
                 shell.renameCurrentSpace(nil)
             }
-            Picker("Space Color", selection: Binding(get: { space.color }, set: { shell.setColor($0, of: space) })) {
+            Picker(selection: Binding(get: { space.color }, set: { shell.setColor($0, of: space) })) {
                 ForEach(SpaceColor.allCases) { color in
                     Label { Text(color.name) } icon: { Image(nsImage: color.swatch()) }
                         .tag(color)
                 }
+            } label: {
+                Label("Space Color", systemImage: "paintpalette")
             }
             .pickerStyle(.menu)
+            Divider()
             Button("Delete Space\u{2026}") { shell.confirmDeletion(of: space) }
                 .disabled(!shell.canDelete(space))
         }

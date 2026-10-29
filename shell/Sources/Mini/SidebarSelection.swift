@@ -159,16 +159,17 @@ struct GroupTabMenu: View {
         let savable = tabs.filter { !$0.isSaved }.count
         let saved = count - savable
         if count == 2 {
-            Button("Open in Split View") { shell.openInSplitView(tabs) }
+            Button("Open in Split View", systemImage: "rectangle.split.2x1") { shell.openInSplitView(tabs) }
+            Divider()
         }
-        Button("Copy \(count) Links") { shell.copyLinks(tabs) }
+        Button("Copy \(count) Links", systemImage: "link") { shell.copyLinks(tabs) }
         Divider()
-        Button("Pin \(count) Tabs") { shell.pinTabs(tabs) }
+        Button("Pin \(count) Tabs", systemImage: "pin") { shell.pinTabs(tabs) }
         if savable > 0 {
-            Button(savable == 1 ? "Save Tab" : "Save \(savable) Tabs") { shell.saveTabs(tabs) }
+            Button(savable == 1 ? "Save Tab" : "Save \(savable) Tabs", systemImage: "bookmark") { shell.saveTabs(tabs) }
         }
         if saved > 0 {
-            Button(saved == 1 ? "Make Tab Regular" : "Make \(saved) Tabs Regular") { shell.makeTabsRegular(tabs) }
+            Button(saved == 1 ? "Make Tab Regular" : "Make \(saved) Tabs Regular", systemImage: "bookmark.slash") { shell.makeTabsRegular(tabs) }
         }
         Divider()
         if savable > 0 {
