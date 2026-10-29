@@ -53,7 +53,7 @@ struct SidebarView: View {
 
     private var footer: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if let tab = shell.nowPlayingTab {
+            if let tab = shell.nowPlayingRowTab {
                 NowPlayingRowView(shell: shell, tab: tab)
             }
             if let reading = shell.weather.reading {
@@ -104,6 +104,11 @@ struct SpaceTabsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
+            if let player = store.playerTab {
+                PlayerSlotView(shell: shell, tab: player)
+                    .padding(.horizontal, SidebarMetrics.edgeInset)
+                    .padding(.bottom, SidebarMetrics.sectionSpacing)
+            }
             if !store.pinnedTabs.isEmpty || shell.sidebarDrag.isDraggingUnpinnedTab {
                 PinnedTabsView(shell: shell)
                     .padding(.horizontal, SidebarMetrics.edgeInset)

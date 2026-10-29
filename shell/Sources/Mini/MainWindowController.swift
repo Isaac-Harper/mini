@@ -1,5 +1,6 @@
 import AppKit
 import CMiniCore
+import MiniRules
 import SwiftUI
 
 @MainActor
@@ -21,6 +22,24 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
     var rootView: NSView { webContentController.view }
     var webAreaView: WebAreaView { webContentController.webAreaView }
     var isSidebarVisible: Bool { !sidebarItem.isCollapsed }
+    var onSidebarLayoutChanged: (() -> Void)?
+
+    var sidebarPresence: PlayerSlot.Sidebar {
+        if isSidebarVisible { return .expanded }
+        return peekSidebar?.isPeeking == true ? .peeking : .hidden
+    }
+
+    var webAreaScreenFrame: NSRect? {
+        guard let window = webAreaView.window else { return nil }
+        return window.convertToScreen(webAreaView.convert(webAreaView.bounds, to: nil))
+    }
+
+    func sidebarHostingView(for kind: PlayerDock.SidebarKind) -> NSView? {
+        switch kind {
+        case .main: sidebarHostingView
+        case .peek: peekSidebar?.hostingView
+        }
+    }
     var onDidExitFullScreen: (() -> Void)?
 
     init(shell: ShellController) {
@@ -67,7 +86,11 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
             MainActor.assumeIsolated {
                 self?.updateCollapsedControls()
                 self?.noteSidebarResize(isDividerDrag: isDividerDrag)
+                self?.onSidebarLayoutChanged?()
             }
+        }
+        NotificationCenter.default.addObserver(forName: NSWindow.didResizeNotification, object: window, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.onSidebarLayoutChanged?() }
         }
         updateCollapsedControls()
     }
@@ -111,8 +134,8 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
         fatalError("init(coder:) is not supported")
     }
 
-    func display(_ hostViews: [BrowserHostView], split: WebAreaView.SplitArrangement?) {
-        webContentController.display(hostViews, split: split)
+    func display(_ hostViews: [BrowserHostView], split: WebAreaView.SplitArrangement?, awaitsHostView: Bool = false) {
+        webContentController.display(hostViews, split: split, awaitsHostView: awaitsHostView)
     }
 
     func focusSidebar() -> Bool {
@@ -216,7 +239,7 @@ final class WebContentViewController: NSViewController {
         cardView.showsShadow = !fills
     }
 
-    func display(_ hostViews: [BrowserHostView], split: WebAreaView.SplitArrangement?) {
+    func display(_ hostViews: [BrowserHostView], split: WebAreaView.SplitArrangement?, awaitsHostView: Bool) {
         view.layoutSubtreeIfNeeded()
         for hostView in hostViews where hostView.superview !== webAreaView {
             hostView.frame = webAreaView.bounds
@@ -224,7 +247,7 @@ final class WebContentViewController: NSViewController {
         }
         webAreaView.splitArrangement = split
         webAreaView.layoutSubtreeIfNeeded()
-        emptyStateView.isHidden = !hostViews.isEmpty
+        emptyStateView.isHidden = !hostViews.isEmpty || awaitsHostView
         for hostView in hostViews {
             hostView.isHidden = false
         }

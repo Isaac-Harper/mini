@@ -42,6 +42,7 @@ final class Tab: Identifiable {
     }
     @ObservationIgnored private(set) var mediaArtworkTint: NSColor?
     var isPausedFromNowPlaying = false
+    var playerPhase = PlayerSlot.Phase.idle
     var themeColor: NSColor?
     var idleFade = 1.0
     var dayFold: DayFold?

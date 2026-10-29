@@ -61,6 +61,7 @@ final class TabSplit {
 @MainActor
 @Observable
 final class TabStore {
+    private(set) var playerTab: Tab?
     private(set) var pinnedTabs: [Tab] = []
     private(set) var savedRootTabs: [Tab] = []
     private(set) var rootTabs: [Tab] = []
@@ -137,11 +138,11 @@ final class TabStore {
     }
 
     var selectableTabs: [Tab] {
-        pinnedTabs + visibleTabs.flatMap { row in row.split.map { [$0.leading, $0.trailing] } ?? [row.tab] }
+        (playerTab.map { [$0] } ?? []) + pinnedTabs + visibleTabs.flatMap { row in row.split.map { [$0.leading, $0.trailing] } ?? [row.tab] }
     }
 
     var allTabs: [Tab] {
-        pinnedTabs + treeTabs
+        (playerTab.map { [$0] } ?? []) + pinnedTabs + treeTabs
     }
 
     var treeRoots: [Tab] { savedRootTabs + rootTabs }
@@ -286,6 +287,54 @@ final class TabStore {
         return tab
     }
 
+    @discardableResult
+    func newPlayerTab(url: String, title: String) -> Tab {
+        if let playerTab { demotePlayer(playerTab) }
+        let tab = makeTab(url: url, title: title)
+        tab.pinnedURL = PlayerSlot.homeURL
+        playerTab = tab
+        observer?.tabStoreDidChangeStructure(self)
+        return tab
+    }
+
+    func makePlayer(_ tab: Tab) {
+        guard tab !== playerTab, !tab.url.isEmpty else { return }
+        precondition(tabsByIdentifier[tab.id] === tab, "Making a player of a tab the store does not hold")
+        if let playerTab { demotePlayer(playerTab) }
+        if tab.isPinned {
+            pinnedTabs.remove(at: position(of: tab, in: pinnedTabs))
+        } else {
+            if let split = split(containing: tab) {
+                unsplit(split)
+            }
+            let parent = tab.parent
+            let index = position(of: tab, in: siblings(of: tab))
+            detach(tab)
+            for (offset, child) in tab.children.enumerated() {
+                insert(child, into: parent, at: index + offset)
+            }
+            tab.children = []
+            tab.isCollapsed = false
+            tab.savedURL = nil
+        }
+        tab.pinnedURL = PlayerSlot.homeURL
+        playerTab = tab
+        observer?.tabStoreDidChangeStructure(self)
+    }
+
+    func removePlayer() {
+        guard let playerTab else { return }
+        demotePlayer(playerTab)
+        observer?.tabStoreDidChangeStructure(self)
+    }
+
+    private func demotePlayer(_ tab: Tab) {
+        precondition(tab === playerTab, "Demoting a tab that is not the player")
+        playerTab = nil
+        tab.pinnedURL = nil
+        insert(tab, into: nil, at: 0)
+    }
+
     func pin(_ tab: Tab, at pinnedIndex: Int? = nil) {
         guard !tab.isPinned, !tab.url.isEmpty else { return }
         if let split = split(containing: tab) {
@@ -368,6 +417,7 @@ final class TabStore {
     }
 
     func move(_ tab: Tab, by offset: Int) {
+        if tab === playerTab { return }
         if tab.isPinned {
             let index = position(of: tab, in: pinnedTabs)
             let destination = index + offset
@@ -386,7 +436,10 @@ final class TabStore {
     }
 
     private func detachForMove(_ tab: Tab) {
-        if tab.isPinned {
+        if tab === playerTab {
+            playerTab = nil
+            tab.pinnedURL = nil
+        } else if tab.isPinned {
             pinnedTabs.remove(at: position(of: tab, in: pinnedTabs))
             tab.pinnedURL = nil
         } else {
@@ -396,6 +449,10 @@ final class TabStore {
 
     func unpin(_ tab: Tab) {
         guard tab.isPinned else { return }
+        if tab === playerTab {
+            removePlayer()
+            return
+        }
         pinnedTabs.remove(at: position(of: tab, in: pinnedTabs))
         tab.pinnedURL = nil
         insert(tab, into: nil, at: 0)
@@ -422,7 +479,9 @@ final class TabStore {
     }
 
     func close(_ tab: Tab) {
-        if tab.isPinned {
+        if tab === playerTab {
+            unloadPlayer()
+        } else if tab.isPinned {
             unload(pinned: tab)
         } else if tab.isSaved {
             unload(saved: tab)
@@ -470,6 +529,7 @@ final class TabStore {
     func removeAll() -> [Tab] {
         let removedTabs = allTabs
         selectedTab = nil
+        playerTab = nil
         pinnedTabs = []
         savedRootTabs = []
         rootTabs = []
@@ -481,7 +541,7 @@ final class TabStore {
         return removedTabs
     }
 
-    func restoreArrangement(pinned: [Tab], savedRoots: [Tab], roots: [Tab], splits restoredSplits: [TabSplit], selecting target: Tab?, removing removedTabs: [Tab], reviving revivedTabs: [Tab]) {
+    func restoreArrangement(player: Tab?, pinned: [Tab], savedRoots: [Tab], roots: [Tab], splits restoredSplits: [TabSplit], selecting target: Tab?, removing removedTabs: [Tab], reviving revivedTabs: [Tab]) {
         for tab in removedTabs {
             tabsByIdentifier[tab.id] = nil
         }
@@ -492,6 +552,7 @@ final class TabStore {
                 closedTabs.remove(at: index)
             }
         }
+        playerTab = player
         pinnedTabs = pinned
         savedRootTabs = savedRoots
         rootTabs = roots
@@ -505,6 +566,24 @@ final class TabStore {
         }
         observer?.tabStoreDidChangeSplits(self)
         select(target ?? selectedTab ?? selectableTabs.first)
+        observer?.tabStoreDidChangeStructure(self)
+    }
+
+    private func unloadPlayer() {
+        guard let tab = playerTab, let pinnedURL = tab.pinnedURL else { preconditionFailure("Unloading a player that does not exist") }
+        let freshTab = makeTab(url: pinnedURL, title: "")
+        freshTab.pinnedURL = pinnedURL
+        freshTab.favicon = tab.favicon
+        playerTab = freshTab
+        tabsByIdentifier[tab.id] = nil
+        let closesSelection = selectedTab === tab
+        if closesSelection {
+            selectedTab = nil
+        }
+        observer?.tabStore(self, didRemove: [tab])
+        if closesSelection {
+            select(pinnedTabs.first ?? treeRoots.first)
+        }
         observer?.tabStoreDidChangeStructure(self)
     }
 

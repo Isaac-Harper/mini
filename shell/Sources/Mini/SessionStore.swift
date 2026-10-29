@@ -1,4 +1,5 @@
 import Foundation
+import MiniRules
 
 struct SavedSpaceContents: Codable, Sendable {
     enum TabKind: String, Codable {
@@ -36,8 +37,10 @@ struct SavedSpaceContents: Codable, Sendable {
     let pinnedTabs: [SavedPinnedTab]?
     let selectedPinnedIndex: Int?
     let splits: [SavedSplit]?
+    let player: SavedPinnedTab?
+    let selectsPlayer: Bool?
 
-    static let empty = SavedSpaceContents(tabs: [], selectedPath: nil, pinnedTabs: nil, selectedPinnedIndex: nil, splits: nil)
+    static let empty = SavedSpaceContents(tabs: [], selectedPath: nil, pinnedTabs: nil, selectedPinnedIndex: nil, splits: nil, player: nil, selectsPlayer: nil)
 }
 
 struct SavedSpace: Codable {
@@ -139,11 +142,16 @@ final class SessionStore {
                     trailingPath: path(of: split.trailing, in: store),
                     fraction: split.fraction
                 )
-            }
+            },
+            player: store.playerTab.map { SavedSpaceContents.SavedPinnedTab(pinnedURL: $0.pinnedURL ?? PlayerSlot.homeURL, url: $0.url, title: $0.title) },
+            selectsPlayer: store.playerTab.map { $0 === selected }
         )
     }
 
     func restore(_ contents: SavedSpaceContents, into store: TabStore) {
+        if let player = contents.player {
+            store.newPlayerTab(url: player.url, title: player.title)
+        }
         for savedPinnedTab in contents.pinnedTabs ?? [] {
             store.newPinnedTab(pinnedURL: savedPinnedTab.pinnedURL, url: savedPinnedTab.url, title: savedPinnedTab.title)
         }
@@ -156,6 +164,10 @@ final class SessionStore {
                   leading !== trailing
             else { continue }
             store.makeSplit(leading: leading, trailing: trailing, fraction: savedSplit.fraction)
+        }
+        if contents.selectsPlayer == true, let playerTab = store.playerTab {
+            store.select(playerTab)
+            return
         }
         if let selectedPinnedIndex = contents.selectedPinnedIndex, store.pinnedTabs.indices.contains(selectedPinnedIndex) {
             store.select(store.pinnedTabs[selectedPinnedIndex])

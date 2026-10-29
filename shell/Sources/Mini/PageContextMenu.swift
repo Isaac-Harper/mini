@@ -1,5 +1,6 @@
 import AppKit
 import CMiniCore
+import MiniRules
 
 struct PageContextRequest: Sendable {
     let flags: UInt32
@@ -68,6 +69,9 @@ final class PageContextMenu: NSObject {
             let url = request.linkURL
             add(to: menu, "Open Link in New Tab", symbol: "plus.square.on.square") { [shell, tab] in shell.openLinkInNewTab(url, from: tab) }
             add(to: menu, "Open Link in Split View", symbol: "rectangle.split.2x1", enabled: isMainWindowTab) { [shell, tab] in shell.openLinkInSplitView(url, from: tab) }
+            if PlayerSlot.isYouTubeVideo(url), tab !== shell.store.playerTab {
+                add(to: menu, "Play in Player", symbol: "play.rectangle") { [shell] in shell.playInPlayer(url) }
+            }
             add(to: menu, "Copy Link", symbol: "link") { Self.copyToPasteboard(url) }
             menu.addItem(.separator())
         }

@@ -1,3 +1,4 @@
+import MiniRules
 import SwiftUI
 
 struct TabRowView: View {
@@ -96,6 +97,9 @@ struct TabRowView: View {
         Divider()
         Button("Pin Tab", systemImage: "pin") { shell.performUndoable("Pin Tab") { shell.store.pin(tab) } }
             .disabled(tab.url.isEmpty)
+        if PlayerSlot.isYouTube(tab.url) {
+            Button("Make Player Tab", systemImage: "play.rectangle") { shell.makePlayer(tab) }
+        }
         if tab.isSaved {
             Button("Remove from Saved", systemImage: "bookmark.slash") { shell.performUndoable("Remove from Saved") { shell.store.unsave(tab) } }
             Divider()

@@ -5,6 +5,7 @@ import SwiftUI
 final class PeekSidebarController {
     private unowned let shell: ShellController
     private let cluster: WindowControlsCluster
+    let hostingView: SidebarHostingView
     private let edgeZone = HoverZoneView()
     private let panel = PeekPanelView()
     private let glassView = NSGlassEffectView()
@@ -22,7 +23,7 @@ final class PeekSidebarController {
     init(shell: ShellController, cluster: WindowControlsCluster, rootView: NSView) {
         self.shell = shell
         self.cluster = cluster
-        let hostingView = SidebarHostingView(rootView: SidebarView(shell: shell))
+        hostingView = SidebarHostingView(rootView: SidebarView(shell: shell))
         hostingView.sizingOptions = []
         hostingView.translatesAutoresizingMaskIntoConstraints = false
         let content = NSView()
@@ -75,6 +76,7 @@ final class PeekSidebarController {
             isPeeking = false
             panel.isHidden = true
         }
+        shell.playerDock.sidebarChanged()
     }
 
     func peek() {
@@ -95,17 +97,23 @@ final class PeekSidebarController {
         if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
             leadingConstraint.constant = Self.inset
             OverlayAnimation.appear(panel)
+            shell.playerDock.sidebarChanged()
             return
         }
         leadingConstraint.constant = -(widthConstraint?.constant ?? 240)
         rootView.layoutSubtreeIfNeeded()
-        NSAnimationContext.runAnimationGroup { context in
+        NSAnimationContext.runAnimationGroup({ context in
             context.duration = Self.slideDuration
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
             context.allowsImplicitAnimation = true
             leadingConstraint.animator().constant = Self.inset
             rootView.layoutSubtreeIfNeeded()
-        }
+        }, completionHandler: { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, self.isPeeking else { return }
+                self.shell.playerDock.sidebarChanged()
+            }
+        })
     }
 
     private func cancelHide() {
@@ -130,6 +138,7 @@ final class PeekSidebarController {
 
     private func hide() {
         isPeeking = false
+        shell.playerDock.sidebarChanged()
         cluster.setShownForPeek(false)
         guard let rootView = panel.superview, let leadingConstraint else { return }
         let finish: @MainActor () -> Void = { [weak self] in

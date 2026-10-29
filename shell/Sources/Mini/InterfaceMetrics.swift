@@ -36,6 +36,10 @@ enum SidebarMetrics {
     static let spaceButtonSize = CGSize(width: 28, height: 24)
     static let spaceButtonSpacing: CGFloat = 4
     static let spaceBarTopPadding: CGFloat = 8
+    static let playerControlSize: CGFloat = 28
+    static let playerPrimaryControlSize: CGFloat = 36
+    static let playerControlSpacing: CGFloat = 8
+    static let playerControlInset: CGFloat = 8
 
     static func indent(depth: Int) -> CGFloat {
         rowLeadingPadding + CGFloat(depth) * indentation
@@ -73,6 +77,7 @@ enum InterfaceFont {
 enum CornerMetrics {
     static let window: CGFloat = 26
     static let sidebarGlass = concentric(outer: window, inset: SidebarMetrics.edgeInset)
+    static let playerSlot = concentric(outer: sidebarGlass, inset: SidebarMetrics.edgeInset)
 
     static func concentric(outer: CGFloat, inset: CGFloat) -> CGFloat {
         max(0, outer - inset)

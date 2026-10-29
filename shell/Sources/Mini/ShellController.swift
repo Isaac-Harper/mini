@@ -33,6 +33,7 @@ final class ShellController: NSObject {
     @ObservationIgnored private var archiveTimer: Timer?
     @ObservationIgnored let sessionStore: SessionStore
     @ObservationIgnored private(set) var windowController: MainWindowController!
+    @ObservationIgnored private(set) var playerDock: PlayerDock!
     @ObservationIgnored private(set) var commandBar: CommandBarController!
     @ObservationIgnored private(set) var findBar: FindBarController!
     @ObservationIgnored private(set) var sitePrompts: SitePromptController!
@@ -112,6 +113,7 @@ final class ShellController: NSObject {
         sitePreferences.pushAdBlockExemptions()
         sitePreferences.pushNotificationPermissions()
         notifications = NotificationsController(shell: self)
+        playerDock = PlayerDock(shell: self)
         sitePreferences.onNotificationsGranted = { [weak self] in self?.notifications.requestAuthorizationIfNeeded() }
         windowController = MainWindowController(shell: self)
         tabUndoManager.levelsOfUndo = 100
@@ -143,6 +145,7 @@ final class ShellController: NSObject {
             space.store.observer = self
         }
         windowController.onDidExitFullScreen = { [weak self] in self?.windowDidExitNativeFullscreen() }
+        windowController.onSidebarLayoutChanged = { [weak self] in self?.playerDock.sidebarChanged() }
         windowController.webAreaView.onSplitFractionChanged = { [weak self] fraction, finished in
             guard let self, let selected = self.store.selectedTab, let split = self.store.split(containing: selected) else { return }
             split.fraction = fraction
@@ -280,6 +283,33 @@ final class ShellController: NSObject {
         nowPlayingTab = allSpaceTabs.first { $0.isPlayingAudio }
     }
 
+    var nowPlayingRowTab: Tab? {
+        guard let tab = nowPlayingTab, playerDock.showsSlot(for: tab) else { return nowPlayingTab }
+        return allSpaceTabs.first { $0.isPlayingAudio && $0 !== tab }
+    }
+
+    func makePlayer(_ tab: Tab) {
+        performUndoable("Make Player Tab") { store.makePlayer(tab) }
+    }
+
+    func expandPlayer() {
+        guard let player = store.playerTab else { return }
+        clearRowSelection()
+        store.select(player)
+    }
+
+    func playInPlayer(_ url: String) {
+        if store.playerTab == nil {
+            performUndoable("Make Player Tab") { store.newPlayerTab(url: url, title: "") }
+        }
+        guard let player = store.playerTab else { preconditionFailure("Play in Player without a player") }
+        if player !== store.selectedTab {
+            player.playerPhase = .docked
+        }
+        navigate(player, to: url)
+        refreshDisplayedTabs()
+    }
+
     func reveal(_ tab: Tab) {
         guard let space = space(containing: tab.id), space.store.tab(withIdentifier: tab.id) === tab else { return }
         switchToSpace(space)
@@ -409,7 +439,7 @@ final class ShellController: NSObject {
         sessionStore.scheduleSave { [unowned self] in (self.spaces, self.currentSpace) }
     }
 
-    private func createBrowser(for tab: Tab) {
+    func createBrowser(for tab: Tab) {
         guard tab.browserState == .none, !tab.url.isEmpty else { return }
         tab.browserState = .created
         tab.needsInitialFocus = true
@@ -482,11 +512,12 @@ final class ShellController: NSObject {
         store.select(partner)
     }
 
-    func refreshDisplayedTabs() {
+    func refreshDisplayedTabs(animatingPlayer: Bool = false) {
         let selected = store.selectedTab
         let split = pageFullscreen == nil ? selected.flatMap(store.split(containing:)) : nil
         let shownTabs = pageFullscreen.map { [$0.tab] } ?? split.map { [$0.leading, $0.trailing] } ?? selected.map { [$0] } ?? []
-        for tab in displayedTabs where !shownTabs.contains(where: { $0 === tab }) {
+        let dockingTab = playerDock.tabToDock(in: store)
+        for tab in displayedTabs where !shownTabs.contains(where: { $0 === tab }) && tab !== dockingTab {
             tab.hostView.isHidden = true
             if tab.hasBrowser, store.tab(withIdentifier: tab.id) === tab {
                 mini_browser_set_focus(tab.id, false)
@@ -498,7 +529,14 @@ final class ShellController: NSObject {
                 WebAreaView.SplitArrangement(leading: split.leading.hostView, trailing: split.trailing.hostView, fraction: split.fraction, focused: focused.hostView)
             }
         }
-        windowController.display(shownTabs.map(\.hostView), split: arrangement)
+        var hostViews = shownTabs.map(\.hostView)
+        var awaitsHostView = false
+        if let undocking = playerDock.dockedTab, shownTabs.contains(where: { $0 === undocking }),
+           playerDock.undock(undocking, animated: animatingPlayer, then: { [weak self] in self?.refreshDisplayedTabs() }) {
+            hostViews.removeAll { $0 === undocking.hostView }
+            awaitsHostView = true
+        }
+        windowController.display(hostViews, split: arrangement, awaitsHostView: awaitsHostView)
         windowController.webAreaView.showLoadingProgress(of: pageFullscreen == nil ? selected : nil)
         for tab in shownTabs where !displayedTabs.contains(where: { $0 === tab }) {
             if tab.hasBrowser {
@@ -511,6 +549,7 @@ final class ShellController: NSObject {
             }
         }
         displayedTabs = shownTabs
+        playerDock.update(animated: animatingPlayer)
     }
 
     func refocusAfterCommitIfOrphaned(_ tab: Tab) {
@@ -545,7 +584,11 @@ extension ShellController: TabStoreObserver {
         if let previous, previous.hasBrowser, store.tab(withIdentifier: previous.id) === previous {
             mini_browser_set_focus(previous.id, false)
         }
-        refreshDisplayedTabs()
+        let player = store.playerTab
+        if let player, previous === player, tab !== player {
+            player.playerPhase = PlayerSlot.phase(afterLeavingWhilePlaying: player.isPlayingAudio)
+        }
+        refreshDisplayedTabs(animatingPlayer: player != nil && (previous === player || tab === player))
         sitePrompts.refresh()
         crashOverlay.refresh()
         if tab != nil {
@@ -572,6 +615,8 @@ extension ShellController: TabStoreObserver {
         }
         if store === self.store, displayedTabs.isEmpty {
             refreshDisplayedTabs()
+        } else if let docked = playerDock.dockedTab, tabs.contains(where: { $0 === docked }) {
+            playerDock.update(animated: false)
         }
         sitePrompts.discardPrompts(for: tabs)
         forgetNowPlaying(tabs)

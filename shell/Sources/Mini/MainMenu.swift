@@ -136,6 +136,7 @@ enum MainMenu {
         menu.addItem(item("Move Tab Up", #selector(ShellController.moveTabUp(_:)), upArrow, [.control, .shift], target: commands, symbol: "arrow.up.square"))
         menu.addItem(item("Move Tab Down", #selector(ShellController.moveTabDown(_:)), downArrow, [.control, .shift], target: commands, symbol: "arrow.down.square"))
         menu.addItem(item("Pin Tab", #selector(ShellController.togglePinnedTab(_:)), "p", [.command, .control], target: commands, symbol: "pin"))
+        menu.addItem(item("Make Player Tab", #selector(ShellController.togglePlayerTab(_:)), "", target: commands, symbol: "play.rectangle"))
         menu.addItem(item("Save Tab", #selector(ShellController.toggleSavedTab(_:)), "d", target: commands, symbol: "bookmark"))
         menu.addItem(item("Duplicate Tab", #selector(ShellController.duplicateSelectedTab(_:)), "d", [.command, .shift], target: commands, symbol: "plus.square.on.square"))
         menu.addItem(item("Archive Tab", #selector(ShellController.archiveSelectedTabs(_:)), "", target: commands))

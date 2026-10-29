@@ -234,6 +234,15 @@ extension ShellController: NSMenuItemValidation {
         return tabs.filter { !$0.isPinned && !$0.isSaved }
     }
 
+    @objc func togglePlayerTab(_ sender: Any?) {
+        guard let tab = store.selectedTab else { return }
+        if tab === store.playerTab {
+            performUndoable("Remove Player Tab") { store.removePlayer() }
+        } else {
+            makePlayer(tab)
+        }
+    }
+
     @objc func archiveSelectedTabs(_ sender: Any?) {
         let tabs = archivableTabs
         if !tabs.isEmpty { archiveTabs(tabs) }
@@ -403,6 +412,10 @@ extension ShellController: NSMenuItemValidation {
             return commandBrowserTab != nil
         case #selector(copyTabAddress(_:)):
             return !((keyLittleWindow?.tab ?? selected)?.url.isEmpty ?? true)
+        case #selector(togglePlayerTab(_:)):
+            let isPlayer = selected.map { $0 === store.playerTab } ?? false
+            menuItem.title = isPlayer ? "Remove Player Tab" : "Make Player Tab"
+            return keyLittleWindow == nil && (isPlayer || selected.map { PlayerSlot.isYouTube($0.url) } ?? false)
         case #selector(archiveSelectedTabs(_:)):
             let count = archivableTabs.count
             menuItem.title = count > 1 ? "Archive \(count) Tabs" : "Archive Tab"

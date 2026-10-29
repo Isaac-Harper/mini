@@ -69,6 +69,9 @@ extension ShellController {
         if tab === store.selectedTab {
             windowController.webAreaView.showLoadingProgress(of: tab)
         }
+        if !isLoading {
+            playerDock.pageFinishedLoading(tab)
+        }
         tab.canGoBack = canGoBack
         tab.canGoForward = canGoForward
         littleWindow(containing: identifier)?.updateAddress()
