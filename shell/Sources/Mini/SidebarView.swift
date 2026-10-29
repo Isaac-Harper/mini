@@ -90,7 +90,8 @@ struct SpaceTabsView: View {
     @State private var scrollEdges = ScrollEdges(top: false, bottom: false)
 
     private var rowTransition: AnyTransition {
-        reduceMotion ? .opacity : .asymmetric(insertion: .move(edge: .leading).combined(with: .opacity), removal: .opacity)
+        reduceMotion ? .opacity : .asymmetric(insertion: .move(edge: .leading).combined(with: .opacity),
+                                              removal: .modifier(active: RowCollapse(height: 0), identity: RowCollapse(height: 1)).combined(with: .opacity))
     }
 
     private var rowAnimation: Animation {
@@ -173,6 +174,14 @@ struct SpaceTabsView: View {
             }
         }
         .transition(rowTransition)
+    }
+}
+
+private struct RowCollapse: ViewModifier {
+    let height: CGFloat
+
+    func body(content: Content) -> some View {
+        content.scaleEffect(x: 1, y: height, anchor: .top)
     }
 }
 
