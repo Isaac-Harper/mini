@@ -13,6 +13,7 @@ Mini is an open source exploration project: a personal, minimal browser built to
 - Three kinds of tabs: pinned tiles, saved tabs and regular tabs. Saved tabs sit in their own "Saved" section under the pins, can nest, are never auto-archived, and ⌘W only unloads one back to its saved page (the dimmed row stays; a small arrow on the row goes back to the saved page after you navigate away). "Remove from Saved" or "Delete" in the row's menu let go of one for real. Drag between sections to change a tab's kind; regular tabs idle for 12 hours are archived
 - Links opened from other apps open in a little floating window with back, forward and an Open in Mini button (⌘O) that moves the live page into a tab
 - Spaces (Personal and Work to start), each with its own tabs, pins and its own cookies and logins; switch with the buttons at the bottom of the sidebar or ⌃1 to ⌃9
+- Swipe two fingers left or right on the sidebar to move to the next or previous space
 - Each space has a color (Space > Space Color, or right-click its button) that lightly tints the sidebar and colors the selected row, focus ring and loading line; the page's theme color blends on top
 - Split view: two tabs side by side with a draggable divider, shown as one joined row in the sidebar
 - Command bar for URLs, search (with Google suggestions) and switching tabs

@@ -5,14 +5,18 @@ struct PinnedTabsView: View {
 
     private let columns = [GridItem(.adaptive(minimum: 44), spacing: 8)]
 
+    @Environment(\.sidebarStore) private var sidebarStore
+
+    private var store: TabStore { sidebarStore ?? shell.store }
+
     var body: some View {
         GlassEffectContainer(spacing: 8) {
             LazyVGrid(columns: columns, spacing: 8) {
-                ForEach(Array(shell.store.pinnedTabs.enumerated()), id: \.element.id) { index, tab in
+                ForEach(Array(store.pinnedTabs.enumerated()), id: \.element.id) { index, tab in
                     PinnedTabTile(shell: shell, tab: tab, index: index)
                 }
                 if shell.sidebarDrag.isDraggingUnpinnedTab {
-                    PinDropTile(shell: shell, index: shell.store.pinnedTabs.count)
+                    PinDropTile(shell: shell, index: store.pinnedTabs.count)
                 }
             }
         }
@@ -46,7 +50,11 @@ private struct PinnedTabTile: View {
 
     private var isDropTarget: Bool { shell.sidebarDrag.target == .pinned(index) }
 
-    private var isSelected: Bool { shell.store.selectedTab === tab }
+    @Environment(\.sidebarStore) private var sidebarStore
+
+    private var store: TabStore { sidebarStore ?? shell.store }
+
+    private var isSelected: Bool { store.selectedTab === tab }
 
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: 12, style: .continuous)

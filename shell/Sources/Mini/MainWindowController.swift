@@ -6,7 +6,7 @@ import SwiftUI
 final class MainWindowController: NSWindowController, NSWindowDelegate {
     private let splitViewController = NSSplitViewController()
     private let sidebarItem: NSSplitViewItem
-    private let sidebarHostingView: SidebarHostingView
+    let sidebarHostingView: SidebarHostingView
     private let webContentController = WebContentViewController()
     private let windowToolbar: WindowToolbar
     private var controlsCluster: WindowControlsCluster?

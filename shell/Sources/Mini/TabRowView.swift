@@ -7,7 +7,11 @@ struct TabRowView: View {
 
     @State private var isHovered = false
 
-    private var isSelected: Bool { shell.store.selectedTab === tab }
+    @Environment(\.sidebarStore) private var sidebarStore
+
+    private var store: TabStore { sidebarStore ?? shell.store }
+
+    private var isSelected: Bool { store.selectedTab === tab }
 
     private var isDimmed: Bool { tab.isSaved && !isSelected && !tab.hasBrowser }
 
@@ -125,8 +129,12 @@ struct SplitTabRowView: View {
 
     @State private var isHovered = false
 
+    @Environment(\.sidebarStore) private var sidebarStore
+
+    private var store: TabStore { sidebarStore ?? shell.store }
+
     private var isSelected: Bool {
-        shell.store.selectedTab.map(split.contains) ?? false
+        store.selectedTab.map(split.contains) ?? false
     }
 
     var body: some View {
@@ -170,7 +178,11 @@ private struct SplitTabHalfView: View {
 
     @State private var isHovered = false
 
-    private var isFocused: Bool { shell.store.selectedTab === tab }
+    @Environment(\.sidebarStore) private var sidebarStore
+
+    private var store: TabStore { sidebarStore ?? shell.store }
+
+    private var isFocused: Bool { store.selectedTab === tab }
 
     var body: some View {
         HStack(spacing: 4) {

@@ -8,10 +8,70 @@ enum SidebarMetrics {
     static let indentation: CGFloat = 16
 }
 
+extension EnvironmentValues {
+    @Entry var sidebarStore: TabStore? = nil
+}
+
 struct SidebarView: View {
     let shell: ShellController
 
     private var store: TabStore { shell.store }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            AddressPill(shell: shell)
+                .padding(.horizontal, SidebarMetrics.edgeInset)
+                .padding(.top, 4)
+                .padding(.bottom, 12)
+            SpaceSwipeStage(shell: shell)
+            Spacer(minLength: 0)
+            footer
+        }
+        .font(.system(size: 13))
+        .animation(.easeInOut(duration: 0.2), value: shell.currentSpace.id)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background {
+            Color.clear
+                .contentShape(Rectangle())
+                .gesture(WindowDragGesture())
+                .simultaneousGesture(TapGesture().onEnded { shell.focusSidebarFromKeyboard() })
+        }
+        .background {
+            SiteTintView(spaceColor: shell.currentSpace.color.accent, neighborColor: shell.spaceSwipe.neighbor?.color.accent,
+                         swipeProgress: shell.spaceSwipe.progress, color: store.selectedTab?.themeColor)
+        }
+        .tint(Color(nsColor: shell.currentSpace.color.accent))
+    }
+
+    private var footer: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if let tab = shell.nowPlayingTab {
+                NowPlayingRowView(shell: shell, tab: tab)
+            }
+            if let reading = shell.weather.reading {
+                WeatherRowView(reading: reading, presenter: shell.weatherPopover) { shell.openWeatherSearch() }
+            }
+            ForEach(shell.downloads.visibleDownloads) { download in
+                DownloadRowView(download: download) { shell.downloads.activate(download) }
+                    .transition(.opacity)
+            }
+            SidebarActionRow(title: "New Tab", systemImage: "plus") {
+                shell.commandBar.open(mode: .newTab)
+            }
+            SpaceBar(shell: shell)
+                .padding(.top, 6)
+        }
+        .animation(.easeInOut(duration: 0.3), value: shell.downloads.visibleDownloads.map(\.id))
+        .padding(.horizontal, SidebarMetrics.edgeInset)
+        .padding(.bottom, SidebarMetrics.edgeInset)
+    }
+}
+
+struct SpaceTabsView: View {
+    let shell: ShellController
+    let space: Space
+
+    private var store: TabStore { space.store }
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -25,10 +85,6 @@ struct SidebarView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            AddressPill(shell: shell)
-                .padding(.horizontal, SidebarMetrics.edgeInset)
-                .padding(.top, 4)
-                .padding(.bottom, 12)
             if !store.pinnedTabs.isEmpty || shell.sidebarDrag.isDraggingUnpinnedTab {
                 PinnedTabsView(shell: shell)
                     .padding(.horizontal, SidebarMetrics.edgeInset)
@@ -76,22 +132,8 @@ struct SidebarView: View {
                     if let identifier { proxy.scrollTo(identifier) }
                 }
             }
-            .id(shell.currentSpace.id)
-            .transition(.opacity)
-            Spacer(minLength: 0)
-            footer
         }
-        .font(.system(size: 13))
-        .animation(.easeInOut(duration: 0.2), value: shell.currentSpace.id)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background {
-            Color.clear
-                .contentShape(Rectangle())
-                .gesture(WindowDragGesture())
-                .simultaneousGesture(TapGesture().onEnded { shell.focusSidebarFromKeyboard() })
-        }
-        .background { SiteTintView(spaceColor: shell.currentSpace.color.accent, color: store.selectedTab?.themeColor) }
-        .tint(Color(nsColor: shell.currentSpace.color.accent))
+        .environment(\.sidebarStore, store)
     }
 
     private func row(for visibleTab: VisibleTab) -> some View {
@@ -103,29 +145,6 @@ struct SidebarView: View {
             }
         }
         .transition(rowTransition)
-    }
-
-    private var footer: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            if let tab = shell.nowPlayingTab {
-                NowPlayingRowView(shell: shell, tab: tab)
-            }
-            if let reading = shell.weather.reading {
-                WeatherRowView(reading: reading, presenter: shell.weatherPopover) { shell.openWeatherSearch() }
-            }
-            ForEach(shell.downloads.visibleDownloads) { download in
-                DownloadRowView(download: download) { shell.downloads.activate(download) }
-                    .transition(.opacity)
-            }
-            SidebarActionRow(title: "New Tab", systemImage: "plus") {
-                shell.commandBar.open(mode: .newTab)
-            }
-            SpaceBar(shell: shell)
-                .padding(.top, 6)
-        }
-        .animation(.easeInOut(duration: 0.3), value: shell.downloads.visibleDownloads.map(\.id))
-        .padding(.horizontal, SidebarMetrics.edgeInset)
-        .padding(.bottom, SidebarMetrics.edgeInset)
     }
 }
 
