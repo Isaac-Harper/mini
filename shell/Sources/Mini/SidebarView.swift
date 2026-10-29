@@ -87,6 +87,7 @@ struct SpaceTabsView: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Namespace private var selectionNamespace
+    @State private var scrollEdges = ScrollEdges(top: false, bottom: false)
 
     private var rowTransition: AnyTransition {
         reduceMotion ? .opacity : .asymmetric(insertion: .move(edge: .leading).combined(with: .opacity), removal: .opacity)
@@ -142,6 +143,13 @@ struct SpaceTabsView: View {
                     .animation(.easeOut(duration: 0.12), value: store.rowSelection)
                 }
                 .scrollIndicators(.never)
+                .onScrollGeometryChange(for: ScrollEdges.self) { geometry in
+                    ScrollEdges(top: geometry.contentOffset.y > geometry.contentInsets.top * -1 + 0.5,
+                                bottom: geometry.contentOffset.y + geometry.containerSize.height < geometry.contentSize.height - 0.5)
+                } action: { _, edges in
+                    scrollEdges = edges
+                }
+                .mask { ScrollEdgeFade(edges: scrollEdges) }
                 .background {
                     Color.clear
                         .contentShape(Rectangle())
@@ -165,6 +173,28 @@ struct SpaceTabsView: View {
             }
         }
         .transition(rowTransition)
+    }
+}
+
+struct ScrollEdges: Equatable {
+    let top: Bool
+    let bottom: Bool
+}
+
+private struct ScrollEdgeFade: View {
+    let edges: ScrollEdges
+
+    private static let height: CGFloat = 16
+
+    var body: some View {
+        VStack(spacing: 0) {
+            LinearGradient(colors: [.clear, .black], startPoint: .top, endPoint: .bottom)
+                .frame(height: edges.top ? Self.height : 0)
+            Rectangle()
+            LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom)
+                .frame(height: edges.bottom ? Self.height : 0)
+        }
+        .animation(.easeOut(duration: 0.15), value: edges)
     }
 }
 
