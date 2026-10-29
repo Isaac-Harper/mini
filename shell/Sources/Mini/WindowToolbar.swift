@@ -80,10 +80,11 @@ final class WindowToolbar: NSObject, NSToolbarDelegate {
     }
 
     static func style(_ button: HoverHighlightButton, _ label: String) {
+        guard let image = button.image else { preconditionFailure("Toolbar button without a symbol") }
         button.isBordered = false
         button.toolTip = label
-        button.contentTintColor = .secondaryLabelColor
-        button.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 15, weight: .regular)
+        button.title = ""
+        button.showSymbol(image, pointSize: 15)
         button.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             button.widthAnchor.constraint(equalToConstant: WindowToolbar.buttonSize.width),

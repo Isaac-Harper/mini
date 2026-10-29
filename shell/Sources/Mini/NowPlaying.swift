@@ -31,6 +31,7 @@ struct NowPlayingRowView: View {
 
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @Environment(\.colorSchemeContrast) private var contrast
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var tint: Color {
         guard !reduceTransparency, contrast != .increased,
@@ -56,6 +57,7 @@ struct NowPlayingRowView: View {
                 shell.togglePlayback(of: tab)
             } label: {
                 Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                    .contentTransition(reduceMotion ? .opacity : .symbolEffect(.replace))
                     .font(InterfaceFont.controlSymbol)
                     .foregroundStyle(.secondary)
                     .frame(width: SidebarMetrics.accessorySize, height: SidebarMetrics.accessorySize)

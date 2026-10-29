@@ -206,6 +206,7 @@ private struct AddressPill: View {
 
     @State private var isHovered = false
     @State private var isEditing = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var draft = ""
     @FocusState private var isFieldFocused: Bool
 
@@ -289,6 +290,7 @@ private struct AddressPill: View {
                         }
                     } label: {
                         Image(systemName: selected.isLoading ? "xmark" : "arrow.clockwise")
+                            .contentTransition(reduceMotion ? .opacity : .symbolEffect(.replace))
                             .font(InterfaceFont.controlSymbol)
                             .foregroundStyle(.secondary)
                             .frame(width: SidebarMetrics.addressPillButtonWidth, height: SidebarMetrics.addressPillHeight)
@@ -392,9 +394,13 @@ private struct SpaceBarIconButton: View {
     var feedback = ControlFeedback.press
     let action: () -> Void
 
+    @State private var bounces = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
         Button(action: action) {
             Image(systemName: systemImage)
+                .symbolEffect(.bounce, value: bounces)
                 .font(InterfaceFont.controlSymbol)
                 .foregroundStyle(isSelected ? AnyShapeStyle(.tint) : AnyShapeStyle(.secondary))
                 .frame(width: SidebarMetrics.spaceButtonSize.width, height: SidebarMetrics.spaceButtonSize.height)
@@ -411,5 +417,8 @@ private struct SpaceBarIconButton: View {
         .focusable(false)
         .hapticFeedback(feedback)
         .help(help)
+        .onChange(of: isSelected) { _, selected in
+            if selected, !reduceMotion { bounces += 1 }
+        }
     }
 }

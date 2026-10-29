@@ -39,10 +39,40 @@ extension View {
 class HoverHighlightButton: NSButton {
     var hoverCornerRadius: CGFloat = SidebarMetrics.rowCornerRadius
     var feedback: ControlFeedback = .press
+    var bouncesOnPress = true
+
+    private let symbolView = NSImageView()
+
+    func showSymbol(_ image: NSImage, pointSize: CGFloat) {
+        symbolView.image = image
+        symbolView.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: pointSize, weight: .regular)
+        symbolView.contentTintColor = .secondaryLabelColor
+        symbolView.translatesAutoresizingMaskIntoConstraints = false
+        self.image = nil
+        imagePosition = .noImage
+        setAccessibilityLabel(image.accessibilityDescription)
+        addSubview(symbolView)
+        NSLayoutConstraint.activate([
+            symbolView.centerXAnchor.constraint(equalTo: centerXAnchor),
+            symbolView.centerYAnchor.constraint(equalTo: centerYAnchor),
+        ])
+        updateSymbolAlpha()
+    }
+
+    override var isEnabled: Bool {
+        didSet { updateSymbolAlpha() }
+    }
+
+    private func updateSymbolAlpha() {
+        symbolView.alphaValue = isEnabled ? 1 : 0.35
+    }
 
     @discardableResult
     override func sendAction(_ action: Selector?, to target: Any?) -> Bool {
         Haptics.controlActivated(feedback)
+        if bouncesOnPress, NSApp.currentEvent?.type == .leftMouseUp, !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
+            symbolView.addSymbolEffect(.bounce)
+        }
         return super.sendAction(action, to: target)
     }
 
