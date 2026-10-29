@@ -85,10 +85,17 @@ extension ShellController {
     func performUndoable(_ actionName: String, _ action: () -> Void) {
         let store = self.store
         let before = TabArrangementSnapshot(of: store)
+        let identifiersBefore = Set(store.allTabs.map(\.id))
         action()
         let after = TabArrangementSnapshot(of: store)
         guard before.signature != after.signature else { return }
         register(TabUndoRecord(actionName: actionName, target: before, source: after), in: store)
+        let closedCount = identifiersBefore.subtracting(store.allTabs.map(\.id)).count
+        if let message = UndoToastModel.message(forAction: actionName, closedCount: closedCount) {
+            undoToast.show(message)
+        } else {
+            undoToast.hide()
+        }
     }
 
     func registerWindowTransfer(_ actionName: String, tab: Tab, store: TabStore, undoMovesIntoWindow: Bool, arrangement: TabArrangementSnapshot, frame: NSRect) {

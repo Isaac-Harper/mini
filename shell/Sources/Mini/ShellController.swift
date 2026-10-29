@@ -13,6 +13,7 @@ final class ShellController: NSObject {
     let weatherPopover = WeatherPopoverPresenter()
     let sidebarDrag = SidebarDragModel()
     let sidebarKeyboard = SidebarKeyboardFocus()
+    let undoToast = UndoToastModel()
     let airPlay = AirPlayVideo()
     let soundOutput = SoundOutput()
     private(set) var nowPlayingTab: Tab?

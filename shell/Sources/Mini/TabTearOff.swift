@@ -15,6 +15,7 @@ extension ShellController {
         moveIntoLittleWindow(tab, from: store, frame: frame)
         Haptics.tabTornOff()
         registerWindowTransfer("Tear Off Tab", tab: tab, store: store, undoMovesIntoWindow: false, arrangement: before, frame: frame)
+        undoToast.show("Tab moved to a window")
     }
 
     func dock(_ littleWindow: LittleWindowController, at target: SidebarDragModel.Target?) {
@@ -28,6 +29,7 @@ extension ShellController {
         }
         store.select(tab)
         Haptics.littleWindowDocked()
+        undoToast.hide()
         registerWindowTransfer("Dock Tab", tab: tab, store: store, undoMovesIntoWindow: true, arrangement: TabArrangementSnapshot(of: store), frame: frame)
     }
 

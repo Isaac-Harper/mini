@@ -146,6 +146,7 @@ Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 - `TabStore.swift`: pinned tabs, tab tree, selection, splits. (tabs-and-undo)
 - `SavedTabsSection.swift`: Saved section and its drop row. (tabs-and-undo)
 - `TabUndo.swift`: snapshots and tab undo. (tabs-and-undo)
+- `UndoToast.swift`: the sidebar's undo toast after close, archive and tear-off. (tabs-and-undo)
 - `TabArchive.swift`: archive policy, idle fade, archive.json. (tabs-and-undo)
 - `SidebarDragging.swift`: sidebar drag and drop. (tabs-and-undo)
 - `TabTearOff.swift`: tear-off preview, tear-off and dock tracking. (tabs-and-undo)

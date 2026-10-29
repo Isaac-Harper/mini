@@ -72,6 +72,10 @@ struct SidebarView: View {
         .animation(.easeInOut(duration: 0.3), value: shell.downloads.visibleDownloads.map(\.id))
         .padding(.horizontal, SidebarMetrics.edgeInset)
         .padding(.bottom, SidebarMetrics.edgeInset)
+        .overlay(alignment: .top) {
+            UndoToastView(shell: shell)
+                .alignmentGuide(.top) { $0[.bottom] + SidebarMetrics.edgeInset }
+        }
     }
 }
 
