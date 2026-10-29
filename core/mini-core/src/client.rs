@@ -411,12 +411,13 @@ wrap_request_handler! {
             _browser: Option<&mut Browser>,
             _frame: Option<&mut Frame>,
             _request: Option<&mut Request>,
-            _is_navigation: ::std::os::raw::c_int,
+            is_navigation: ::std::os::raw::c_int,
             _is_download: ::std::os::raw::c_int,
             _request_initiator: Option<&CefString>,
             _disable_default_handling: Option<&mut ::std::os::raw::c_int>,
         ) -> Option<ResourceRequestHandler> {
-            ad_blocking::is_active().then(MiniResourceRequestHandler::new)
+            let blocks_ads = ad_blocking::is_active();
+            (blocks_ads || is_navigation != 0).then(|| MiniResourceRequestHandler::new(self.tab, blocks_ads))
         }
 
         fn on_render_process_terminated(

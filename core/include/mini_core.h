@@ -186,6 +186,11 @@ typedef struct MiniCallbacks {
   // activation for prerendered pages) and cumulative layout shift (largest
   // session window). Sent on changes, at most every 250 ms.
   void (*page_vitals_changed)(MiniTabId tab, double lcp, double inp, double cls, double ttfb);
+  // A main-frame document response arrived. headers holds only these, one
+  // "name: value" per line (absent ones left out): server, age,
+  // x-vercel-cache, x-vercel-id, cf-cache-status, cf-ray, x-nextjs-cache,
+  // x-nextjs-prerender. Never cookies or anything else.
+  void (*main_frame_headers_received)(MiniTabId tab, const char *headers);
   void (*browser_closed)(MiniTabId tab);
   void (*all_browsers_closed)(void);
   // Mini was launched again on this profile (CEF's already-running relaunch).

@@ -190,6 +190,12 @@ final class BrowserEngine {
                     BrowserEngine.shared.requiredShell.pageVitalsChanged(identifier, vitals: WebVitals(reportedLCP: lcp, inp: inp, cls: cls, ttfb: ttfb))
                 }
             },
+            main_frame_headers_received: { identifier, headers in
+                let headers = requiredString(headers)
+                MainActor.assumeIsolated {
+                    BrowserEngine.shared.requiredShell.mainFrameHeadersReceived(identifier, edge: EdgeHeaders.summary(of: EdgeHeaders.parse(lines: headers)))
+                }
+            },
             browser_closed: { identifier in
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.browserClosed(identifier) }
             },

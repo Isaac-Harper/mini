@@ -1,9 +1,12 @@
 use cef::*;
 
-use crate::{ad_blocking, client::main_frame_url};
+use crate::{MiniTabId, ad_blocking, client::main_frame_url, response_headers};
 
 wrap_resource_request_handler! {
-    pub struct MiniResourceRequestHandler;
+    pub struct MiniResourceRequestHandler {
+        tab: MiniTabId,
+        blocks_ads: bool,
+    }
 
     impl ResourceRequestHandler {
         fn on_before_resource_load(
@@ -13,7 +16,7 @@ wrap_resource_request_handler! {
             request: Option<&mut Request>,
             _callback: Option<&mut Callback>,
         ) -> ReturnValue {
-            let (Some(browser), Some(request)) = (browser, request) else {
+            let (true, Some(browser), Some(request)) = (self.blocks_ads, browser, request) else {
                 return ReturnValue::CONTINUE;
             };
             let url = CefString::from(&request.url()).to_string();
@@ -23,6 +26,21 @@ wrap_resource_request_handler! {
             } else {
                 ReturnValue::CONTINUE
             }
+        }
+
+        fn on_resource_response(
+            &self,
+            _browser: Option<&mut Browser>,
+            frame: Option<&mut Frame>,
+            request: Option<&mut Request>,
+            response: Option<&mut Response>,
+        ) -> ::std::os::raw::c_int {
+            let is_main_frame_document = frame.is_some_and(|frame| frame.is_main() == 1)
+                && request.is_some_and(|request| request.resource_type() == ResourceType::MAIN_FRAME);
+            if let (true, Some(response)) = (is_main_frame_document, response) {
+                response_headers::report_from_io_thread(self.tab, response);
+            }
+            0
         }
     }
 }

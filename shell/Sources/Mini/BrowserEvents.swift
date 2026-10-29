@@ -249,6 +249,11 @@ extension ShellController {
         tab.vitals = vitals
     }
 
+    func mainFrameHeadersReceived(_ identifier: MiniTabId, edge: EdgeSummary?) {
+        guard let tab = liveTab(identifier), tab.edge != edge else { return }
+        tab.edge = edge
+    }
+
     func sourceReceived(_ identifier: MiniTabId, request: UInt64, source: String) {
         SourceWindowController.sourceReceived(request: request, source: source)
     }

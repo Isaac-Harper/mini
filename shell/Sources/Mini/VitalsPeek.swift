@@ -80,6 +80,16 @@ struct VitalsPeekView: View {
                     VitalsValue(metric: .timeToFirstByte, value: tab.vitals.timeToFirstByte)
                 }
             }
+            if let edge = tab.edge {
+                Text(edge.text)
+                    .font(InterfaceFont.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .padding(.horizontal, SidebarMetrics.addressPillChipPadding)
+                    .frame(height: SidebarMetrics.addressPillChipHeight + 4)
+                    .background(Capsule().fill(.fill.tertiary))
+                    .accessibilityLabel("Served by \(edge.text)")
+            }
         }
         .padding(12)
         .background(Color(nsColor: .windowBackgroundColor).opacity(0.75))

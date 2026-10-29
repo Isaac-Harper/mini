@@ -45,6 +45,7 @@ final class Tab: Identifiable {
     var playerPhase = PlayerSlot.Phase.idle
     var themeColor: NSColor?
     var vitals = WebVitals()
+    var edge: EdgeSummary?
     var idleFade = 1.0
     var dayFold: DayFold?
     @ObservationIgnored var horizontalScrollRoom = HorizontalScrollRoom()

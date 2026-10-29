@@ -42,6 +42,7 @@ pub struct Callbacks {
     pub source_received: unsafe extern "C" fn(MiniTabId, u64, *const u8, usize),
     pub main_frame_load_failed: unsafe extern "C" fn(MiniTabId, i32, *const c_char),
     pub page_vitals_changed: unsafe extern "C" fn(MiniTabId, f64, f64, f64, f64),
+    pub main_frame_headers_received: unsafe extern "C" fn(MiniTabId, *const c_char),
     pub browser_closed: unsafe extern "C" fn(MiniTabId),
     pub all_browsers_closed: unsafe extern "C" fn(),
     pub app_relaunched: unsafe extern "C" fn(*const *const c_char, usize),
@@ -143,6 +144,9 @@ impl Callbacks {
             page_vitals_changed: table
                 .page_vitals_changed
                 .expect("MiniCallbacks.page_vitals_changed is null"),
+            main_frame_headers_received: table
+                .main_frame_headers_received
+                .expect("MiniCallbacks.main_frame_headers_received is null"),
             browser_closed: table
                 .browser_closed
                 .expect("MiniCallbacks.browser_closed is null"),
