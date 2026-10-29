@@ -71,12 +71,11 @@ extension ShellController {
         let entries = targets.flatMap(\.subtree).filter { !$0.url.isEmpty }
             .map { ArchivedTab(url: $0.url, title: $0.displayTitle, archivedAt: now, spaceIdentifier: currentSpace.id) }
         store.rowSelection.clear()
-        performUndoable(targets.count == 1 ? "Archive Tab" : "Archive Tabs") {
+        performUndoable(targets.count == 1 ? "Archive Tab" : "Archive Tabs", archiving: entries) {
             for tab in targets where store.tab(withIdentifier: tab.id) === tab {
                 store.remove(tab)
             }
         }
-        archive.add(entries)
     }
 
     func pinTabs(_ tabs: [Tab]) {

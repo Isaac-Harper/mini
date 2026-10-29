@@ -8,6 +8,11 @@ struct ArchivedTab: Codable, Equatable {
     let spaceIdentifier: String?
 }
 
+struct ArchiveChange {
+    let added: [ArchivedTab]
+    let displaced: [ArchivedTab]
+}
+
 enum ArchivePolicy {
     static let idleThreshold: TimeInterval = 12 * 60 * 60
     static let fadeStart: TimeInterval = 6 * 60 * 60
@@ -70,11 +75,28 @@ final class ArchiveStore {
         }
     }
 
-    func add(_ newEntries: [ArchivedTab]) {
-        guard !newEntries.isEmpty else { return }
-        var seenURLs = Set<String>()
-        entries = Array((newEntries.reversed() + entries).filter { seenURLs.insert($0.url).inserted }.prefix(Self.capacity))
+    @discardableResult
+    func add(_ newEntries: [ArchivedTab]) -> ArchiveChange {
+        guard !newEntries.isEmpty else { return ArchiveChange(added: [], displaced: []) }
+        let kept = Self.newestPerURL(newEntries.reversed() + entries)
+        let displaced = entries.filter { !kept.contains($0) }
+        entries = kept
         save()
+        return ArchiveChange(added: newEntries.filter(kept.contains), displaced: displaced)
+    }
+
+    func revert(_ change: ArchiveChange) {
+        let restored = (entries.filter { !change.added.contains($0) } + change.displaced)
+            .enumerated()
+            .sorted { $0.element.archivedAt != $1.element.archivedAt ? $0.element.archivedAt > $1.element.archivedAt : $0.offset < $1.offset }
+            .map(\.element)
+        entries = Self.newestPerURL(restored)
+        save()
+    }
+
+    private static func newestPerURL(_ candidates: [ArchivedTab]) -> [ArchivedTab] {
+        var seenURLs = Set<String>()
+        return Array(candidates.filter { seenURLs.insert($0.url).inserted }.prefix(capacity))
     }
 
     func remove(_ entry: ArchivedTab) {

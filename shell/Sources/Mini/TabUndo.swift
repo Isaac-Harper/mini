@@ -64,32 +64,40 @@ struct TabArrangementSnapshot {
     }
 }
 
+enum ArchiveUndoStep {
+    case revert(ArchiveChange)
+    case add([ArchivedTab])
+}
+
 @MainActor
 final class TabUndoRecord {
     let actionName: String
     let target: TabArrangementSnapshot
     let source: TabArrangementSnapshot
+    let archiveStep: ArchiveUndoStep?
 
-    init(actionName: String, target: TabArrangementSnapshot, source: TabArrangementSnapshot) {
+    init(actionName: String, target: TabArrangementSnapshot, source: TabArrangementSnapshot, archiveStep: ArchiveUndoStep?) {
         self.actionName = actionName
         self.target = target
         self.source = source
+        self.archiveStep = archiveStep
     }
 
-    var inverse: TabUndoRecord {
-        TabUndoRecord(actionName: actionName, target: source, source: target)
+    func inverse(archiveStep: ArchiveUndoStep?) -> TabUndoRecord {
+        TabUndoRecord(actionName: actionName, target: source, source: target, archiveStep: archiveStep)
     }
 }
 
 extension ShellController {
-    func performUndoable(_ actionName: String, _ action: () -> Void) {
+    func performUndoable(_ actionName: String, archiving archivedEntries: [ArchivedTab] = [], _ action: () -> Void) {
         let store = self.store
         let before = TabArrangementSnapshot(of: store)
         let identifiersBefore = Set(store.allTabs.map(\.id))
         action()
         let after = TabArrangementSnapshot(of: store)
         guard before.signature != after.signature else { return }
-        register(TabUndoRecord(actionName: actionName, target: before, source: after), in: store)
+        let archiveStep = archivedEntries.isEmpty ? nil : ArchiveUndoStep.revert(archive.add(archivedEntries))
+        register(TabUndoRecord(actionName: actionName, target: before, source: after, archiveStep: archiveStep), in: store)
         let closedCount = identifiersBefore.subtracting(store.allTabs.map(\.id)).count
         if let message = UndoToastModel.message(forAction: actionName, closedCount: closedCount) {
             undoToast.show(message)
@@ -214,7 +222,17 @@ extension ShellController {
             switchToSpace(space)
         }
         restore(record.target, replacing: record.source, in: store)
-        register(record.inverse, in: store)
+        let inverseArchiveStep: ArchiveUndoStep?
+        switch record.archiveStep {
+        case .revert(let change):
+            archive.revert(change)
+            inverseArchiveStep = .add(change.added)
+        case .add(let entries):
+            inverseArchiveStep = .revert(archive.add(entries))
+        case nil:
+            inverseArchiveStep = nil
+        }
+        register(record.inverse(archiveStep: inverseArchiveStep), in: store)
     }
 
     private func liveTab(for tab: Tab, in store: TabStore) -> Tab? {
