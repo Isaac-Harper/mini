@@ -171,4 +171,4 @@ Bundle and scripts (detail in signing-release-codecs.md):
 
 ## Status
 
-v0.1.0 is the only release (signed, notarized, stock CEF), cut at the weather row and hardened-runtime stage. Everything since is on master, unreleased: notifications, zoom, Now Playing, split view, little windows, spaces, history, context menu, fullscreen, peek sidebar, page card, swipe navigation, tab undo, saved tabs, space colors and swipe, idle fade, tear-off and dock, haptics, and the local proprietary-codecs CEF (`git log v0.1.0..HEAD` for the full list).
+v0.2.0 is the latest release (signed, notarized, stock CEF): spaces, saved tabs, undo, tear-off, space colors and swipe, haptics, history, context menu, fullscreen, peek sidebar, evening tint and the rest since v0.1.0. Local builds and `make install` use the proprietary-codecs CEF when installed; releases never do. `git log v0.2.0..HEAD` lists unreleased work.
