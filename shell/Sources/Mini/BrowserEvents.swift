@@ -82,6 +82,7 @@ extension ShellController {
         if !isLoading {
             playerDock.pageFinishedLoading(tab)
         }
+        environmentLoadingChanged(tab, isLoading: isLoading)
         tab.canGoBack = canGoBack
         tab.canGoForward = canGoForward
         littleWindow(containing: identifier)?.updateAddress()

@@ -207,6 +207,9 @@ final class BrowserEngine {
                 let image = length > 0 && bytes != nil ? Data(bytes: bytes!, count: length) : Data()
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.pageSnapshotReceived(identifier, request: request, image: image) }
             },
+            scroll_fraction_received: { identifier, fraction in
+                MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.scrollFractionReceived(identifier, fraction: fraction) }
+            },
             browser_closed: { identifier in
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.browserClosed(identifier) }
             },

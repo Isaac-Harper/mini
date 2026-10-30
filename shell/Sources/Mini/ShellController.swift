@@ -12,6 +12,7 @@ final class ShellController: NSObject {
     let weather = WeatherService()
     let weatherPopover = WeatherPopoverPresenter()
     let vitalsPopover = VitalsPopoverPresenter()
+    var deploymentEnvironmentsCache: DeploymentEnvironmentsCache?
     let sidebarDrag = SidebarDragModel()
     let sidebarKeyboard = SidebarKeyboardFocus()
     let undoToast = UndoToastModel()
@@ -449,6 +450,8 @@ final class ShellController: NSObject {
 
     func navigate(_ tab: Tab, to url: String) {
         cancelDevServerWait(of: tab)
+        tab.pendingEnvironmentAddress = nil
+        tab.environmentScrollRestore = nil
         tab.awaitsReloadTiming = false
         tab.url = url
         if tab.hasBrowser {

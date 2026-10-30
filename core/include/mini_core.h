@@ -200,6 +200,10 @@ typedef struct MiniCallbacks {
   // Result of mini_browser_capture_snapshot: the visible page as JPEG bytes
   // at the display's scale, length 0 when it could not be captured.
   void (*page_snapshot_received)(MiniTabId tab, uint64_t request, const uint8_t *image, size_t length);
+  // Result of mini_browser_request_scroll_fraction: the main frame's vertical
+  // scroll as scrollY / (scrollHeight - innerHeight), clamped to 0...1, 0 when
+  // the page cannot scroll.
+  void (*scroll_fraction_received)(MiniTabId tab, double fraction);
   void (*browser_closed)(MiniTabId tab);
   void (*all_browsers_closed)(void);
   // Mini was launched again on this profile (CEF's already-running relaunch).
@@ -288,6 +292,13 @@ void mini_browser_clear_site_data(MiniTabId tab, const char *origin);
 // replacing the previous one, so a click on that link starts from the
 // prefetched response. "" removes it, which cancels an unfinished prefetch.
 void mini_browser_preload(MiniTabId tab, const char *url);
+// Reads the main frame's vertical scroll fraction; scroll_fraction_received
+// delivers it. Nothing arrives when the page runs no script.
+void mini_browser_request_scroll_fraction(MiniTabId tab);
+// Scrolls the main frame to fraction (0...1, panics otherwise) of its
+// scrollable height, only while it is still at the top, so a page the user
+// already scrolled (or one opened at an anchor) keeps its position.
+void mini_browser_restore_scroll_fraction(MiniTabId tab, double fraction);
 // Fetches the main frame's source from the renderer, no network request;
 // source_received delivers it with the same request number.
 void mini_browser_request_source(MiniTabId tab, uint64_t request);

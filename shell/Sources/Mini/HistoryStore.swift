@@ -106,6 +106,7 @@ final class HistoryLibrary {
 @MainActor
 final class HistoryStore {
     private var database: OpaquePointer?
+    private(set) var revision = 0
 
     private static let transient = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
 
@@ -138,10 +139,12 @@ final class HistoryStore {
                 last_visit = excluded.last_visit,
                 title = CASE WHEN excluded.title = '' THEN title ELSE excluded.title END
             """, [.text(url), .text(title), .real(date.timeIntervalSince1970)])
+        revision += 1
     }
 
     func updateTitle(_ title: String, url: String) {
         run("UPDATE visits SET title = ?1 WHERE url = ?2", [.text(title), .text(url)])
+        revision += 1
     }
 
     func recent(limit: Int) -> [HistoryEntry] {
@@ -160,10 +163,12 @@ final class HistoryStore {
 
     func delete(url: String) {
         run("DELETE FROM visits WHERE url = ?1", [.text(url)])
+        revision += 1
     }
 
     func deleteAll() {
         execute("DELETE FROM visits")
+        revision += 1
     }
 
     private enum Binding {
