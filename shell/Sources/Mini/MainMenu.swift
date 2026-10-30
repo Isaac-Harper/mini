@@ -102,7 +102,7 @@ enum MainMenu {
         menu.addItem(.separator())
         menu.addItem(item("Picture in Picture", #selector(ShellController.togglePictureInPicture(_:)), "p", [.command, .option], target: commands, symbol: "pip"))
         menu.addItem(.separator())
-        menu.addItem(item("Switch to Production", #selector(ShellController.switchPreviewAndProduction(_:)), "p", [.command, .shift], target: commands, symbol: "arrow.left.arrow.right"))
+        menu.addItem(item("Switch to Production", #selector(ShellController.switchPreviewAndProduction(_:)), "P", [.command], target: commands, symbol: "arrow.left.arrow.right"))
         menu.addItem(item("Developer Tools", #selector(ShellController.showDeveloperTools(_:)), "i", [.command, .option], target: commands, symbol: "hammer"))
         menu.addItem(item("View Source", #selector(ShellController.viewSource(_:)), "u", [.command, .option], target: commands, symbol: "chevron.left.forwardslash.chevron.right"))
         menu.addItem(.separator())
