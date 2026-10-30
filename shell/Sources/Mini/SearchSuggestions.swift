@@ -26,11 +26,12 @@ final class SearchSuggestionFetcher {
     private var pendingFetch: Task<Void, Never>?
 
     private static let debounce: Duration = .milliseconds(120)
+    private static let maximumQueryLength = 200
 
     func fetch(_ query: String, deliver: @escaping @MainActor ([String], String) -> Void) {
         pendingFetch?.cancel()
         pendingFetch = nil
-        guard !query.isEmpty, case .search = URLInput.interpret(query),
+        guard !query.isEmpty, query.count <= Self.maximumQueryLength, case .search = URLInput.interpret(query),
               let url = SearchSuggestions.requestURL(for: query)
         else { return }
         pendingFetch = Task { @MainActor in

@@ -70,6 +70,7 @@ enum SidebarMetrics {
 }
 
 enum CommandBarMetrics {
+    static var width: CGFloat { InterfaceScale.scaled(760) }
     static var cornerRadius: CGFloat { InterfaceScale.scaled(20) }
     static var contentInset: CGFloat { InterfaceScale.scaled(8) }
     static var fieldInset: CGFloat { InterfaceScale.scaled(20) }
@@ -80,6 +81,9 @@ enum CommandBarMetrics {
     static var suggestionsTopSpacing: CGFloat { InterfaceScale.scaled(12) }
     static var suggestionsBottomInset: CGFloat { InterfaceScale.scaled(4) }
     static var rowHeight: CGFloat { InterfaceScale.scaled(36) }
+    static var sectionHeaderHeight: CGFloat { InterfaceScale.scaled(28) }
+    static var noticeHeight: CGFloat { InterfaceScale.scaled(32) }
+    static var bottomMargin: CGFloat { InterfaceScale.scaled(24) }
     static var rowPadding: CGFloat { InterfaceScale.scaled(12) }
     static var rowIconSize: CGFloat { InterfaceScale.scaled(16) }
     static var rowIconSpacing: CGFloat { InterfaceScale.scaled(12) }

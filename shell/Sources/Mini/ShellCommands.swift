@@ -21,9 +21,13 @@ extension ShellController: NSToolbarItemValidation {
 
 extension ShellController: NSMenuItemValidation {
     func open(_ url: String, from mode: CommandBarMode) {
+        open(url, target: CommandOpenTarget.target(entry: mode, modifier: .none))
+    }
+
+    func open(_ url: String, target: CommandOpenTarget) {
         let selected = store.selectedTab
-        switch mode {
-        case .editCurrent:
+        switch target {
+        case .currentTab:
             if let selected {
                 navigate(selected, to: url)
                 return
@@ -32,7 +36,9 @@ extension ShellController: NSMenuItemValidation {
         case .newTab:
             store.select(store.newTab(url: url, parent: nil, after: selected.map(store.rootAncestor)))
         case .newChildTab:
-            store.select(store.newTab(url: url, parent: selected))
+            store.select(store.newTab(url: url, parent: selected.flatMap { $0.isPinned ? nil : $0 }))
+        case .backgroundTab:
+            openInBackground(url)
         }
     }
 

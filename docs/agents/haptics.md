@@ -17,6 +17,7 @@ Controls use a small semantic vocabulary on top of the same gate: `ControlFeedba
 | Now Playing play/pause | toggle | `.hapticFeedback(.toggle)` |
 | Now Playing row (reveal), weather row, downloads row | press | tap handler, `.hapticFeedback(.press)` |
 | Little window back, forward, Open in Mini | press | `LittleWindowController` toolbar actions |
+| Command bar rows (every kind except disabled actions and the hint) | press | `CommandSuggestionsView` tap handler; Return and arrows stay silent |
 
 Context menu items, multi-select group actions chosen from the menu, Cmd-W, Delete, Ctrl-1/2 and the sidebar keyboard stay silent. The toolbar sidebar toggle's click also reaches `sidebarSnappedCollapsed` (the collapse happens inside a `leftMouseUp`), which the 90 ms gate drops, so one click still gives one haptic. Verified with posted (queued) mouse and key events: one admitted haptic per row, space button, New Tab and toolbar toggle click; two clicks 12 ms apart admit one and drop one; Down/Return in the focused sidebar, Ctrl-1, Cmd-Ctrl-S, pointer movement over rows and programmatic selection or back record nothing. Now Playing has no skip control, so there is no skip haptic.
 
