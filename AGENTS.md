@@ -143,6 +143,7 @@ Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 - `AirPlay.swift`: AirPlay video handoff, the row's route picker, the sound output fallback menu. (shell-ui)
 - `WeatherService.swift`, `WeatherRowView.swift`, `WeatherWeekView.swift`: weather row and 7-day popover. (shell-ui)
 - `CommandBarController.swift`, `CommandBarModel.swift`, `CommandSuggestionsView.swift`: the command bar. (shell-ui)
+- `Sources/MiniRules/AddressInput.swift`, `CommandResults.swift`, `CommandSelection.swift`, `InlineCompletion.swift`: URL or search classification, result ranking and dedupe, selection retention, Escape and the Return modifier matrix, inline completion, unit tested. (command-bar)
 - `PastedLinks.swift`: pasted link lists in the command bar. (shell-ui)
 - `CommandActions.swift`, `Sources/MiniRules/FuzzyMatch.swift`, `Sources/MiniRules/KeyEquivalentText.swift`: the command bar's `>` action list from the main menu, unit tested matching. (shell-ui)
 - `SearchSuggestions.swift`: Google suggestions. (shell-ui)
