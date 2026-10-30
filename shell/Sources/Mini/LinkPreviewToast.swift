@@ -133,7 +133,8 @@ extension ShellController {
               let host = address.host() else { return false }
         let tags = tab.linkPreviewTags ?? LinkPreviewTags(baseURL: tab.url, titleTag: tab.displayTitle)
         let preview = LinkPreview(tags)
-        let card = LinkPreviewCardView(preview: preview, host: host, showsDiagnostics: tab.linkPreviewTags != nil)
+        let displayHost = address.port.map { "\(host):\(String($0))" } ?? host
+        let card = LinkPreviewCardView(preview: preview, host: displayHost, showsDiagnostics: tab.linkPreviewTags != nil)
         toast.show(card: card, cornerRadius: LinkPreviewCardView.cornerRadius, duration: 3.5)
         guard let imageURL = preview.imageURL else { return true }
         Task { @MainActor [weak card] in

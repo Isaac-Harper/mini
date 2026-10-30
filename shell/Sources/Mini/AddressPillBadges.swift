@@ -2,21 +2,36 @@ import MiniRules
 import SwiftUI
 
 struct AddressPillChip: View {
-    let text: String
+    let text: String?
+    let symbol: String?
     let help: String
 
+    init(text: String?, symbol: String? = nil, help: String) {
+        self.text = text
+        self.symbol = symbol
+        self.help = help
+    }
+
     var body: some View {
-        Text(text)
-            .font(InterfaceFont.caption)
-            .foregroundStyle(.secondary)
-            .lineLimit(1)
-            .truncationMode(.tail)
-            .frame(maxWidth: SidebarMetrics.addressPillChipMaximumTextWidth)
-            .fixedSize()
-            .padding(.horizontal, SidebarMetrics.addressPillChipPadding)
-            .frame(height: SidebarMetrics.addressPillChipHeight)
-            .background(Capsule().fill(.fill.tertiary))
-            .glassTooltip(help)
+        HStack(spacing: SidebarMetrics.accessorySpacing) {
+            if let text {
+                Text(text)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .frame(maxWidth: SidebarMetrics.addressPillChipMaximumTextWidth)
+            }
+            if let symbol {
+                Image(systemName: symbol)
+                    .font(InterfaceFont.accessorySymbol)
+            }
+        }
+        .font(InterfaceFont.caption)
+        .foregroundStyle(.secondary)
+        .fixedSize()
+        .padding(.horizontal, SidebarMetrics.addressPillChipPadding)
+        .frame(height: SidebarMetrics.addressPillChipHeight)
+        .background(Capsule().fill(.fill.tertiary))
+        .glassTooltip(help)
     }
 }
 
@@ -53,12 +68,12 @@ struct AddressPillBadges: View {
         HStack(spacing: SidebarMetrics.accessorySpacing) {
             if let chip = tab.pageAppearanceChip {
                 Button { shell.resetPageAppearance(of: tab) } label: {
-                    AddressPillChip(text: chip.text, help: chip.help)
+                    AddressPillChip(text: chip.text, symbol: chip.showsMotionSymbol ? "figure.walk.motion" : nil, help: chip.help)
                 }
                 .buttonStyle(.plain)
                 .focusable(false)
                 .hapticFeedback(.press)
-                .accessibilityLabel("\(chip.text), reset page appearance")
+                .accessibilityLabel(chip.help)
             }
             if let port = LocalDevelopment.port(ofLocalAddress: tab.url) {
                 EnvironmentChip(shell: shell, tab: tab, text: "dev :\(String(port))", description: "Local development server on port \(String(port))")

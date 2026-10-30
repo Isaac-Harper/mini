@@ -26,16 +26,16 @@ enum PageColorScheme: Int {
 extension Tab {
     var hasPageAppearanceOverride: Bool { pageColorScheme != .system || pageReducesMotion }
 
-    var pageAppearanceChip: (text: String, help: String)? {
+    var pageAppearanceChip: (text: String?, showsMotionSymbol: Bool, help: String)? {
         switch (pageColorScheme, pageReducesMotion) {
         case (.system, false):
             nil
         case (.system, true):
-            ("Reduced motion", "This page sees reduced motion. Click to follow the system again.")
+            (nil, true, "This page sees reduced motion. Click to follow the system again.")
         case let (scheme, false):
-            (scheme.name, "This page is shown in \(scheme.name.lowercased()) appearance. Click to follow the system again.")
+            (scheme.name, false, "This page is shown in \(scheme.name.lowercased()) appearance. Click to follow the system again.")
         case let (scheme, true):
-            ("\(scheme.name) \u{00B7} Reduced", "This page is shown in \(scheme.name.lowercased()) appearance with reduced motion. Click to follow the system again.")
+            (scheme.name, true, "This page is shown in \(scheme.name.lowercased()) appearance with reduced motion. Click to follow the system again.")
         }
     }
 }
