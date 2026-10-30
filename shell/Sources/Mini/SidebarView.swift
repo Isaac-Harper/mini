@@ -331,7 +331,7 @@ private struct AddressPill: View {
                     if isEditing { endEditing() }
                 }
                 if let selected, !isEditing {
-                    AddressPillBadges(tab: selected)
+                    AddressPillBadges(shell: shell, tab: selected)
                         .padding(.leading, SidebarMetrics.accessorySpacing)
                 }
                 if let selected, selected.hasLoginForm, selected.hasBrowser {

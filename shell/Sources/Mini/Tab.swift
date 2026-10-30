@@ -62,6 +62,8 @@ final class Tab: Identifiable {
     @ObservationIgnored var hasCrashed = false
     @ObservationIgnored var zoomedHost: String?
     @ObservationIgnored var devServerWait: DevServerWait?
+    @ObservationIgnored var pendingEnvironmentAddress: String?
+    @ObservationIgnored var environmentScrollRestore: EnvironmentScrollRestore?
     @ObservationIgnored var certificateErrorPage: LoadErrorPage?
 
     init(id: MiniTabId, url: String, title: String) {

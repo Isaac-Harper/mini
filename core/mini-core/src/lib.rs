@@ -18,6 +18,7 @@ mod preload;
 mod registrable_domain;
 mod resource_requests;
 mod response_headers;
+mod scroll_position;
 mod site_data;
 mod state;
 mod theme_color;
@@ -81,6 +82,7 @@ pub struct MiniCallbacks {
     pub main_frame_load_failed: Option<unsafe extern "C" fn(MiniTabId, i32, *const c_char)>,
     pub page_vitals_changed: Option<unsafe extern "C" fn(MiniTabId, f64, f64, f64, f64, f64)>,
     pub main_frame_headers_received: Option<unsafe extern "C" fn(MiniTabId, *const c_char)>,
+    pub scroll_fraction_received: Option<unsafe extern "C" fn(MiniTabId, f64)>,
     pub browser_closed: Option<unsafe extern "C" fn(MiniTabId)>,
     pub all_browsers_closed: Option<unsafe extern "C" fn()>,
     pub app_relaunched: Option<unsafe extern "C" fn(*const *const c_char, usize)>,
@@ -505,6 +507,20 @@ pub extern "C" fn mini_browser_preload(tab: MiniTabId, url: *const c_char) {
     let url = borrowed_text(url, "url");
     if let Some(browser) = created_browser(tab) {
         preload::set(&browser, login::token(), url);
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn mini_browser_request_scroll_fraction(tab: MiniTabId) {
+    if let Some(browser) = created_browser(tab) {
+        scroll_position::request(&browser, login::token());
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn mini_browser_restore_scroll_fraction(tab: MiniTabId, fraction: f64) {
+    if let Some(browser) = created_browser(tab) {
+        scroll_position::restore(&browser, fraction);
     }
 }
 

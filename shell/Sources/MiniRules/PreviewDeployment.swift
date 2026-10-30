@@ -45,19 +45,6 @@ public struct PreviewDeployment: Equatable, Sendable {
         return firstLabel == domainLabel ? [firstLabel] : [firstLabel, domainLabel]
     }
 
-    public static func counterpart(of rawHost: String, amongVisitedHosts visitedHosts: [String], registrableDomain: (String) -> String?) -> String? {
-        let host = rawHost.lowercased()
-        if let preview = of(host: host) {
-            return visitedHosts.first { productionProjects(ofHost: $0, registrableDomain: registrableDomain).contains(preview.project) }?.lowercased()
-        }
-        let projects = productionProjects(ofHost: host, registrableDomain: registrableDomain)
-        guard !projects.isEmpty else { return nil }
-        return visitedHosts.first { visited in
-            guard let preview = of(host: visited) else { return false }
-            return projects.contains(preview.project)
-        }?.lowercased()
-    }
-
     private static func singleLabel(of host: String, under suffix: String) -> String? {
         guard host.hasSuffix(suffix) else { return nil }
         let label = String(host.dropLast(suffix.count))

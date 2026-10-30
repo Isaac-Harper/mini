@@ -445,6 +445,8 @@ final class ShellController: NSObject {
 
     func navigate(_ tab: Tab, to url: String) {
         cancelDevServerWait(of: tab)
+        tab.pendingEnvironmentAddress = nil
+        tab.environmentScrollRestore = nil
         tab.awaitsReloadTiming = false
         tab.url = url
         if tab.hasBrowser {

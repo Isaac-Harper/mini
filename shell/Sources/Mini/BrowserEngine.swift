@@ -203,6 +203,9 @@ final class BrowserEngine {
                     BrowserEngine.shared.requiredShell.mainFrameHeadersReceived(identifier, edge: EdgeHeaders.summary(of: EdgeHeaders.parse(lines: headers)))
                 }
             },
+            scroll_fraction_received: { identifier, fraction in
+                MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.scrollFractionReceived(identifier, fraction: fraction) }
+            },
             browser_closed: { identifier in
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.browserClosed(identifier) }
             },

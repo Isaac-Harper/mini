@@ -506,10 +506,10 @@ extension ShellController: NSMenuItemValidation {
             return keyLittleWindow == nil && selectedWebOrigin != nil
         case #selector(resetPermissionsForSite(_:)):
             return selected.map { sitePreferences.hasPermissionDecisions(forSiteAt: $0.url) } ?? false
-        case #selector(switchPreviewAndProduction(_:)):
-            let isPreview = selected.flatMap { URLInput.host(of: $0.url) }.flatMap(PreviewDeployment.of(host:)) != nil
-            menuItem.title = isPreview ? "Switch to Production" : "Switch to Preview"
-            return keyLittleWindow == nil && selected.flatMap(previewCounterpartURL(of:)) != nil
+        case #selector(switchEnvironment(_:)):
+            let target = keyLittleWindow == nil ? selected.flatMap { DeploymentEnvironments.next(in: deploymentEnvironments(of: $0)) } : nil
+            menuItem.title = Self.switchTitle(to: target?.kind ?? .production)
+            return target != nil
         case #selector(togglePreloadOnHover(_:)):
             menuItem.state = hoverPreloader.isEnabled ? .on : .off
             return true
