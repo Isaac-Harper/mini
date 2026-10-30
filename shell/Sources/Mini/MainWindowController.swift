@@ -147,8 +147,12 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
         splitViewController.toggleSidebar(nil)
     }
 
-    func setSidebarCollapsed(_ collapsed: Bool) {
-        sidebarItem.isCollapsed = collapsed
+    func setSidebarCollapsed(_ collapsed: Bool, animated: Bool = false) {
+        if animated {
+            sidebarItem.animator().isCollapsed = collapsed
+        } else {
+            sidebarItem.isCollapsed = collapsed
+        }
     }
 
     func hidePageCardUntilRevealed() {
@@ -163,9 +167,9 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
         }
     }
 
-    func setToolbarVisible(_ visible: Bool) {
+    func setToolbarVisible(_ visible: Bool, animated: Bool = false) {
         window?.toolbar?.isVisible = visible
-        webContentController.setPageFillsWindow(!visible)
+        webContentController.setPageFillsWindow(!visible, animated: animated)
         isToolbarVisible = visible
         updateCollapsedControls()
     }
@@ -243,13 +247,29 @@ final class WebContentViewController: NSViewController {
         view = container
     }
 
-    func setPageFillsWindow(_ fills: Bool) {
-        for constraint in insetConstraints {
-            constraint.constant = fills ? 0 : Self.cardInset
+    func setPageFillsWindow(_ fills: Bool, animated: Bool = false) {
+        guard animated else {
+            for constraint in insetConstraints {
+                constraint.constant = fills ? 0 : Self.cardInset
+            }
+            webAreaView.layer?.cornerRadius = fills ? 0 : Self.cardCornerRadius
+            cardView.showsShadow = !fills
+            return
         }
-        webAreaView.layer?.cornerRadius = fills ? 0 : Self.cardCornerRadius
-        cardView.showsShadow = !fills
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = Self.fullscreenGrowDuration
+            context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            context.allowsImplicitAnimation = true
+            for constraint in insetConstraints {
+                constraint.animator().constant = fills ? 0 : Self.cardInset
+            }
+            webAreaView.layer?.cornerRadius = fills ? 0 : Self.cardCornerRadius
+            cardView.showsShadow = !fills
+            view.layoutSubtreeIfNeeded()
+        }
     }
+
+    static let fullscreenGrowDuration: TimeInterval = 0.25
 
     func display(_ hostViews: [BrowserHostView], split: WebAreaView.SplitArrangement?, awaitsHostView: Bool) {
         view.layoutSubtreeIfNeeded()

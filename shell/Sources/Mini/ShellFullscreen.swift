@@ -37,21 +37,31 @@ extension ShellController {
         commandBar.close(restoringWebFocus: false)
         findBar.close(restoringWebFocus: false)
         statusBubble.hide()
-        windowController.setSidebarCollapsed(true)
-        windowController.setToolbarVisible(false)
+        let animates = !isNativeFullscreen && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        windowController.setSidebarCollapsed(true, animated: animates)
+        windowController.setToolbarVisible(false, animated: animates)
         refreshDisplayedTabs()
-        if !isNativeFullscreen {
-            window.toggleFullScreen(nil)
-        }
         focusSelectedWebContent()
+        guard !isNativeFullscreen else { return }
+        guard animates else {
+            window.toggleFullScreen(nil)
+            return
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + WebContentViewController.fullscreenGrowDuration) { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, self.pageFullscreen?.tab === tab, !self.window.styleMask.contains(.fullScreen) else { return }
+                self.window.toggleFullScreen(nil)
+            }
+        }
     }
 
     private func restoreFromPageFullscreen() {
         guard let pageFullscreen else { return }
         self.pageFullscreen = nil
-        windowController.setToolbarVisible(true)
+        let animates = !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        windowController.setToolbarVisible(true, animated: animates)
         if pageFullscreen.sidebarWasVisible {
-            windowController.setSidebarCollapsed(false)
+            windowController.setSidebarCollapsed(false, animated: animates)
         }
         if pageFullscreen.enteredNativeFullscreen, window.styleMask.contains(.fullScreen) {
             window.toggleFullScreen(nil)
