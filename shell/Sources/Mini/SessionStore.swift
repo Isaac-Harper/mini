@@ -39,8 +39,9 @@ struct SavedSpaceContents: Codable, Sendable {
     let splits: [SavedSplit]?
     let player: SavedPinnedTab?
     let selectsPlayer: Bool?
+    let hidesPlayer: Bool?
 
-    static let empty = SavedSpaceContents(tabs: [], selectedPath: nil, pinnedTabs: nil, selectedPinnedIndex: nil, splits: nil, player: nil, selectsPlayer: nil)
+    static let empty = SavedSpaceContents(tabs: [], selectedPath: nil, pinnedTabs: nil, selectedPinnedIndex: nil, splits: nil, player: nil, selectsPlayer: nil, hidesPlayer: nil)
 }
 
 struct SavedSpace: Codable {
@@ -144,13 +145,16 @@ final class SessionStore {
                 )
             },
             player: store.playerTab.map { SavedSpaceContents.SavedPinnedTab(pinnedURL: $0.pinnedURL ?? PlayerSlot.homeURL, url: $0.url, title: $0.title) },
-            selectsPlayer: store.playerTab.map { $0 === selected }
+            selectsPlayer: store.playerTab.map { $0 === selected },
+            hidesPlayer: store.showsPlayerSlot ? nil : true
         )
     }
 
     func restore(_ contents: SavedSpaceContents, into store: TabStore) {
         if let player = contents.player {
             store.newPlayerTab(url: player.url, title: player.title)
+        } else if contents.hidesPlayer == true {
+            store.setShowsPlayerSlot(false)
         }
         for savedPinnedTab in contents.pinnedTabs ?? [] {
             store.newPinnedTab(pinnedURL: savedPinnedTab.pinnedURL, url: savedPinnedTab.url, title: savedPinnedTab.title)

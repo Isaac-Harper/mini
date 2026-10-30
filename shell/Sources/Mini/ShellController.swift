@@ -308,6 +308,11 @@ final class ShellController: NSObject {
         performUndoable("Make Player Tab") { store.makePlayer(tab) }
     }
 
+    func createPlayer() {
+        clearRowSelection()
+        performUndoable("Make Player Tab") { store.select(store.newPlayerTab(url: PlayerSlot.homeURL, title: "")) }
+    }
+
     func expandPlayer() {
         guard let player = store.playerTab else { return }
         clearRowSelection()

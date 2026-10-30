@@ -12,7 +12,7 @@ final class SidebarKeyboardFocus {
 
 extension ShellController {
     private var sidebarKeyboardItems: [Tab] {
-        store.pinnedTabs + store.visibleTabs.map(\.tab)
+        (store.playerTab.map { [$0] } ?? []) + store.pinnedTabs + store.visibleTabs.map(\.tab)
     }
 
     func focusSidebarFromKeyboard() {

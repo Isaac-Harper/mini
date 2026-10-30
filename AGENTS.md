@@ -138,7 +138,7 @@ Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 - `SidebarSelection.swift`, `Sources/MiniRules/RowSelection.swift`: multi-select rows (pure range and toggle rules, unit tested) and the group actions. (tabs-and-undo)
 - `Downloads.swift`: downloads model and sidebar rows. (shell-ui)
 - `NowPlaying.swift`, `DominantColor.swift`: Now Playing row, mute button, artwork tint. (shell-ui)
-- `PlayerDock.swift`, `PlayerSlotView.swift`, `Sources/MiniRules/PlayerSlot.swift`: the Player tab's sidebar slot, the docked browser's child panel and hover controls, the dock page scripts; pure phase and presentation rules, unit tested. (shell-ui)
+- `PlayerDock.swift`, `PlayerSlotView.swift`, `Sources/MiniRules/PlayerSlot.swift`: the Player tab's sidebar slot (or the empty Player row), the docked browser's child panel and hover controls, the dock page scripts; pure phase and presentation rules, unit tested. (shell-ui)
 - `AirPlay.swift`: AirPlay video handoff, the row's route picker, the sound output fallback menu. (shell-ui)
 - `WeatherService.swift`, `WeatherRowView.swift`, `WeatherWeekView.swift`: weather row and 7-day popover. (shell-ui)
 - `CommandBarController.swift`, `CommandBarModel.swift`, `CommandSuggestionsView.swift`: the command bar. (shell-ui)

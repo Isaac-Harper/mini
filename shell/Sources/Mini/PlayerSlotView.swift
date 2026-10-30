@@ -33,6 +33,7 @@ struct PlayerSlotView: View {
         return shape.fill(.black)
             .aspectRatio(PlayerSlot.aspectRatio, contentMode: .fit)
             .frame(maxWidth: .infinity)
+            .overlay { SidebarFocusRing(shell: shell, tab: tab, cornerRadius: CornerMetrics.playerSlot) }
             .onGeometryChange(for: CGRect.self, of: { $0.frame(in: .global) }) { frame in
                 guard store === shell.store else { return }
                 shell.playerDock.reportSlotFrame(frame, in: isMainSidebar ? .main : .peek)
@@ -45,8 +46,7 @@ struct PlayerSlotView: View {
     }
 
     private var row: some View {
-        let shape = RoundedRectangle(cornerRadius: SidebarMetrics.rowCornerRadius, style: .continuous)
-        return HStack(spacing: SidebarMetrics.iconSpacing) {
+        HStack(spacing: SidebarMetrics.iconSpacing) {
             TabIconView(tab: tab, size: SidebarMetrics.iconSize)
             Text("Player")
                 .lineLimit(1)
@@ -54,21 +54,8 @@ struct PlayerSlotView: View {
             Spacer(minLength: 0)
             AudioToggleButton(shell: shell, tab: tab)
         }
-        .padding(.leading, SidebarMetrics.footerRowPadding)
-        .padding(.trailing, SidebarMetrics.rowTrailingPadding)
-        .frame(height: SidebarMetrics.rowHeight)
-        .background {
-            if isSelected {
-                if let namespace {
-                    shape.fill(.tint.opacity(0.22)).matchedGeometryEffect(id: "pinnedSelection", in: namespace)
-                } else {
-                    shape.fill(.tint.opacity(0.22))
-                }
-            }
-        }
-        .hoverHighlight(suppressed: isSelected)
-        .glassEffect(.regular.interactive(), in: shape)
-        .contentShape(shape)
+        .modifier(PlayerRowChrome(isSelected: isSelected, namespace: namespace))
+        .overlay { SidebarFocusRing(shell: shell, tab: tab, cornerRadius: SidebarMetrics.rowCornerRadius) }
         .help(tab.displayTitle)
         .onTapGesture {
             Haptics.controlActivated(.press)
@@ -76,6 +63,63 @@ struct PlayerSlotView: View {
             shell.store.select(tab)
         }
         .transition(.opacity)
+    }
+}
+
+struct EmptyPlayerRow: View {
+    let shell: ShellController
+
+    var body: some View {
+        HStack(spacing: SidebarMetrics.iconSpacing) {
+            if let favicon = shell.faviconCache.image(forPageAt: PlayerSlot.homeURL) {
+                FaviconView(image: favicon, size: SidebarMetrics.iconSize)
+            } else {
+                Image(systemName: "play.rectangle.fill")
+                    .resizable()
+                    .scaledToFit()
+                    .foregroundStyle(.red)
+                    .frame(width: SidebarMetrics.iconSize, height: SidebarMetrics.iconSize)
+            }
+            Text("Player")
+                .lineLimit(1)
+                .foregroundStyle(.primary)
+            Spacer(minLength: 0)
+        }
+        .modifier(PlayerRowChrome(isSelected: false, namespace: nil))
+        .help("YouTube")
+        .onTapGesture {
+            Haptics.controlActivated(.press)
+            shell.createPlayer()
+        }
+        .contextMenu {
+            Button("Hide Player", systemImage: "eye.slash") { shell.performUndoable("Hide Player") { shell.store.setShowsPlayerSlot(false) } }
+        }
+        .transition(.opacity)
+    }
+}
+
+private struct PlayerRowChrome: ViewModifier {
+    let isSelected: Bool
+    let namespace: Namespace.ID?
+
+    func body(content: Content) -> some View {
+        let shape = RoundedRectangle(cornerRadius: SidebarMetrics.rowCornerRadius, style: .continuous)
+        return content
+            .padding(.leading, SidebarMetrics.footerRowPadding)
+            .padding(.trailing, SidebarMetrics.rowTrailingPadding)
+            .frame(height: SidebarMetrics.rowHeight)
+            .background {
+                if isSelected {
+                    if let namespace {
+                        shape.fill(.tint.opacity(0.22)).matchedGeometryEffect(id: "pinnedSelection", in: namespace)
+                    } else {
+                        shape.fill(.tint.opacity(0.22))
+                    }
+                }
+            }
+            .hoverHighlight(suppressed: isSelected)
+            .glassEffect(.regular.interactive(), in: shape)
+            .contentShape(shape)
     }
 }
 
@@ -99,7 +143,7 @@ struct PlayerDockControls: View {
 
     var body: some View {
         ZStack {
-            Color.clear
+            Color.black.opacity(dock.isHovered ? 0.25 : 0)
                 .contentShape(Rectangle())
                 .onTapGesture {
                     Haptics.controlActivated(.toggle)
@@ -138,7 +182,6 @@ struct PlayerDockControls: View {
             }
             .padding(SidebarMetrics.playerControlInset)
         }
-        .background(.black.opacity(0.25))
     }
 
     private func control(_ symbol: String, help: String, feedback: ControlFeedback, size: CGFloat = SidebarMetrics.playerControlSize, action: @escaping () -> Void) -> some View {

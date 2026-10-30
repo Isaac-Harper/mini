@@ -281,7 +281,7 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
         let store = shell.store
         withoutAnimation {
             let historyMatches = shell.history.store(forSpace: shell.currentSpace.id).search(field.stringValue, limit: 60)
-            model.update(query: field.stringValue, tabs: store.allTabs, selectedTab: store.selectedTab, archived: shell.archive.entries, history: historyMatches)
+            model.update(query: field.stringValue, tabs: store.allTabs, playerTab: store.playerTab, selectedTab: store.selectedTab, archived: shell.archive.entries, history: historyMatches)
         }
         updateIcon()
         searchSuggestionFetcher.fetch(model.trimmedQuery) { [weak self] texts, query in

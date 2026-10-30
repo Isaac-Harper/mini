@@ -108,6 +108,10 @@ struct SpaceTabsView: View {
                 PlayerSlotView(shell: shell, tab: player)
                     .padding(.horizontal, SidebarMetrics.edgeInset)
                     .padding(.bottom, SidebarMetrics.sectionSpacing)
+            } else if store.showsPlayerSlot {
+                EmptyPlayerRow(shell: shell)
+                    .padding(.horizontal, SidebarMetrics.edgeInset)
+                    .padding(.bottom, SidebarMetrics.sectionSpacing)
             }
             if !store.pinnedTabs.isEmpty || shell.sidebarDrag.isDraggingUnpinnedTab {
                 PinnedTabsView(shell: shell)

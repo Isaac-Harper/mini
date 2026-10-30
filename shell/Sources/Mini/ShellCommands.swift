@@ -247,6 +247,10 @@ extension ShellController: NSMenuItemValidation {
         }
     }
 
+    @objc func showPlayerSlot(_ sender: Any?) {
+        performUndoable("Show Player") { store.setShowsPlayerSlot(true) }
+    }
+
     @objc func archiveSelectedTabs(_ sender: Any?) {
         let tabs = archivableTabs
         if !tabs.isEmpty { archiveTabs(tabs) }
@@ -420,6 +424,8 @@ extension ShellController: NSMenuItemValidation {
             let isPlayer = selected.map { $0 === store.playerTab } ?? false
             menuItem.title = isPlayer ? "Remove Player Tab" : "Make Player Tab"
             return keyLittleWindow == nil && (isPlayer || selected.map { PlayerSlot.isYouTube($0.url) } ?? false)
+        case #selector(showPlayerSlot(_:)):
+            return keyLittleWindow == nil && !store.showsPlayerSlot
         case #selector(archiveSelectedTabs(_:)):
             let count = archivableTabs.count
             menuItem.title = count > 1 ? "Archive \(count) Tabs" : "Archive Tab"

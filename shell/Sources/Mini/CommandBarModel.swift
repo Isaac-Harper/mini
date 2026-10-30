@@ -56,6 +56,7 @@ final class CommandBarModel {
     @ObservationIgnored private var query = ""
     @ObservationIgnored private var tabs: [Tab] = []
     @ObservationIgnored private weak var selectedTab: Tab?
+    @ObservationIgnored private weak var playerTab: Tab?
     @ObservationIgnored private var archived: [ArchivedTab] = []
     @ObservationIgnored private var history: [HistoryEntry] = []
     @ObservationIgnored private var searchSuggestions: [String] = []
@@ -123,9 +124,10 @@ final class CommandBarModel {
         selectedIndex = suggestions.firstIndex { $0.id == previouslySelectedIdentifier } ?? 0
     }
 
-    func update(query: String, tabs: [Tab], selectedTab: Tab?, archived: [ArchivedTab], history: [HistoryEntry]) {
+    func update(query: String, tabs: [Tab], playerTab: Tab?, selectedTab: Tab?, archived: [ArchivedTab], history: [HistoryEntry]) {
         self.query = query
         self.tabs = tabs
+        self.playerTab = playerTab
         self.selectedTab = selectedTab
         self.archived = archived
         self.history = history
@@ -151,7 +153,7 @@ final class CommandBarModel {
         let matchingTabs = tabs
             .filter { tab in
                 guard tab !== selectedTab else { return false }
-                let haystack = "\(tab.title) \(URLInput.host(of: tab.url) ?? tab.url)".lowercased()
+                let haystack = "\(tab === playerTab ? "Player " : "")\(tab.title) \(URLInput.host(of: tab.url) ?? tab.url)".lowercased()
                 return tokens.allSatisfy { haystack.contains($0) }
             }
             .prefix(Self.maximumOtherRows)

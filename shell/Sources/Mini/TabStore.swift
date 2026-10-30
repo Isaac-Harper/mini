@@ -62,6 +62,7 @@ final class TabSplit {
 @Observable
 final class TabStore {
     private(set) var playerTab: Tab?
+    private(set) var showsPlayerSlot = true
     private(set) var pinnedTabs: [Tab] = []
     private(set) var savedRootTabs: [Tab] = []
     private(set) var rootTabs: [Tab] = []
@@ -293,6 +294,7 @@ final class TabStore {
         let tab = makeTab(url: url, title: title)
         tab.pinnedURL = PlayerSlot.homeURL
         playerTab = tab
+        showsPlayerSlot = true
         observer?.tabStoreDidChangeStructure(self)
         return tab
     }
@@ -319,12 +321,21 @@ final class TabStore {
         }
         tab.pinnedURL = PlayerSlot.homeURL
         playerTab = tab
+        showsPlayerSlot = true
         observer?.tabStoreDidChangeStructure(self)
     }
 
     func removePlayer() {
         guard let playerTab else { return }
         demotePlayer(playerTab)
+        showsPlayerSlot = false
+        observer?.tabStoreDidChangeStructure(self)
+    }
+
+    func setShowsPlayerSlot(_ shows: Bool) {
+        precondition(shows || playerTab == nil, "Hiding the player slot while it holds a player")
+        guard shows != showsPlayerSlot else { return }
+        showsPlayerSlot = shows
         observer?.tabStoreDidChangeStructure(self)
     }
 
@@ -541,7 +552,7 @@ final class TabStore {
         return removedTabs
     }
 
-    func restoreArrangement(player: Tab?, pinned: [Tab], savedRoots: [Tab], roots: [Tab], splits restoredSplits: [TabSplit], selecting target: Tab?, removing removedTabs: [Tab], reviving revivedTabs: [Tab]) {
+    func restoreArrangement(player: Tab?, showsPlayerSlot restoredShowsPlayerSlot: Bool, pinned: [Tab], savedRoots: [Tab], roots: [Tab], splits restoredSplits: [TabSplit], selecting target: Tab?, removing removedTabs: [Tab], reviving revivedTabs: [Tab]) {
         for tab in removedTabs {
             tabsByIdentifier[tab.id] = nil
         }
@@ -553,6 +564,7 @@ final class TabStore {
             }
         }
         playerTab = player
+        showsPlayerSlot = restoredShowsPlayerSlot
         pinnedTabs = pinned
         savedRootTabs = savedRoots
         rootTabs = roots

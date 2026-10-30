@@ -44,6 +44,7 @@ struct TabArrangementSnapshot {
     }
 
     let player: Node?
+    let showsPlayerSlot: Bool
     let pinned: [Node]
     let savedRoots: [Node]
     let roots: [Node]
@@ -52,6 +53,7 @@ struct TabArrangementSnapshot {
 
     init(of store: TabStore) {
         player = store.playerTab.map(Node.init)
+        showsPlayerSlot = store.showsPlayerSlot
         pinned = store.pinnedTabs.map(Node.init)
         savedRoots = store.savedRootTabs.map(Node.init)
         roots = store.rootTabs.map(Node.init)
@@ -64,7 +66,7 @@ struct TabArrangementSnapshot {
     var signature: String {
         let tree = [player.map { [$0] } ?? [], pinned, savedRoots, roots].map { $0.map(\.signature).joined(separator: ";") }.joined(separator: "/")
         let pairs = splits.map { "\($0.leading.id)-\($0.trailing.id)" }.joined(separator: ",")
-        return tree + "#" + pairs
+        return tree + "#" + pairs + "#\(showsPlayerSlot)"
     }
 }
 
@@ -339,6 +341,7 @@ extension ShellController {
         }
         store.restoreArrangement(
             player: player,
+            showsPlayerSlot: target.showsPlayerSlot || player != nil,
             pinned: pinned,
             savedRoots: savedRoots,
             roots: roots,
