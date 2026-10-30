@@ -143,6 +143,7 @@ pub fn handle_signal(tab: MiniTabId, browser: &Browser, message: &str) {
             || crate::error_page::handle_signal(browser, rest)
             || crate::vitals::handle_signal(tab, browser, rest)
             || crate::page_health::handle_signal(tab, browser, rest)
+            || crate::link_preview::handle_signal(tab, browser, rest)
             || crate::horizontal_scroll::handle_signal(tab, browser, rest)
             || crate::scroll_position::handle_signal(tab, browser, rest)
             || crate::page_reply::handle_signal(tab, rest))

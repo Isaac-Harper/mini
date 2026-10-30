@@ -47,6 +47,7 @@ final class Tab: Identifiable {
     var vitals = WebVitals()
     var edge: EdgeSummary?
     var health = PageHealth()
+    @ObservationIgnored var linkPreviewTags: LinkPreviewTags?
     var reloadDurationText: String?
     var pageColorScheme = PageColorScheme.system
     var pageReducesMotion = false

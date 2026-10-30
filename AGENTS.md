@@ -100,6 +100,8 @@ Rust core (`core/`, detail in cef-and-core.md):
 - `src/downloads.rs`: download destination naming and progress.
 - `src/page_source.rs`: main-frame source for View Source.
 - `src/page_appearance.rs`: DevTools media emulation (prefers-color-scheme, prefers-reduced-motion) and page snapshots for Page Appearance.
+- `src/link_preview.rs`: og:/twitter: link preview tags script and report parsing.
+- `src/screenshot.rs`: the one DevTools page capture (JPEG for Page Appearance, PNG with scrollbars hidden and an element box for Copy Screenshot).
 - `src/preload.rs`: the speculation rules prefetch script for Preload on Hover.
 - `src/scroll_position.rs`: main-frame scroll fraction read and restore for the environment switch.
 - `src/page_reply.rs`: the `:pagetext:<request>:` console reply channel (parse, dispatch to `page_text_received`) shared by the two request scripts below.
@@ -159,7 +161,7 @@ Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 - `OverlayAnimation.swift`: shared overlay appear and disappear. (shell-ui)
 - `FindBarController.swift`: find in page. (shell-ui)
 - `StatusBubbleController.swift`: link hover bubble. (shell-ui)
-- `ToastController.swift`: transient toast. (shell-ui)
+- `ToastController.swift`: transient toast, one-line or a card. (shell-ui)
 - `ErrorPages.swift`, `Sources/MiniRules/LoadErrorPage.swift`: styled error pages and offline auto retry. (shell-ui)
 - `PageTextRequests.swift`, `Sources/MiniRules/TextStyle.swift`: request/reply for Copy Text Style and Copy Page as Markdown; computed style to CSS block and sRGB to OKLCH, unit tested. (shell-ui)
 - `CrashOverlayController.swift`: crashed page and waiting-for-localhost overlay. (shell-ui)
@@ -167,6 +169,8 @@ Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 - `LoginFillController.swift`, `LoginFillCardView.swift`: password fill card. (shell-ui)
 - `PageContextMenu.swift`: native page context menu. (shell-ui)
 - `NavigationHistory.swift`: back/forward history menus. (shell-ui)
+- `LinkPreviewToast.swift`, `Sources/MiniRules/LinkPreview.swift`: the unfurl card shown on Copy URL, its image fetch, unit tested tag precedence, URL resolution and diagnostics. (shell-ui)
+- `PageScreenshot.swift`, `Sources/MiniRules/ScreenshotGeometry.swift`: Copy Screenshot (page and element), card corner clipping, shutter press and the draggable thumbnail; unit tested geometry. (shell-ui)
 - `SourceWindowController.swift`, `Sources/MiniRules/SourceHighlighting.swift`: View Source window and its HTML/CSS/JS tokenizer, unit tested. (shell-ui)
 - `SwipeNavigationController.swift`: two-finger swipe back and forward. (shell-ui)
 - `ShellFullscreen.swift`: page fullscreen. (shell-ui)

@@ -8,6 +8,7 @@ mod editable_focus;
 mod error_page;
 mod favicon;
 mod horizontal_scroll;
+mod link_preview;
 mod login;
 mod media;
 mod navigation;
@@ -22,6 +23,7 @@ mod preload;
 mod registrable_domain;
 mod resource_requests;
 mod response_headers;
+mod screenshot;
 mod scroll_position;
 mod site_data;
 mod state;
@@ -88,7 +90,9 @@ pub struct MiniCallbacks {
     pub main_frame_load_failed: Option<unsafe extern "C" fn(MiniTabId, i32, *const c_char)>,
     pub page_vitals_changed: Option<unsafe extern "C" fn(MiniTabId, f64, f64, f64, f64, f64)>,
     pub main_frame_headers_received: Option<unsafe extern "C" fn(MiniTabId, *const c_char)>,
-    pub page_snapshot_received: Option<unsafe extern "C" fn(MiniTabId, u64, *const u8, usize)>,
+    pub link_preview_reported: Option<unsafe extern "C" fn(MiniTabId, *const link_preview::MiniLinkPreview)>,
+    pub page_snapshot_received:
+        Option<unsafe extern "C" fn(MiniTabId, u64, *const u8, usize, *const screenshot::MiniElementBox)>,
     pub scroll_fraction_received: Option<unsafe extern "C" fn(MiniTabId, f64)>,
     pub page_health_wanted: Option<unsafe extern "C" fn(MiniTabId, *const c_char) -> bool>,
     pub page_errors_reported: Option<unsafe extern "C" fn(MiniTabId, u32, *const c_char)>,
@@ -563,9 +567,21 @@ pub extern "C" fn mini_browser_request_text_style(tab: MiniTabId, request: u64) 
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn mini_browser_capture_snapshot(tab: MiniTabId, request: u64) {
+pub extern "C" fn mini_browser_capture_snapshot(
+    tab: MiniTabId,
+    request: u64,
+    format: i32,
+    measures_element: bool,
+    x: f64,
+    y: f64,
+) {
+    let format = screenshot::CaptureFormat::from_raw(format);
+    assert!(
+        !measures_element || (format == screenshot::CaptureFormat::Png && x.is_finite() && y.is_finite()),
+        "element point {x}, {y} needs a PNG capture and a finite point"
+    );
     if let Some(browser) = created_browser(tab) {
-        page_appearance::capture_snapshot(tab, &browser, request);
+        screenshot::capture(tab, &browser, request, format, measures_element.then_some((x, y)));
     }
 }
 

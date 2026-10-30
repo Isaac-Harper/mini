@@ -2,7 +2,7 @@ use cef::*;
 use std::ffi::c_void;
 
 use crate::{
-    MiniTabId, ad_blocking, authentication, context_menu, downloads, editable_focus, error_page, favicon, horizontal_scroll, login, media, notifications, page_health, permissions, theme_color, vitals, webauthn,
+    MiniTabId, ad_blocking, authentication, context_menu, downloads, editable_focus, error_page, favicon, horizontal_scroll, link_preview, login, media, notifications, page_health, permissions, theme_color, vitals, webauthn,
     resource_requests::MiniResourceRequestHandler,
     state::{TabState, c_string, callbacks, with_core},
 };
@@ -304,6 +304,12 @@ wrap_load_handler! {
                         0,
                     );
                 }
+                let preview_script = link_preview::script(frame, login::token());
+                frame.execute_java_script(
+                    Some(&CefString::from(preview_script.as_str())),
+                    Some(&CefString::from(frame_url.as_str())),
+                    0,
+                );
             }
             let editable_script = editable_focus::script(frame, login::token());
             frame.execute_java_script(

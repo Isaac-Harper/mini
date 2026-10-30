@@ -72,6 +72,7 @@ enum MainMenu {
         let pageMarkdownItem = item("Copy Page as Markdown", #selector(ShellController.copyPageAsMarkdown(_:)), "c", [.command, .option, .shift], target: commands, symbol: "doc.richtext")
         pageMarkdownItem.isAlternate = true
         menu.addItem(pageMarkdownItem)
+        menu.addItem(item("Copy Screenshot", #selector(ShellController.copyScreenshot(_:)), "S", [.command], target: commands, symbol: "camera.viewfinder"))
         menu.addItem(.separator())
         menu.addItem(item("Find", #selector(ShellController.showFindBar(_:)), "f", target: commands, symbol: "magnifyingglass"))
         menu.addItem(item("Find Next", #selector(ShellController.findNextMatch(_:)), "g", target: commands, symbol: "chevron.down"))

@@ -101,6 +101,12 @@ final class PageContextMenu: NSObject {
             }
             menu.addItem(.separator())
         }
+        if isMainWindowTab, !request.has(MINI_CONTEXT_EDITABLE) {
+            add(to: menu, "Copy Screenshot", symbol: "camera.viewfinder") { [shell, tab] in PageScreenshot.capture(tab, in: shell, elementAt: nil) }
+            let point = request.location
+            add(to: menu, "Copy Screenshot of Element", symbol: "viewfinder.rectangular") { [shell, tab] in PageScreenshot.capture(tab, in: shell, elementAt: point) }
+            menu.addItem(.separator())
+        }
         if !request.has(MINI_CONTEXT_LINK), !request.has(MINI_CONTEXT_IMAGE), !request.has(MINI_CONTEXT_SELECTION), !request.has(MINI_CONTEXT_EDITABLE) {
             add(to: menu, "Back", symbol: "chevron.left", enabled: tab.canGoBack) { [tab] in mini_browser_go_back(tab.id) }
             add(to: menu, "Forward", symbol: "chevron.right", enabled: tab.canGoForward) { [tab] in mini_browser_go_forward(tab.id) }

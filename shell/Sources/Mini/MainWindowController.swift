@@ -21,6 +21,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
 
     var rootView: NSView { webContentController.view }
     var webAreaView: WebAreaView { webContentController.webAreaView }
+    var pageCardView: NSView { webContentController.cardView }
     var isSidebarVisible: Bool { !sidebarItem.isCollapsed }
     var onSidebarLayoutChanged: (() -> Void)?
 

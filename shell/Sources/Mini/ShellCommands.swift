@@ -332,7 +332,13 @@ extension ShellController: NSMenuItemValidation {
         guard let url = keyLittleWindow?.tab.url ?? store.selectedTab?.url, !url.isEmpty else { return }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(url, forType: .string)
+        let tab = keyLittleWindow?.tab ?? store.selectedTab
+        if let tab, showLinkPreviewToast(for: tab) { return }
         toast.show("Copied")
+    }
+
+    @objc func copyScreenshot(_ sender: Any?) {
+        if let tab = mainWindowBrowserTab { PageScreenshot.capture(tab, in: self, elementAt: nil) }
     }
 
     private var commandPageTab: Tab? {
@@ -482,6 +488,8 @@ extension ShellController: NSMenuItemValidation {
             let count = archivableTabs.count
             menuItem.title = count > 1 ? "Archive \(count) Tabs" : "Archive Tab"
             return keyLittleWindow == nil && count > 0
+        case #selector(copyScreenshot(_:)):
+            return mainWindowBrowserTab != nil
         case #selector(copyTabMarkdownLink(_:)):
             return commandPageTab != nil
         case #selector(copyPageAsMarkdown(_:)):
