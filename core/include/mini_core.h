@@ -85,6 +85,38 @@ typedef enum MiniEditCommand {
   MINI_EDIT_SELECT_ALL = 6,
 } MiniEditCommand;
 
+// Link preview tags of the main frame's http(s) document, as a page's
+// unfurl in a chat app would read them. Strings are "" when absent and
+// only valid during the call; image URLs are as written in the page
+// (possibly relative to base_url). og_image is the first of og:image,
+// og:image:url, og:image:secure_url; twitter_image the first of
+// twitter:image, twitter:image:src. image_width/height are the declared
+// og:image:width/height, 0 when absent.
+typedef struct MiniLinkPreview {
+  const char *base_url;
+  const char *title_tag;
+  const char *og_title;
+  const char *twitter_title;
+  const char *og_description;
+  const char *twitter_description;
+  const char *description;
+  const char *og_image;
+  const char *twitter_image;
+  uint32_t image_width;
+  uint32_t image_height;
+} MiniLinkPreview;
+
+// Bounding box of the element under a point, in CSS pixels relative to the
+// viewport (window.devicePixelRatio device pixels each, which includes
+// page zoom).
+typedef struct MiniElementBox {
+  double x;
+  double y;
+  double width;
+  double height;
+  double pixel_ratio;
+} MiniElementBox;
+
 // Every callback is invoked on the main thread. Strings are UTF-8 and only
 // valid for the duration of the call.
 typedef struct MiniCallbacks {
@@ -197,9 +229,14 @@ typedef struct MiniCallbacks {
   // x-vercel-cache, x-vercel-id, cf-cache-status, cf-ray, x-nextjs-cache,
   // x-nextjs-prerender. Never cookies or anything else.
   void (*main_frame_headers_received)(MiniTabId tab, const char *headers);
-  // Result of mini_browser_capture_snapshot: the visible page as JPEG bytes
-  // at the display's scale, length 0 when it could not be captured.
-  void (*page_snapshot_received)(MiniTabId tab, uint64_t request, const uint8_t *image, size_t length);
+  // The main frame's link preview tags, sent after DOMContentLoaded and again
+  // after the load event when they changed.
+  void (*link_preview_reported)(MiniTabId tab, const MiniLinkPreview *preview);
+  // Result of mini_browser_capture_snapshot: the visible page at the
+  // display's scale in the requested format (length 0 when it could not be
+  // captured), and the element's box when one was measured, else NULL.
+  void (*page_snapshot_received)(MiniTabId tab, uint64_t request, const uint8_t *image, size_t length,
+                                 const MiniElementBox *element);
   void (*browser_closed)(MiniTabId tab);
   void (*all_browsers_closed)(void);
   // Mini was launched again on this profile (CEF's already-running relaunch).
@@ -301,9 +338,18 @@ typedef enum MiniColorScheme {
 // protocol (Emulation.setEmulatedMedia). It lasts for the browser's life,
 // across navigations and renderer restarts.
 void mini_browser_set_emulated_media(MiniTabId tab, int32_t color_scheme, bool reduced_motion);
-// Captures the visible page (Page.captureScreenshot); page_snapshot_received
-// delivers it with the same request number.
-void mini_browser_capture_snapshot(MiniTabId tab, uint64_t request);
+typedef enum MiniCaptureFormat {
+  MINI_CAPTURE_JPEG = 0,
+  MINI_CAPTURE_PNG = 1,
+} MiniCaptureFormat;
+// Captures the visible page through DevTools Page.captureScreenshot;
+// page_snapshot_received delivers it with the same request number.
+// format is a MiniCaptureFormat: JPEG is quick (quality 90, for a
+// crossfade); PNG hides the scrollbars around the capture
+// (captureBeyondViewport false) and, with measures_element, also measures
+// the element at x/y (CSS pixels in the viewport). measures_element needs PNG.
+void mini_browser_capture_snapshot(MiniTabId tab, uint64_t request, int32_t format, bool measures_element, double x,
+                                   double y);
 // Opens the native print panel for the page.
 void mini_browser_print(MiniTabId tab);
 void mini_browser_close(MiniTabId tab);

@@ -69,6 +69,7 @@ enum MainMenu {
         menu.addItem(item("Select All", #selector(NSText.selectAll(_:)), "a", symbol: "checkmark.circle"))
         menu.addItem(item("Copy URL", #selector(ShellController.copyTabAddress(_:)), "c", [.command, .shift], target: commands, symbol: "link"))
         menu.addItem(item("Copy as Markdown Link", #selector(ShellController.copyTabMarkdownLink(_:)), "c", [.command, .option], target: commands, symbol: "link"))
+        menu.addItem(item("Copy Screenshot", #selector(ShellController.copyScreenshot(_:)), "S", [.command], target: commands, symbol: "camera.viewfinder"))
         menu.addItem(.separator())
         menu.addItem(item("Find", #selector(ShellController.showFindBar(_:)), "f", target: commands, symbol: "magnifyingglass"))
         menu.addItem(item("Find Next", #selector(ShellController.findNextMatch(_:)), "g", target: commands, symbol: "chevron.down"))

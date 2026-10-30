@@ -74,6 +74,7 @@ extension ShellController {
         }
         if isLoading, !tab.isLoading {
             tab.vitals = WebVitals()
+            tab.linkPreviewTags = nil
         }
         tab.isLoading = isLoading
         if tab === store.selectedTab {
@@ -269,6 +270,10 @@ extension ShellController {
     func mainFrameHeadersReceived(_ identifier: MiniTabId, edge: EdgeSummary?) {
         guard let tab = liveTab(identifier), tab.edge != edge else { return }
         tab.edge = edge
+    }
+
+    func linkPreviewReported(_ identifier: MiniTabId, tags: LinkPreviewTags) {
+        liveTab(identifier)?.linkPreviewTags = tags
     }
 
     func sourceReceived(_ identifier: MiniTabId, request: UInt64, source: String) {

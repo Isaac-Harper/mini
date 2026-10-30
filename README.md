@@ -38,6 +38,8 @@ Mini is an open source exploration project: a personal, minimal browser built to
 - View > Page Appearance shows one tab's page in light or dark, or with reduced motion, whatever macOS is set to; the switch crossfades, and a chip in the address pill says so (click it to follow the system again)
 - Option-drag the page's right edge to narrow it and test breakpoints: the page's real viewport changes, the width shows beside the edge, and it clicks into place at 375, 768, 1024 and 1280. Double-click the edge to go back to full width
 - Native right-click menus on pages: links, images, selections, spelling suggestions, Inspect Element
+- Copying a page's address (⇧⌘C) shows how the link will unfurl in Slack, iMessage or X: the preview image, title and host, with a quiet note when the image is missing or the wrong shape, or the page has no title
+- Copy Screenshot (Edit menu, ⇧⌘S, or right-click the page) copies the visible page as a PNG with the card's rounded corners and no scrollbars; Copy Screenshot of Element copies just the element you right-clicked. The thumbnail in the confirmation can be dragged into other apps
 - Hovering a link shows its address in a small bubble at the bottom of the page
 - No extensions, sync, accounts or settings window
 
@@ -102,7 +104,8 @@ The stock CEF build plays VP8, VP9, AV1, Opus and other open formats, but not H.
 | ⌃⌘S | Show or hide the sidebar |
 | ⌃⌘\ | Split the current tab with the last one you used, or close the split |
 | ⌘\ | Fill password |
-| ⇧⌘C | Copy the page address |
+| ⇧⌘C | Copy the page address (shows its link preview) |
+| ⇧⌘S | Copy a screenshot of the page |
 | ⌘Y | Show all history |
 | ⌘[, ⌘] | Back and forward (right-click or hold the arrow buttons for the history list) |
 | ⌘R, ⌘. | Reload and stop |

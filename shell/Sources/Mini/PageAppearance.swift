@@ -66,8 +66,12 @@ extension ShellController {
         return tab != nil
     }
 
-    func pageSnapshotReceived(_ identifier: MiniTabId, request: UInt64, image: Data) {
-        pageAppearance.snapshotReceived(identifier, request: request, image: image)
+    func pageSnapshotReceived(_ identifier: MiniTabId, request: UInt64, image: Data, elementBox: CGRect?, pixelRatio: Double?) {
+        if PageScreenshot.isPending(request) {
+            screenshotCaptured(identifier, request: request, pngData: image, elementBox: elementBox, pixelRatio: pixelRatio)
+        } else {
+            pageAppearance.snapshotReceived(identifier, request: request, image: image)
+        }
     }
 }
 
@@ -79,7 +83,6 @@ final class PageAppearanceTransitions {
 
     private unowned let shell: ShellController
     private var pendingSnapshots: [MiniTabId: UInt64] = [:]
-    private var nextRequest: UInt64 = 0
 
     init(shell: ShellController) {
         self.shell = shell
@@ -93,10 +96,9 @@ final class PageAppearanceTransitions {
             apply(tab)
             return
         }
-        nextRequest += 1
-        let request = nextRequest
+        let request = PageSnapshotRequest.next()
         pendingSnapshots[tab.id] = request
-        mini_browser_capture_snapshot(tab.id, request)
+        mini_browser_capture_snapshot(tab.id, request, Int32(MINI_CAPTURE_JPEG.rawValue), false, 0, 0)
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.snapshotTimeout) { [weak self, weak tab] in
             MainActor.assumeIsolated {
                 guard let self, let tab, self.pendingSnapshots[tab.id] == request else { return }

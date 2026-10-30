@@ -46,6 +46,7 @@ final class Tab: Identifiable {
     var themeColor: NSColor?
     var vitals = WebVitals()
     var edge: EdgeSummary?
+    @ObservationIgnored var linkPreviewTags: LinkPreviewTags?
     var reloadDurationText: String?
     var pageColorScheme = PageColorScheme.system
     var pageReducesMotion = false

@@ -142,6 +142,7 @@ pub fn handle_signal(tab: MiniTabId, browser: &Browser, message: &str) {
             || crate::theme_color::handle_signal(tab, browser, rest)
             || crate::error_page::handle_signal(browser, rest)
             || crate::vitals::handle_signal(tab, browser, rest)
+            || crate::link_preview::handle_signal(tab, browser, rest)
             || crate::horizontal_scroll::handle_signal(tab, browser, rest))
     {
         return;

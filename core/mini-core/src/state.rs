@@ -44,7 +44,8 @@ pub struct Callbacks {
     pub main_frame_load_failed: unsafe extern "C" fn(MiniTabId, i32, *const c_char),
     pub page_vitals_changed: unsafe extern "C" fn(MiniTabId, f64, f64, f64, f64, f64),
     pub main_frame_headers_received: unsafe extern "C" fn(MiniTabId, *const c_char),
-    pub page_snapshot_received: unsafe extern "C" fn(MiniTabId, u64, *const u8, usize),
+    pub link_preview_reported: unsafe extern "C" fn(MiniTabId, *const crate::link_preview::MiniLinkPreview),
+    pub page_snapshot_received: unsafe extern "C" fn(MiniTabId, u64, *const u8, usize, *const crate::screenshot::MiniElementBox),
     pub browser_closed: unsafe extern "C" fn(MiniTabId),
     pub all_browsers_closed: unsafe extern "C" fn(),
     pub app_relaunched: unsafe extern "C" fn(*const *const c_char, usize),
@@ -152,6 +153,9 @@ impl Callbacks {
             main_frame_headers_received: table
                 .main_frame_headers_received
                 .expect("MiniCallbacks.main_frame_headers_received is null"),
+            link_preview_reported: table
+                .link_preview_reported
+                .expect("MiniCallbacks.link_preview_reported is null"),
             page_snapshot_received: table
                 .page_snapshot_received
                 .expect("MiniCallbacks.page_snapshot_received is null"),

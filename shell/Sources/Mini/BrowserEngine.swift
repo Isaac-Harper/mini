@@ -203,9 +203,18 @@ final class BrowserEngine {
                     BrowserEngine.shared.requiredShell.mainFrameHeadersReceived(identifier, edge: EdgeHeaders.summary(of: EdgeHeaders.parse(lines: headers)))
                 }
             },
-            page_snapshot_received: { identifier, request, bytes, length in
+            link_preview_reported: { identifier, preview in
+                guard let preview else { preconditionFailure("link_preview_reported without a preview") }
+                let tags = LinkPreviewTags(preview.pointee)
+                MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.linkPreviewReported(identifier, tags: tags) }
+            },
+            page_snapshot_received: { identifier, request, bytes, length, element in
                 let image = length > 0 && bytes != nil ? Data(bytes: bytes!, count: length) : Data()
-                MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.pageSnapshotReceived(identifier, request: request, image: image) }
+                let elementBox = element.map { CGRect(x: $0.pointee.x, y: $0.pointee.y, width: $0.pointee.width, height: $0.pointee.height) }
+                let pixelRatio = element?.pointee.pixel_ratio
+                MainActor.assumeIsolated {
+                    BrowserEngine.shared.requiredShell.pageSnapshotReceived(identifier, request: request, image: image, elementBox: elementBox, pixelRatio: pixelRatio)
+                }
             },
             browser_closed: { identifier in
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.browserClosed(identifier) }
@@ -228,4 +237,14 @@ final class BrowserEngine {
 private func requiredString(_ pointer: UnsafePointer<CChar>?) -> String {
     guard let pointer else { preconditionFailure("Core passed a null string") }
     return String(cString: pointer)
+}
+
+extension LinkPreviewTags {
+    init(_ preview: MiniLinkPreview) {
+        self.init(baseURL: requiredString(preview.base_url), titleTag: requiredString(preview.title_tag), openGraphTitle: requiredString(preview.og_title),
+                  twitterTitle: requiredString(preview.twitter_title), openGraphDescription: requiredString(preview.og_description),
+                  twitterDescription: requiredString(preview.twitter_description), description: requiredString(preview.description),
+                  openGraphImage: requiredString(preview.og_image), twitterImage: requiredString(preview.twitter_image),
+                  declaredImageWidth: Int(preview.image_width), declaredImageHeight: Int(preview.image_height))
+    }
 }
