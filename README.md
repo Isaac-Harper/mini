@@ -15,7 +15,7 @@ Mini is an open source exploration project: a personal, minimal browser built to
 - Spaces (Personal and Work to start), each with its own tabs, pins and its own cookies and logins; switch with the buttons at the bottom of the sidebar or ⌃1 to ⌃9
 - Swipe two fingers left or right on the sidebar to move to the next or previous space
 - Drag a tab out of the sidebar onto the page or off the window to tear it off into a little window, live page and all; drag a little window by its toolbar over the sidebar to dock it back
-- On a Force Touch trackpad, quiet haptic detents mark the moments that click into place: the sidebar snapping shut or open and reaching its width limits, the split divider snapping to center, a dragged tab changing where it will land, a swipe passing the point where it commits, and a tab tearing off or docking
+- On a Force Touch trackpad, quiet haptic detents mark the moments that click into place: the sidebar snapping shut or open and reaching its width limits, the split divider snapping to center, the page's edge reaching a common breakpoint width, a dragged tab changing where it will land, a swipe passing the point where it commits, and a tab tearing off or docking
 - After sunset the sidebar warms very slightly, easing in and out over 20 minutes around sunset and sunrise from the weather row's forecast (View > Evening Tint)
 - Each space has a color (Space > Space Color, or right-click its button) that lightly tints the sidebar and colors the selected row, focus ring and loading line; the page's theme color blends on top
 - Split view: two tabs side by side with a draggable divider, shown as one joined row in the sidebar
@@ -35,6 +35,8 @@ Mini is an open source exploration project: a personal, minimal browser built to
 - A one-line weather row at the bottom of the sidebar (Open-Meteo, city-level location; hover for the 7-day forecast, click to search the weather)
 - Fullscreen video fills the whole screen; the sidebar and page card come back when it ends
 - View > Clear Data for This Site deletes that site's cookies and storage in the current space
+- View > Page Appearance shows one tab's page in light or dark, or with reduced motion, whatever macOS is set to; the switch crossfades, and a chip in the address pill says so (click it to follow the system again)
+- Option-drag the page's right edge to narrow it and test breakpoints: the page's real viewport changes, the width shows beside the edge, and it clicks into place at 375, 768, 1024 and 1280. Double-click the edge to go back to full width
 - Native right-click menus on pages: links, images, selections, spelling suggestions, Inspect Element
 - Hovering a link shows its address in a small bubble at the bottom of the page
 - No extensions, sync, accounts or settings window

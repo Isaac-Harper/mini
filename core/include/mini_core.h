@@ -197,6 +197,9 @@ typedef struct MiniCallbacks {
   // x-vercel-cache, x-vercel-id, cf-cache-status, cf-ray, x-nextjs-cache,
   // x-nextjs-prerender. Never cookies or anything else.
   void (*main_frame_headers_received)(MiniTabId tab, const char *headers);
+  // Result of mini_browser_capture_snapshot: the visible page as JPEG bytes
+  // at the display's scale, length 0 when it could not be captured.
+  void (*page_snapshot_received)(MiniTabId tab, uint64_t request, const uint8_t *image, size_t length);
   void (*browser_closed)(MiniTabId tab);
   void (*all_browsers_closed)(void);
   // Mini was launched again on this profile (CEF's already-running relaunch).
@@ -288,6 +291,19 @@ void mini_browser_preload(MiniTabId tab, const char *url);
 // Fetches the main frame's source from the renderer, no network request;
 // source_received delivers it with the same request number.
 void mini_browser_request_source(MiniTabId tab, uint64_t request);
+typedef enum MiniColorScheme {
+  MINI_COLOR_SCHEME_SYSTEM = 0,
+  MINI_COLOR_SCHEME_LIGHT = 1,
+  MINI_COLOR_SCHEME_DARK = 2,
+} MiniColorScheme;
+// Emulates prefers-color-scheme (a MiniColorScheme; SYSTEM follows macOS)
+// and prefers-reduced-motion for the tab's pages through the DevTools
+// protocol (Emulation.setEmulatedMedia). It lasts for the browser's life,
+// across navigations and renderer restarts.
+void mini_browser_set_emulated_media(MiniTabId tab, int32_t color_scheme, bool reduced_motion);
+// Captures the visible page (Page.captureScreenshot); page_snapshot_received
+// delivers it with the same request number.
+void mini_browser_capture_snapshot(MiniTabId tab, uint64_t request);
 // Opens the native print panel for the page.
 void mini_browser_print(MiniTabId tab);
 void mini_browser_close(MiniTabId tab);

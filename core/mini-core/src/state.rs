@@ -44,6 +44,7 @@ pub struct Callbacks {
     pub main_frame_load_failed: unsafe extern "C" fn(MiniTabId, i32, *const c_char),
     pub page_vitals_changed: unsafe extern "C" fn(MiniTabId, f64, f64, f64, f64, f64),
     pub main_frame_headers_received: unsafe extern "C" fn(MiniTabId, *const c_char),
+    pub page_snapshot_received: unsafe extern "C" fn(MiniTabId, u64, *const u8, usize),
     pub browser_closed: unsafe extern "C" fn(MiniTabId),
     pub all_browsers_closed: unsafe extern "C" fn(),
     pub app_relaunched: unsafe extern "C" fn(*const *const c_char, usize),
@@ -151,6 +152,9 @@ impl Callbacks {
             main_frame_headers_received: table
                 .main_frame_headers_received
                 .expect("MiniCallbacks.main_frame_headers_received is null"),
+            page_snapshot_received: table
+                .page_snapshot_received
+                .expect("MiniCallbacks.page_snapshot_received is null"),
             browser_closed: table
                 .browser_closed
                 .expect("MiniCallbacks.browser_closed is null"),
@@ -179,6 +183,7 @@ pub struct TabState {
     pub artwork_url: String,
     pub artwork_generation: u64,
     pub site_data_observer: Option<Registration>,
+    pub snapshot_observer: Option<Registration>,
     pub editable_focus: crate::editable_focus::EditableFocus,
     pub pending_error_page: Option<String>,
 }

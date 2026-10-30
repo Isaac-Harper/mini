@@ -12,6 +12,7 @@ mod login;
 mod media;
 mod navigation;
 mod notifications;
+mod page_appearance;
 mod page_source;
 mod permissions;
 mod preload;
@@ -81,6 +82,7 @@ pub struct MiniCallbacks {
     pub main_frame_load_failed: Option<unsafe extern "C" fn(MiniTabId, i32, *const c_char)>,
     pub page_vitals_changed: Option<unsafe extern "C" fn(MiniTabId, f64, f64, f64, f64, f64)>,
     pub main_frame_headers_received: Option<unsafe extern "C" fn(MiniTabId, *const c_char)>,
+    pub page_snapshot_received: Option<unsafe extern "C" fn(MiniTabId, u64, *const u8, usize)>,
     pub browser_closed: Option<unsafe extern "C" fn(MiniTabId)>,
     pub all_browsers_closed: Option<unsafe extern "C" fn()>,
     pub app_relaunched: Option<unsafe extern "C" fn(*const *const c_char, usize)>,
@@ -512,6 +514,20 @@ pub extern "C" fn mini_browser_preload(tab: MiniTabId, url: *const c_char) {
 pub extern "C" fn mini_browser_request_source(tab: MiniTabId, request: u64) {
     if let Some(browser) = created_browser(tab) {
         page_source::request(tab, &browser, request);
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn mini_browser_set_emulated_media(tab: MiniTabId, color_scheme: i32, reduced_motion: bool) {
+    if let Some(browser) = created_browser(tab) {
+        page_appearance::set_emulated_media(&browser, color_scheme, reduced_motion);
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn mini_browser_capture_snapshot(tab: MiniTabId, request: u64) {
+    if let Some(browser) = created_browser(tab) {
+        page_appearance::capture_snapshot(tab, &browser, request);
     }
 }
 

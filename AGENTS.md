@@ -98,6 +98,7 @@ Rust core (`core/`, detail in cef-and-core.md):
 - `src/navigation.rs`: session history visitor and `history.go` offsets.
 - `src/downloads.rs`: download destination naming and progress.
 - `src/page_source.rs`: main-frame source for View Source.
+- `src/page_appearance.rs`: DevTools media emulation (prefers-color-scheme, prefers-reduced-motion) and page snapshots for Page Appearance.
 - `src/preload.rs`: the speculation rules prefetch script for Preload on Hover.
 
 Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
@@ -131,6 +132,8 @@ Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 - `AddressPillBadges.swift`: the pill's caption chips (preview, dev port, vitals warning dot). (shell-ui)
 - `HoverPreloader.swift`, `Sources/MiniRules/HoverPreload.swift`: Preload on Hover (speculation rules prefetch of the hovered same-site link), unit tested rules. (shell-ui)
 - `ReloadTiming.swift`: the reload time label after a user reload. (shell-ui)
+- `PageAppearance.swift`: View > Page Appearance per tab (light, dark, reduced motion), its crossfade and the pill chip. (shell-ui)
+- `PageWidthDrag.swift`, `Sources/MiniRules/PageWidth.swift`: Option-drag the page card's right edge to narrow the page for breakpoints; detent, snap and clamp rules unit tested. (shell-ui)
 - `VitalsPeek.swift`, `Sources/MiniRules/WebVitals.swift`, `Sources/MiniRules/EdgeHeaders.swift`: the pill's Core Web Vitals popover with the edge badge, unit tested thresholds and header parsing. (shell-ui)
 - `Sources/MiniRules/LocalDevelopment.swift`, `LocalServers.swift`, `DevServerReconnect.swift`: localhost dev tabs, the command bar's local server list from lsof, and the wait-and-reload after connection refused, unit tested rules. (shell-ui)
 - `Sources/MiniRules/PreviewDeployment.swift`, `PreviewSwitching.swift`: preview deployment hosts and the preview/production switch from history, unit tested. (shell-ui)

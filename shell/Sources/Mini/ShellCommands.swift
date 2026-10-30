@@ -51,7 +51,7 @@ extension ShellController: NSMenuItemValidation {
         return tab
     }
 
-    fileprivate var commandBrowserTab: Tab? {
+    var commandBrowserTab: Tab? {
         guard let littleWindow = keyLittleWindow else { return selectedBrowserTab }
         return littleWindow.tab.hasBrowser ? littleWindow.tab : nil
     }
@@ -457,6 +457,8 @@ extension ShellController: NSMenuItemValidation {
             return true
         case #selector(selectTabAtIndex(_:)):
             return !store.selectableTabs.isEmpty
+        case #selector(setPageColorScheme(_:)), #selector(togglePageReducedMotion(_:)):
+            return validatePageAppearanceItem(menuItem)
         case #selector(togglePictureInPicture(_:)):
             return commandBrowserTab != nil
         case #selector(copyTabAddress(_:)):
