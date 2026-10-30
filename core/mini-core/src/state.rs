@@ -41,6 +41,7 @@ pub struct Callbacks {
     pub media_artwork_changed: unsafe extern "C" fn(MiniTabId, *const u8, usize),
     pub video_handed_off: unsafe extern "C" fn(MiniTabId, *const c_char, f64),
     pub source_received: unsafe extern "C" fn(MiniTabId, u64, *const u8, usize),
+    pub page_text_received: unsafe extern "C" fn(MiniTabId, u64, *const u8, usize),
     pub main_frame_load_failed: unsafe extern "C" fn(MiniTabId, i32, *const c_char),
     pub page_vitals_changed: unsafe extern "C" fn(MiniTabId, f64, f64, f64, f64, f64),
     pub main_frame_headers_received: unsafe extern "C" fn(MiniTabId, *const c_char),
@@ -144,6 +145,9 @@ impl Callbacks {
             source_received: table
                 .source_received
                 .expect("MiniCallbacks.source_received is null"),
+            page_text_received: table
+                .page_text_received
+                .expect("MiniCallbacks.page_text_received is null"),
             main_frame_load_failed: table
                 .main_frame_load_failed
                 .expect("MiniCallbacks.main_frame_load_failed is null"),

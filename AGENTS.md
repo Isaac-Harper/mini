@@ -101,6 +101,9 @@ Rust core (`core/`, detail in cef-and-core.md):
 - `src/page_appearance.rs`: DevTools media emulation (prefers-color-scheme, prefers-reduced-motion) and page snapshots for Page Appearance.
 - `src/preload.rs`: the speculation rules prefetch script for Preload on Hover.
 - `src/scroll_position.rs`: main-frame scroll fraction read and restore for the environment switch.
+- `src/page_reply.rs`: the `:pagetext:<request>:` console reply channel (parse, dispatch to `page_text_received`) shared by the two request scripts below.
+- `src/text_style.rs`: Copy Text Style script (computed style of the selection's start element).
+- `src/page_markdown.rs`: Copy Page as Markdown converter script.
 
 Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 
@@ -157,6 +160,7 @@ Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 - `StatusBubbleController.swift`: link hover bubble. (shell-ui)
 - `ToastController.swift`: transient toast. (shell-ui)
 - `ErrorPages.swift`, `Sources/MiniRules/LoadErrorPage.swift`: styled error pages and offline auto retry. (shell-ui)
+- `PageTextRequests.swift`, `Sources/MiniRules/TextStyle.swift`: request/reply for Copy Text Style and Copy Page as Markdown; computed style to CSS block and sRGB to OKLCH, unit tested. (shell-ui)
 - `CrashOverlayController.swift`: crashed page and waiting-for-localhost overlay. (shell-ui)
 - `SitePromptController.swift`, `SitePromptViews.swift`: permission and auth cards. (shell-ui)
 - `LoginFillController.swift`, `LoginFillCardView.swift`: password fill card. (shell-ui)

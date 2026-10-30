@@ -39,6 +39,8 @@ Mini is an open source exploration project: a personal, minimal browser built to
 - View > Page Appearance shows one tab's page in light or dark, or with reduced motion, whatever macOS is set to; the switch crossfades, and a chip in the address pill says so (click it to follow the system again)
 - Option-drag the page's right edge to narrow it and test breakpoints: the page's real viewport changes, the width shows beside the edge, and it clicks into place at 375, 768, 1024 and 1280. Double-click the edge to go back to full width
 - Native right-click menus on pages: links, images, selections, spelling suggestions, Inspect Element
+- Copy Text Style in the right-click menu over selected text copies its computed font family, size, line height, weight, letter spacing and color (as OKLCH) as a CSS block
+- Hold Option and Shift in the Edit menu for Copy Page as Markdown (also in the `>` command list): the page's main content as Markdown with the title and address on top
 - Hovering a link shows its address in a small bubble at the bottom of the page
 - No extensions, sync, accounts or settings window
 

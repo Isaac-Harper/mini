@@ -345,6 +345,11 @@ extension ShellController: NSMenuItemValidation {
         toast.show("Copied")
     }
 
+    @objc func copyPageAsMarkdown(_ sender: Any?) {
+        guard let tab = commandPageTab else { return }
+        copyPageAsMarkdown(from: tab)
+    }
+
     @objc func openInSafari(_ sender: Any?) {
         guard let tab = commandPageTab, let url = URL(string: tab.url), ["http", "https"].contains(url.scheme?.lowercased()),
               let safari = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.Safari") else { return }
@@ -475,6 +480,8 @@ extension ShellController: NSMenuItemValidation {
             return keyLittleWindow == nil && count > 0
         case #selector(copyTabMarkdownLink(_:)):
             return commandPageTab != nil
+        case #selector(copyPageAsMarkdown(_:)):
+            return commandPageTab?.hasBrowser == true
         case #selector(openInSafari(_:)):
             return commandPageTab.flatMap { URL(string: $0.url)?.scheme?.lowercased() }.map { ["http", "https"].contains($0) } ?? false
         case #selector(moveTabUp(_:)), #selector(moveTabDown(_:)):
