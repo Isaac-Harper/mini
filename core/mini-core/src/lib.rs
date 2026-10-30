@@ -12,6 +12,8 @@ mod login;
 mod media;
 mod navigation;
 mod notifications;
+mod page_markdown;
+mod page_reply;
 mod page_source;
 mod permissions;
 mod preload;
@@ -20,6 +22,7 @@ mod resource_requests;
 mod response_headers;
 mod site_data;
 mod state;
+mod text_style;
 mod theme_color;
 mod vitals;
 mod webauthn;
@@ -78,6 +81,7 @@ pub struct MiniCallbacks {
     pub media_artwork_changed: Option<unsafe extern "C" fn(MiniTabId, *const u8, usize)>,
     pub video_handed_off: Option<unsafe extern "C" fn(MiniTabId, *const c_char, f64)>,
     pub source_received: Option<unsafe extern "C" fn(MiniTabId, u64, *const u8, usize)>,
+    pub page_text_received: Option<unsafe extern "C" fn(MiniTabId, u64, *const u8, usize)>,
     pub main_frame_load_failed: Option<unsafe extern "C" fn(MiniTabId, i32, *const c_char)>,
     pub page_vitals_changed: Option<unsafe extern "C" fn(MiniTabId, f64, f64, f64, f64, f64)>,
     pub main_frame_headers_received: Option<unsafe extern "C" fn(MiniTabId, *const c_char)>,
@@ -512,6 +516,20 @@ pub extern "C" fn mini_browser_preload(tab: MiniTabId, url: *const c_char) {
 pub extern "C" fn mini_browser_request_source(tab: MiniTabId, request: u64) {
     if let Some(browser) = created_browser(tab) {
         page_source::request(tab, &browser, request);
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn mini_browser_request_text_style(tab: MiniTabId, request: u64) {
+    if let Some(browser) = created_browser(tab) {
+        text_style::request(&browser, request);
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn mini_browser_request_page_markdown(tab: MiniTabId, request: u64) {
+    if let Some(browser) = created_browser(tab) {
+        page_markdown::request(&browser, request);
     }
 }
 

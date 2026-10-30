@@ -113,7 +113,7 @@ fn frame_url(frame: &Frame) -> String {
     CefString::from(&frame.url()).to_string()
 }
 
-fn run(frame: &Frame, script: &str) {
+pub fn run(frame: &Frame, script: &str) {
     frame.execute_java_script(
         Some(&CefString::from(script)),
         Some(&CefString::from(frame_url(frame).as_str())),
@@ -142,7 +142,8 @@ pub fn handle_signal(tab: MiniTabId, browser: &Browser, message: &str) {
             || crate::theme_color::handle_signal(tab, browser, rest)
             || crate::error_page::handle_signal(browser, rest)
             || crate::vitals::handle_signal(tab, browser, rest)
-            || crate::horizontal_scroll::handle_signal(tab, browser, rest))
+            || crate::horizontal_scroll::handle_signal(tab, browser, rest)
+            || crate::page_reply::handle_signal(tab, rest))
     {
         return;
     }

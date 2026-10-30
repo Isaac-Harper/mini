@@ -184,6 +184,10 @@ final class BrowserEngine {
                 let source = length > 0 && bytes != nil ? String(decoding: UnsafeBufferPointer(start: bytes!, count: length), as: UTF8.self) : ""
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.sourceReceived(identifier, request: request, source: source) }
             },
+            page_text_received: { identifier, request, bytes, length in
+                let text = length > 0 && bytes != nil ? String(decoding: UnsafeBufferPointer(start: bytes!, count: length), as: UTF8.self) : ""
+                MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.pageTextReceived(identifier, request: request, text: text) }
+            },
             main_frame_load_failed: { identifier, errorCode, failedURL in
                 let failedURL = requiredString(failedURL)
                 MainActor.assumeIsolated {

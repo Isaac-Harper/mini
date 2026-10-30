@@ -180,6 +180,10 @@ typedef struct MiniCallbacks {
   // Result of mini_browser_request_source: the main frame's HTML as loaded
   // (CefFrame::GetSource), UTF-8 bytes, not NUL-terminated.
   void (*source_received)(MiniTabId tab, uint64_t request, const uint8_t *source, size_t length);
+  // Reply to mini_browser_request_text_style (a JSON object of the selection
+  // start element's computed text style) or mini_browser_request_page_markdown
+  // (the page as Markdown), UTF-8, with the same request number.
+  void (*page_text_received)(MiniTabId tab, uint64_t request, const uint8_t *text, size_t length);
   // The main frame's navigation to failed_url failed (CefLoadHandler
   // OnLoadError). error_code is Chromium's net error, e.g. -102 for
   // ERR_CONNECTION_REFUSED; -3 (ERR_ABORTED) is sent too.
@@ -288,6 +292,13 @@ void mini_browser_preload(MiniTabId tab, const char *url);
 // Fetches the main frame's source from the renderer, no network request;
 // source_received delivers it with the same request number.
 void mini_browser_request_source(MiniTabId tab, uint64_t request);
+// Reads the computed text style of the element holding the start of the
+// current text selection in whichever frame has one; page_text_received
+// follows, or nothing when no frame has a selection.
+void mini_browser_request_text_style(MiniTabId tab, uint64_t request);
+// Converts the main frame's main content to Markdown inside the renderer;
+// page_text_received delivers it with the same request number.
+void mini_browser_request_page_markdown(MiniTabId tab, uint64_t request);
 // Opens the native print panel for the page.
 void mini_browser_print(MiniTabId tab);
 void mini_browser_close(MiniTabId tab);

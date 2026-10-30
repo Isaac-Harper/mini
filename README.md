@@ -36,6 +36,8 @@ Mini is an open source exploration project: a personal, minimal browser built to
 - Fullscreen video fills the whole screen; the sidebar and page card come back when it ends
 - View > Clear Data for This Site deletes that site's cookies and storage in the current space
 - Native right-click menus on pages: links, images, selections, spelling suggestions, Inspect Element
+- Copy Text Style in the right-click menu over selected text copies its computed font family, size, line height, weight, letter spacing and color (as OKLCH) as a CSS block
+- Hold Option and Shift in the Edit menu for Copy Page as Markdown (also in the `>` command list): the page's main content as Markdown with the title and address on top
 - Hovering a link shows its address in a small bubble at the bottom of the page
 - No extensions, sync, accounts or settings window
 

@@ -94,6 +94,7 @@ final class PageContextMenu: NSObject {
             if !request.has(MINI_CONTEXT_EDITABLE) {
                 addEdit(to: menu, "Copy", symbol: "doc.on.doc", MINI_EDIT_COPY, MINI_EDIT_CAN_COPY)
             }
+            add(to: menu, "Copy Text Style", symbol: "textformat") { [shell, tab] in shell.copyTextStyle(from: tab) }
             add(to: menu, "Look Up \u{201C}\(Self.abbreviated(selection))\u{201D}", symbol: "character.book.closed") { [weak self] in self?.lookUp(selection) }
             add(to: menu, "Search for \u{201C}\(Self.abbreviated(selection))\u{201D}", symbol: "magnifyingglass") { [shell, tab] in
                 shell.openLinkInNewTab(URLInput.Interpretation.search(selection).url, from: tab)
