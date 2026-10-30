@@ -1,4 +1,5 @@
 import AppKit
+import CMiniCore
 import MiniRules
 import SwiftUI
 
@@ -40,9 +41,13 @@ final class VitalsPopoverPresenter {
         let popover = NSPopover()
         popover.behavior = .applicationDefined
         popover.animates = !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
-        popover.contentViewController = NSHostingController(rootView: VitalsPeekView(tab: tab) { [weak self] inside in
+        popover.contentViewController = NSHostingController(rootView: VitalsPeekView(tab: tab, onHover: { [weak self] inside in
             self?.popoverHoverChanged(inside)
-        })
+        }, onOpenDeveloperTools: { [weak self, weak tab] in
+            guard let tab, tab.hasBrowser else { return }
+            mini_browser_show_dev_tools(tab.id)
+            self?.close()
+        }))
         popover.show(relativeTo: anchor.bounds, of: anchor, preferredEdge: .maxX)
         self.popover = popover
     }
@@ -67,6 +72,7 @@ final class VitalsPopoverPresenter {
 struct VitalsPeekView: View {
     let tab: Tab
     let onHover: (Bool) -> Void
+    let onOpenDeveloperTools: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -90,10 +96,44 @@ struct VitalsPeekView: View {
                     .background(Capsule().fill(.fill.tertiary))
                     .accessibilityLabel("Served by \(edge.text)")
             }
+            if let errorLine = tab.health.errorLine {
+                PageHealthLine(text: errorLine, truncation: .tail, action: onOpenDeveloperTools)
+            }
+            if let failedRequestLine = tab.health.failedRequestLine(onPage: tab.url) {
+                PageHealthLine(text: failedRequestLine, truncation: .middle, action: onOpenDeveloperTools)
+            }
         }
         .padding(12)
         .background(Color(nsColor: .windowBackgroundColor).opacity(0.75))
         .onHover(perform: onHover)
+    }
+}
+
+private struct PageHealthLine: View {
+    let text: String
+    let truncation: Text.TruncationMode
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Circle()
+                    .fill(Color.orange.opacity(0.7))
+                    .frame(width: 5, height: 5)
+                Text(text)
+                    .font(InterfaceFont.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(truncation)
+            }
+            .frame(maxWidth: 280, alignment: .leading)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .focusable(false)
+        .hapticFeedback(.press)
+        .glassTooltip("Open Developer Tools")
+        .accessibilityHint("Opens Developer Tools")
     }
 }
 
@@ -128,11 +168,13 @@ private struct VitalsValue: View {
 }
 
 struct VitalsWarningDot: View {
+    let tooltip: String
+
     var body: some View {
         Circle()
             .fill(Color.orange.opacity(0.7))
             .frame(width: 5, height: 5)
-            .glassTooltip("Slow paint or layout shift on this page")
+            .glassTooltip(tooltip)
     }
 }
 

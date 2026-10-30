@@ -13,6 +13,7 @@ final class ShellController: NSObject {
     let weatherPopover = WeatherPopoverPresenter()
     let vitalsPopover = VitalsPopoverPresenter()
     var deploymentEnvironmentsCache: DeploymentEnvironmentsCache?
+    let reloadOptionKey = ReloadOptionKey()
     let sidebarDrag = SidebarDragModel()
     let sidebarKeyboard = SidebarKeyboardFocus()
     let undoToast = UndoToastModel()

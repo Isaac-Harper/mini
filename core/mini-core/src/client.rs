@@ -2,7 +2,7 @@ use cef::*;
 use std::ffi::c_void;
 
 use crate::{
-    MiniTabId, ad_blocking, authentication, context_menu, downloads, editable_focus, error_page, favicon, horizontal_scroll, login, media, notifications, permissions, theme_color, vitals, webauthn,
+    MiniTabId, ad_blocking, authentication, context_menu, downloads, editable_focus, error_page, favicon, horizontal_scroll, login, media, notifications, page_health, permissions, theme_color, vitals, webauthn,
     resource_requests::MiniResourceRequestHandler,
     state::{TabState, c_string, callbacks, with_core},
 };
@@ -73,6 +73,7 @@ fn register_created_browser(tab: MiniTabId, browser: Browser) {
 fn unregister_closed_browser(tab: MiniTabId) {
     permissions::dismiss_for_tab(tab);
     authentication::cancel_for_tab(tab);
+    page_health::forget(tab);
     let all_closed = with_core(|core| {
         core.tabs
             .remove(&tab)
@@ -296,6 +297,13 @@ wrap_load_handler! {
                     Some(&CefString::from(frame_url.as_str())),
                     0,
                 );
+                if let Some(health_script) = page_health::main_frame_script(self.tab, frame, login::token()) {
+                    frame.execute_java_script(
+                        Some(&CefString::from(health_script.as_str())),
+                        Some(&CefString::from(frame_url.as_str())),
+                        0,
+                    );
+                }
             }
             let editable_script = editable_focus::script(frame, login::token());
             frame.execute_java_script(
@@ -418,6 +426,21 @@ wrap_request_handler! {
             1
         }
 
+        fn on_before_browse(
+            &self,
+            _browser: Option<&mut Browser>,
+            frame: Option<&mut Frame>,
+            request: Option<&mut Request>,
+            _user_gesture: ::std::os::raw::c_int,
+            _is_redirect: ::std::os::raw::c_int,
+        ) -> ::std::os::raw::c_int {
+            if frame.expect("navigation without a frame").is_main() == 1 {
+                let url = CefString::from(&request.expect("navigation without a request").url()).to_string();
+                page_health::main_frame_navigation_started(self.tab, &url);
+            }
+            0
+        }
+
         fn resource_request_handler(
             &self,
             _browser: Option<&mut Browser>,
@@ -429,7 +452,9 @@ wrap_request_handler! {
             _disable_default_handling: Option<&mut ::std::os::raw::c_int>,
         ) -> Option<ResourceRequestHandler> {
             let blocks_ads = ad_blocking::is_active();
-            (blocks_ads || is_navigation != 0).then(|| MiniResourceRequestHandler::new(self.tab, blocks_ads))
+            let health_page = page_health::tracked_page(self.tab).unwrap_or(0);
+            (blocks_ads || is_navigation != 0 || health_page != 0)
+                .then(|| MiniResourceRequestHandler::new(self.tab, blocks_ads, health_page))
         }
 
         fn on_render_process_terminated(

@@ -1,11 +1,12 @@
 use cef::*;
 
-use crate::{MiniTabId, ad_blocking, client::main_frame_url, response_headers};
+use crate::{MiniTabId, ad_blocking, client::main_frame_url, page_health, response_headers};
 
 wrap_resource_request_handler! {
     pub struct MiniResourceRequestHandler {
         tab: MiniTabId,
         blocks_ads: bool,
+        health_page: u64,
     }
 
     impl ResourceRequestHandler {
@@ -41,6 +42,20 @@ wrap_resource_request_handler! {
                 response_headers::report_from_io_thread(self.tab, response);
             }
             0
+        }
+
+        fn on_resource_load_complete(
+            &self,
+            _browser: Option<&mut Browser>,
+            _frame: Option<&mut Frame>,
+            request: Option<&mut Request>,
+            response: Option<&mut Response>,
+            status: UrlrequestStatus,
+            _received_content_length: i64,
+        ) {
+            if let (true, Some(request)) = (self.health_page != 0, request) {
+                page_health::report_from_io_thread(self.tab, self.health_page, request, response.as_deref(), status);
+            }
         }
     }
 }

@@ -208,6 +208,21 @@ typedef struct MiniCallbacks {
   // scroll as scrollY / (scrollHeight - innerHeight), clamped to 0...1, 0 when
   // the page cannot scroll.
   void (*scroll_fraction_received)(MiniTabId tab, double fraction);
+  // Asked synchronously when a main-frame navigation starts and on each of
+  // its redirects (the previous document's page health is gone): return true
+  // to collect page health (page_errors_reported, request_failed) for url.
+  // Nothing is collected for a tab while it answers false.
+  bool (*page_health_wanted)(MiniTabId tab, const char *url);
+  // Uncaught errors and unhandled promise rejections of the main frame's
+  // document, batched: count new ones since the last report and the first
+  // one's message (single line, at most 300 characters). Page content: never
+  // log or persist it.
+  void (*page_errors_reported)(MiniTabId tab, uint32_t count, const char *first_message);
+  // A subresource of the tab's page (any frame, not the main document or the
+  // favicon) failed: status is the HTTP status (400 or more), or Chromium's
+  // negative net error when no response arrived. Aborted and ad block
+  // cancelled requests are not reported.
+  void (*request_failed)(MiniTabId tab, int32_t status, const char *url);
   void (*browser_closed)(MiniTabId tab);
   void (*all_browsers_closed)(void);
   // Mini was launched again on this profile (CEF's already-running relaunch).
@@ -257,6 +272,8 @@ void mini_browser_visit_navigation_entries(MiniTabId tab, MiniNavigationEntryVis
 // Moves through session history by offset entries (negative is back).
 void mini_browser_go_to_history_offset(MiniTabId tab, int32_t offset);
 void mini_browser_reload(MiniTabId tab);
+// Reloads bypassing the cache (CefBrowser::ReloadIgnoreCache).
+void mini_browser_reload_ignoring_cache(MiniTabId tab);
 void mini_browser_stop(MiniTabId tab);
 void mini_browser_set_focus(MiniTabId tab, bool focused);
 void mini_browser_set_hidden(MiniTabId tab, bool hidden);

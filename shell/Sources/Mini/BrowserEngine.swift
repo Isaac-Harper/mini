@@ -214,6 +214,22 @@ final class BrowserEngine {
             scroll_fraction_received: { identifier, fraction in
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.scrollFractionReceived(identifier, fraction: fraction) }
             },
+            page_health_wanted: { identifier, url in
+                let url = requiredString(url)
+                return MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.pageHealthWanted(identifier, url: url) }
+            },
+            page_errors_reported: { identifier, count, firstMessage in
+                let firstMessage = requiredString(firstMessage)
+                MainActor.assumeIsolated {
+                    BrowserEngine.shared.requiredShell.pageErrorsReported(identifier, count: Int(count), firstMessage: firstMessage)
+                }
+            },
+            request_failed: { identifier, status, url in
+                let url = requiredString(url)
+                MainActor.assumeIsolated {
+                    BrowserEngine.shared.requiredShell.requestFailed(identifier, request: FailedRequest(status: Int(status), url: url))
+                }
+            },
             browser_closed: { identifier in
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.browserClosed(identifier) }
             },

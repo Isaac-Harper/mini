@@ -13,6 +13,7 @@ mod media;
 mod navigation;
 mod notifications;
 mod page_appearance;
+mod page_health;
 mod page_markdown;
 mod page_reply;
 mod page_source;
@@ -89,6 +90,9 @@ pub struct MiniCallbacks {
     pub main_frame_headers_received: Option<unsafe extern "C" fn(MiniTabId, *const c_char)>,
     pub page_snapshot_received: Option<unsafe extern "C" fn(MiniTabId, u64, *const u8, usize)>,
     pub scroll_fraction_received: Option<unsafe extern "C" fn(MiniTabId, f64)>,
+    pub page_health_wanted: Option<unsafe extern "C" fn(MiniTabId, *const c_char) -> bool>,
+    pub page_errors_reported: Option<unsafe extern "C" fn(MiniTabId, u32, *const c_char)>,
+    pub request_failed: Option<unsafe extern "C" fn(MiniTabId, i32, *const c_char)>,
     pub browser_closed: Option<unsafe extern "C" fn(MiniTabId)>,
     pub all_browsers_closed: Option<unsafe extern "C" fn()>,
     pub app_relaunched: Option<unsafe extern "C" fn(*const *const c_char, usize)>,
@@ -330,6 +334,13 @@ pub extern "C" fn mini_browser_show_error_page(tab: MiniTabId, html: *const c_ch
 pub extern "C" fn mini_browser_reload(tab: MiniTabId) {
     if let Some(browser) = created_browser(tab) {
         browser.reload();
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn mini_browser_reload_ignoring_cache(tab: MiniTabId) {
+    if let Some(browser) = created_browser(tab) {
+        browser.reload_ignore_cache();
     }
 }
 
