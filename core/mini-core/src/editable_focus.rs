@@ -2,11 +2,7 @@ use std::collections::HashSet;
 
 use cef::*;
 
-use crate::{
-    MiniTabId,
-    login::javascript_string_literal,
-    state::with_core,
-};
+use crate::{MiniTabId, login::javascript_string_literal, state::with_core};
 
 const EDITABLE_FOCUS_SCRIPT: &str = r#"(function(){
 var key=Symbol.for('mini-editable-'+__TOKEN__);

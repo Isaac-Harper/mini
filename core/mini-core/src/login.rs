@@ -75,7 +75,10 @@ pub fn parse_signal<'message>(token: &str, message: &'message str) -> Option<&'m
     (!frame_id.is_empty()).then_some(frame_id)
 }
 
-pub fn parse_form_signal<'message>(token: &str, message: &'message str) -> Option<(&'message str, bool)> {
+pub fn parse_form_signal<'message>(
+    token: &str,
+    message: &'message str,
+) -> Option<(&'message str, bool)> {
     let rest = message.strip_prefix(token)?.strip_prefix(":form:")?;
     let (frame_id, presence) = rest.rsplit_once(':')?;
     if frame_id.is_empty() {
@@ -88,7 +91,10 @@ pub fn parse_form_signal<'message>(token: &str, message: &'message str) -> Optio
     }
 }
 
-fn report_form_presence(tab: MiniTabId, change: impl FnOnce(&mut std::collections::HashSet<String>)) {
+fn report_form_presence(
+    tab: MiniTabId,
+    change: impl FnOnce(&mut std::collections::HashSet<String>),
+) {
     let changed_to = with_core(|core| {
         let state = core.tabs.get_mut(&tab)?;
         let had_form = !state.login_form_frames.is_empty();
@@ -151,7 +157,10 @@ pub fn handle_signal(tab: MiniTabId, browser: &Browser, message: &str) {
         return;
     }
     if let Some((frame_id, present)) = parse_form_signal(token(), message) {
-        if browser.frame_by_identifier(Some(&CefString::from(frame_id))).is_none() {
+        if browser
+            .frame_by_identifier(Some(&CefString::from(frame_id)))
+            .is_none()
+        {
             return;
         }
         let frame_id = frame_id.to_owned();
@@ -239,11 +248,26 @@ mod tests {
             None
         );
         assert_eq!(parse_signal(token, &format!("{token}:login:")), None);
-        assert_eq!(parse_form_signal(token, &format!("{token}:form:7-12:1")), Some(("7-12", true)));
-        assert_eq!(parse_form_signal(token, &format!("{token}:form:7-12:0")), Some(("7-12", false)));
+        assert_eq!(
+            parse_form_signal(token, &format!("{token}:form:7-12:1")),
+            Some(("7-12", true))
+        );
+        assert_eq!(
+            parse_form_signal(token, &format!("{token}:form:7-12:0")),
+            Some(("7-12", false))
+        );
         assert_eq!(parse_form_signal(token, &format!("{token}:form::1")), None);
-        assert_eq!(parse_form_signal(token, &format!("{token}:form:7-12:2")), None);
-        assert_eq!(parse_form_signal("ffffffffffffffffffffffffffffffff", &format!("{token}:form:7-12:1")), None);
+        assert_eq!(
+            parse_form_signal(token, &format!("{token}:form:7-12:2")),
+            None
+        );
+        assert_eq!(
+            parse_form_signal(
+                "ffffffffffffffffffffffffffffffff",
+                &format!("{token}:form:7-12:1")
+            ),
+            None
+        );
         assert_eq!(parse_signal(token, &format!("{token}:logout:7")), None);
         assert_eq!(parse_signal(token, "hello"), None);
     }

@@ -2,9 +2,12 @@ use cef::*;
 use std::ffi::c_void;
 
 use crate::{
-    MiniTabId, ad_blocking, authentication, context_menu, downloads, editable_focus, error_page, favicon, horizontal_scroll, link_preview, login, media, notifications, page_health, permissions, theme_color, vitals, webauthn,
+    MiniTabId, ad_blocking, authentication, context_menu, downloads, editable_focus, error_page,
+    favicon, horizontal_scroll, link_preview, login, media, notifications, page_health,
+    permissions,
     resource_requests::MiniResourceRequestHandler,
     state::{TabState, c_string, callbacks, with_core},
+    theme_color, vitals, webauthn,
 };
 
 pub fn alloy_window_info(parent_view: *mut c_void) -> WindowInfo {

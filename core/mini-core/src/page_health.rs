@@ -36,7 +36,9 @@ if(typeof early==='function'){var taken=early();if(taken.count>0)record(taken.ev
 static TRACKED_PAGES: Mutex<Option<HashMap<MiniTabId, u64>>> = Mutex::new(None);
 static NEXT_PAGE: AtomicU64 = AtomicU64::new(1);
 
-fn with_tracked_pages<Output>(action: impl FnOnce(&mut HashMap<MiniTabId, u64>) -> Output) -> Output {
+fn with_tracked_pages<Output>(
+    action: impl FnOnce(&mut HashMap<MiniTabId, u64>) -> Output,
+) -> Output {
     let mut pages = TRACKED_PAGES.lock().expect("page health lock poisoned");
     action(pages.get_or_insert_with(HashMap::new))
 }
@@ -72,7 +74,10 @@ fn script(frame: &Frame, token: &str) -> String {
             "__FRAME__",
             &javascript_string_literal(&CefString::from(&frame.identifier()).to_string()),
         )
-        .replace("__EARLY_KEY__", &javascript_string_literal(early_errors::KEY))
+        .replace(
+            "__EARLY_KEY__",
+            &javascript_string_literal(early_errors::KEY),
+        )
 }
 
 #[derive(Deserialize, Debug, PartialEq)]
@@ -101,7 +106,8 @@ pub fn handle_signal(tab: MiniTabId, browser: &Browser, rest: &str) -> bool {
     let is_main_frame = browser
         .frame_by_identifier(Some(&CefString::from(frame_id)))
         .is_some_and(|frame| frame.is_main() == 1);
-    if let (true, true, Some(report)) = (is_main_frame, tracked_page(tab).is_some(), parse(payload)) {
+    if let (true, true, Some(report)) = (is_main_frame, tracked_page(tab).is_some(), parse(payload))
+    {
         let message = c_string(&report.message);
         unsafe { (callbacks().page_errors_reported)(tab, report.count, message.as_ptr()) };
     }
@@ -112,7 +118,8 @@ pub fn failure_status(request_failed: bool, http_status: i32, net_error: i32) ->
     const ABORTED: i32 = -3;
     const BLOCKED_BY_CLIENT: i32 = -20;
     if request_failed {
-        return (net_error < 0 && net_error != ABORTED && net_error != BLOCKED_BY_CLIENT).then_some(net_error);
+        return (net_error < 0 && net_error != ABORTED && net_error != BLOCKED_BY_CLIENT)
+            .then_some(net_error);
     }
     (http_status >= 400).then_some(http_status)
 }
@@ -124,7 +131,10 @@ pub fn report_from_io_thread(
     response: Option<&Response>,
     status: UrlrequestStatus,
 ) {
-    if matches!(request.resource_type(), ResourceType::MAIN_FRAME | ResourceType::FAVICON) {
+    if matches!(
+        request.resource_type(),
+        ResourceType::MAIN_FRAME | ResourceType::FAVICON
+    ) {
         return;
     }
     let request_failed = status.get_raw() == UrlrequestStatus::FAILED.get_raw();
@@ -135,7 +145,11 @@ pub fn report_from_io_thread(
     };
     let url = CefString::from(&request.url()).to_string();
     let mut task = FailedRequestReport::new(tab, page, failure, url);
-    assert_eq!(post_task(ThreadId::UI, Some(&mut task)), 1, "cannot post a failed request to the UI thread");
+    assert_eq!(
+        post_task(ThreadId::UI, Some(&mut task)),
+        1,
+        "cannot post a failed request to the UI thread"
+    );
 }
 
 wrap_task! {
@@ -165,10 +179,19 @@ mod tests {
     fn parses_a_batch_and_keeps_one_short_line() {
         assert_eq!(
             parse(r#"{"count":2,"message":"TypeError: x is undefined"}"#),
-            Some(ErrorReport { count: 2, message: "TypeError: x is undefined".into() })
+            Some(ErrorReport {
+                count: 2,
+                message: "TypeError: x is undefined".into()
+            })
         );
-        let long = format!(r#"{{"count":1,"message":"{}\nsecond line"}}"#, "a".repeat(400));
-        assert_eq!(parse(&long).map(|report| report.message), Some("a".repeat(300)));
+        let long = format!(
+            r#"{{"count":1,"message":"{}\nsecond line"}}"#,
+            "a".repeat(400)
+        );
+        assert_eq!(
+            parse(&long).map(|report| report.message),
+            Some("a".repeat(300))
+        );
     }
 
     #[test]

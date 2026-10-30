@@ -6,20 +6,32 @@ use crate::{
 };
 
 const REPORTED_HEADERS: [&str; 8] = [
-    "server", "age", "x-vercel-cache", "x-vercel-id", "cf-cache-status", "cf-ray", "x-nextjs-cache", "x-nextjs-prerender",
+    "server",
+    "age",
+    "x-vercel-cache",
+    "x-vercel-id",
+    "cf-cache-status",
+    "cf-ray",
+    "x-nextjs-cache",
+    "x-nextjs-prerender",
 ];
 
 pub fn report_from_io_thread(tab: MiniTabId, response: &Response) {
     let lines: String = REPORTED_HEADERS
         .iter()
         .filter_map(|name| {
-            let value = CefString::from(&response.header_by_name(Some(&CefString::from(*name)))).to_string();
+            let value = CefString::from(&response.header_by_name(Some(&CefString::from(*name))))
+                .to_string();
             let value = value.trim();
             (!value.is_empty() && !value.contains('\n')).then(|| format!("{name}: {value}\n"))
         })
         .collect();
     let mut task = HeadersReport::new(tab, lines);
-    assert_eq!(post_task(ThreadId::UI, Some(&mut task)), 1, "cannot post response headers to the UI thread");
+    assert_eq!(
+        post_task(ThreadId::UI, Some(&mut task)),
+        1,
+        "cannot post response headers to the UI thread"
+    );
 }
 
 wrap_task! {

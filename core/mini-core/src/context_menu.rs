@@ -41,13 +41,34 @@ fn userfree_text(value: CefStringUserfree) -> String {
 fn edit_capabilities(params: &ContextMenuParams) -> u32 {
     let flags = params.edit_state_flags().as_ref().0;
     let mapping = [
-        (sys::cef_context_menu_edit_state_flags_t::CM_EDITFLAG_CAN_UNDO.0, 1 << 0),
-        (sys::cef_context_menu_edit_state_flags_t::CM_EDITFLAG_CAN_REDO.0, 1 << 1),
-        (sys::cef_context_menu_edit_state_flags_t::CM_EDITFLAG_CAN_CUT.0, 1 << 2),
-        (sys::cef_context_menu_edit_state_flags_t::CM_EDITFLAG_CAN_COPY.0, 1 << 3),
-        (sys::cef_context_menu_edit_state_flags_t::CM_EDITFLAG_CAN_PASTE.0, 1 << 4),
-        (sys::cef_context_menu_edit_state_flags_t::CM_EDITFLAG_CAN_DELETE.0, 1 << 5),
-        (sys::cef_context_menu_edit_state_flags_t::CM_EDITFLAG_CAN_SELECT_ALL.0, 1 << 6),
+        (
+            sys::cef_context_menu_edit_state_flags_t::CM_EDITFLAG_CAN_UNDO.0,
+            1 << 0,
+        ),
+        (
+            sys::cef_context_menu_edit_state_flags_t::CM_EDITFLAG_CAN_REDO.0,
+            1 << 1,
+        ),
+        (
+            sys::cef_context_menu_edit_state_flags_t::CM_EDITFLAG_CAN_CUT.0,
+            1 << 2,
+        ),
+        (
+            sys::cef_context_menu_edit_state_flags_t::CM_EDITFLAG_CAN_COPY.0,
+            1 << 3,
+        ),
+        (
+            sys::cef_context_menu_edit_state_flags_t::CM_EDITFLAG_CAN_PASTE.0,
+            1 << 4,
+        ),
+        (
+            sys::cef_context_menu_edit_state_flags_t::CM_EDITFLAG_CAN_DELETE.0,
+            1 << 5,
+        ),
+        (
+            sys::cef_context_menu_edit_state_flags_t::CM_EDITFLAG_CAN_SELECT_ALL.0,
+            1 << 6,
+        ),
     ];
     mapping
         .iter()
@@ -76,7 +97,11 @@ fn menu_flags(params: &ContextMenuParams) -> u32 {
 pub fn request(tab: MiniTabId, params: &ContextMenuParams) {
     let flags = menu_flags(params);
     let link_url = c_string(&userfree_text(params.link_url()));
-    let image_url = c_string(&if flags & FLAG_IMAGE != 0 { userfree_text(params.source_url()) } else { String::new() });
+    let image_url = c_string(&if flags & FLAG_IMAGE != 0 {
+        userfree_text(params.source_url())
+    } else {
+        String::new()
+    });
     let selection_text = c_string(&userfree_text(params.selection_text()));
     let misspelled_word = c_string(&userfree_text(params.misspelled_word()));
     let mut suggestion_list = CefStringList::new();
@@ -86,7 +111,10 @@ pub fn request(tab: MiniTabId, params: &ContextMenuParams) {
         .take(MAXIMUM_SUGGESTIONS)
         .map(|suggestion| c_string(&suggestion))
         .collect();
-    let suggestion_pointers: Vec<*const c_char> = suggestions.iter().map(|suggestion| suggestion.as_ptr()).collect();
+    let suggestion_pointers: Vec<*const c_char> = suggestions
+        .iter()
+        .map(|suggestion| suggestion.as_ptr())
+        .collect();
     let menu = MiniContextMenu {
         flags,
         edit_capabilities: edit_capabilities(params),
@@ -103,7 +131,10 @@ pub fn request(tab: MiniTabId, params: &ContextMenuParams) {
 }
 
 pub fn perform_edit(browser: &Browser, command: i32) {
-    let frame = browser.focused_frame().or_else(|| browser.main_frame()).expect("browser has no frame");
+    let frame = browser
+        .focused_frame()
+        .or_else(|| browser.main_frame())
+        .expect("browser has no frame");
     match command {
         COMMAND_UNDO => frame.undo(),
         COMMAND_REDO => frame.redo(),

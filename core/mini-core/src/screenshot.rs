@@ -110,7 +110,8 @@ fn message_id() -> i32 {
 }
 
 fn execute(host: &BrowserHost, message_id: i32, method: &str, params: &mut DictionaryValue) {
-    let sent = host.execute_dev_tools_method(message_id, Some(&CefString::from(method)), Some(params));
+    let sent =
+        host.execute_dev_tools_method(message_id, Some(&CefString::from(method)), Some(params));
     assert_eq!(sent, message_id, "{method} was not sent");
 }
 
@@ -129,7 +130,12 @@ fn await_result(mut pipeline: Pipeline, stage: Stage) -> (BrowserHost, i32) {
 fn set_scrollbars_hidden(host: &BrowserHost, message_id: i32, hidden: bool) {
     let mut params = dictionary();
     params.set_bool(Some(&CefString::from("hidden")), hidden.into());
-    execute(host, message_id, "Emulation.setScrollbarsHidden", &mut params);
+    execute(
+        host,
+        message_id,
+        "Emulation.setScrollbarsHidden",
+        &mut params,
+    );
 }
 
 pub fn measure_expression(x: f64, y: f64) -> String {
@@ -143,7 +149,10 @@ fn send_measure(pipeline: Pipeline) {
     let (x, y) = pipeline.element_point.expect("measure without a point");
     let (host, message_id) = await_result(pipeline, Stage::Measuring);
     let mut params = dictionary();
-    params.set_string(Some(&CefString::from("expression")), Some(&CefString::from(measure_expression(x, y).as_str())));
+    params.set_string(
+        Some(&CefString::from("expression")),
+        Some(&CefString::from(measure_expression(x, y).as_str())),
+    );
     params.set_bool(Some(&CefString::from("returnByValue")), 1);
     execute(&host, message_id, "Runtime.evaluate", &mut params);
 }
@@ -154,12 +163,18 @@ fn send_capture(pipeline: Pipeline) {
     let mut params = dictionary();
     match format {
         CaptureFormat::Jpeg => {
-            params.set_string(Some(&CefString::from("format")), Some(&CefString::from("jpeg")));
+            params.set_string(
+                Some(&CefString::from("format")),
+                Some(&CefString::from("jpeg")),
+            );
             params.set_int(Some(&CefString::from("quality")), 90);
             params.set_bool(Some(&CefString::from("optimizeForSpeed")), 1);
         }
         CaptureFormat::Png => {
-            params.set_string(Some(&CefString::from("format")), Some(&CefString::from("png")));
+            params.set_string(
+                Some(&CefString::from("format")),
+                Some(&CefString::from("png")),
+            );
             params.set_bool(Some(&CefString::from("captureBeyondViewport")), 0);
             params.set_bool(Some(&CefString::from("fromSurface")), 1);
         }
@@ -171,14 +186,36 @@ fn finish(pipeline: &Pipeline, image: Vec<u8>) {
     if pipeline.format == CaptureFormat::Png {
         set_scrollbars_hidden(&pipeline.host, message_id(), false);
     }
-    let element_pointer = pipeline.element.as_ref().map_or(std::ptr::null(), std::ptr::from_ref);
-    unsafe { (callbacks().page_snapshot_received)(pipeline.tab, pipeline.request, image.as_ptr(), image.len(), element_pointer) };
+    let element_pointer = pipeline
+        .element
+        .as_ref()
+        .map_or(std::ptr::null(), std::ptr::from_ref);
+    unsafe {
+        (callbacks().page_snapshot_received)(
+            pipeline.tab,
+            pipeline.request,
+            image.as_ptr(),
+            image.len(),
+            element_pointer,
+        )
+    };
 }
 
 pub fn parse_element_box(result: &[u8]) -> Option<MiniElementBox> {
-    let element = serde_json::from_slice::<EvaluateResult>(result).ok()?.result.value?;
-    let values = [element.x, element.y, element.width, element.height, element.pixel_ratio];
-    let sane = values.iter().all(|value| value.is_finite() && value.abs() < 10_000_000.0)
+    let element = serde_json::from_slice::<EvaluateResult>(result)
+        .ok()?
+        .result
+        .value?;
+    let values = [
+        element.x,
+        element.y,
+        element.width,
+        element.height,
+        element.pixel_ratio,
+    ];
+    let sane = values
+        .iter()
+        .all(|value| value.is_finite() && value.abs() < 10_000_000.0)
         && element.width > 0.0
         && element.height > 0.0
         && element.pixel_ratio > 0.0;
@@ -187,7 +224,9 @@ pub fn parse_element_box(result: &[u8]) -> Option<MiniElementBox> {
 
 pub fn parse_image(result: &[u8], format: CaptureFormat) -> Option<Vec<u8>> {
     let capture = serde_json::from_slice::<CaptureResult>(result).ok()?;
-    let image = base64::engine::general_purpose::STANDARD.decode(capture.data).ok()?;
+    let image = base64::engine::general_purpose::STANDARD
+        .decode(capture.data)
+        .ok()?;
     let signature: &[u8] = match format {
         CaptureFormat::Jpeg => b"\xff\xd8",
         CaptureFormat::Png => b"\x89PNG",
@@ -195,7 +234,13 @@ pub fn parse_image(result: &[u8], format: CaptureFormat) -> Option<Vec<u8>> {
     image.starts_with(signature).then_some(image)
 }
 
-pub fn capture(tab: MiniTabId, browser: &Browser, request: u64, format: CaptureFormat, element_point: Option<(f64, f64)>) {
+pub fn capture(
+    tab: MiniTabId,
+    browser: &Browser,
+    request: u64,
+    format: CaptureFormat,
+    element_point: Option<(f64, f64)>,
+) {
     let host = browser.host().expect("browser has no host");
     if with_tab(tab, |state| state.snapshot_observer.is_none()) {
         let mut observer = SnapshotObserver::new();
@@ -204,7 +249,15 @@ pub fn capture(tab: MiniTabId, browser: &Browser, request: u64, format: CaptureF
             .expect("CEF refused the devtools observer");
         with_tab(tab, |state| state.snapshot_observer = Some(registration));
     }
-    let pipeline = Pipeline { tab, request, host, format, element_point, element: None, stage: Stage::HidingScrollbars };
+    let pipeline = Pipeline {
+        tab,
+        request,
+        host,
+        format,
+        element_point,
+        element: None,
+        stage: Stage::HidingScrollbars,
+    };
     match format {
         CaptureFormat::Jpeg => send_capture(pipeline),
         CaptureFormat::Png => {
@@ -216,30 +269,50 @@ pub fn capture(tab: MiniTabId, browser: &Browser, request: u64, format: CaptureF
 
 #[cfg(test)]
 mod tests {
-    use super::{CaptureFormat, MiniElementBox, measure_expression, parse_element_box, parse_image};
+    use super::{
+        CaptureFormat, MiniElementBox, measure_expression, parse_element_box, parse_image,
+    };
 
     #[test]
     fn reads_the_measured_box() {
         let result = br#"{"result":{"type":"object","value":{"x":10.5,"y":-20,"width":300,"height":40,"ratio":3}}}"#;
         assert_eq!(
             parse_element_box(result),
-            Some(MiniElementBox { x: 10.5, y: -20.0, width: 300.0, height: 40.0, pixel_ratio: 3.0 })
+            Some(MiniElementBox {
+                x: 10.5,
+                y: -20.0,
+                width: 300.0,
+                height: 40.0,
+                pixel_ratio: 3.0
+            })
         );
     }
 
     #[test]
     fn rejects_missing_or_empty_boxes() {
-        assert_eq!(parse_element_box(br#"{"result":{"type":"object","subtype":"null","value":null}}"#), None);
+        assert_eq!(
+            parse_element_box(br#"{"result":{"type":"object","subtype":"null","value":null}}"#),
+            None
+        );
         assert_eq!(parse_element_box(br#"{"result":{"type":"object","value":{"x":0,"y":0,"width":0,"height":4,"ratio":2}}}"#), None);
         assert_eq!(parse_element_box(b"nonsense"), None);
     }
 
     #[test]
     fn decodes_only_the_requested_format() {
-        assert_eq!(parse_image(br#"{"data":"iVBORw0KGgo="}"#, CaptureFormat::Png), Some(b"\x89PNG\r\n\x1a\n".to_vec()));
-        assert_eq!(parse_image(br#"{"data":"/9j/"}"#, CaptureFormat::Jpeg), Some(vec![0xff, 0xd8, 0xff]));
+        assert_eq!(
+            parse_image(br#"{"data":"iVBORw0KGgo="}"#, CaptureFormat::Png),
+            Some(b"\x89PNG\r\n\x1a\n".to_vec())
+        );
+        assert_eq!(
+            parse_image(br#"{"data":"/9j/"}"#, CaptureFormat::Jpeg),
+            Some(vec![0xff, 0xd8, 0xff])
+        );
         assert_eq!(parse_image(br#"{"data":"/9j/"}"#, CaptureFormat::Png), None);
-        assert_eq!(parse_image(br#"{"data":"aGVsbG8="}"#, CaptureFormat::Png), None);
+        assert_eq!(
+            parse_image(br#"{"data":"aGVsbG8="}"#, CaptureFormat::Png),
+            None
+        );
         assert_eq!(parse_image(br#"{"data":"%%%"}"#, CaptureFormat::Jpeg), None);
         assert_eq!(parse_image(b"not json", CaptureFormat::Jpeg), None);
     }

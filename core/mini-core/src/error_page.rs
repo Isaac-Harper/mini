@@ -33,7 +33,11 @@ pub fn show(tab: MiniTabId, html: &str) {
 }
 
 pub fn main_frame_loaded(tab: MiniTabId, frame: &Frame) {
-    let pending = with_core(|core| core.tabs.get_mut(&tab).and_then(|state| state.pending_error_page.take()));
+    let pending = with_core(|core| {
+        core.tabs
+            .get_mut(&tab)
+            .and_then(|state| state.pending_error_page.take())
+    });
     if let Some(html) = pending {
         apply(frame, &html);
     }
@@ -41,7 +45,11 @@ pub fn main_frame_loaded(tab: MiniTabId, frame: &Frame) {
 
 fn apply(frame: &Frame, html: &str) {
     let script = replacement_script(token(), html);
-    frame.execute_java_script(Some(&CefString::from(script.as_str())), Some(&CefString::from("mini-error-page")), 0);
+    frame.execute_java_script(
+        Some(&CefString::from(script.as_str())),
+        Some(&CefString::from("mini-error-page")),
+        0,
+    );
 }
 
 pub fn handle_signal(browser: &Browser, rest: &str) -> bool {

@@ -1,10 +1,6 @@
 use cef::*;
 
-use crate::{
-    MiniTabId,
-    login::javascript_string_literal,
-    state::callbacks,
-};
+use crate::{MiniTabId, login::javascript_string_literal, state::callbacks};
 
 const THEME_COLOR_SCRIPT: &str = r#"(function(){
 var key=Symbol.for('mini-theme-'+__TOKEN__);

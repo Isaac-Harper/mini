@@ -1,6 +1,9 @@
 use cef::*;
 
-use crate::{MiniTabId, state::{callbacks, tab_is_live}};
+use crate::{
+    MiniTabId,
+    state::{callbacks, tab_is_live},
+};
 
 wrap_string_visitor! {
     struct SourceVisitor {

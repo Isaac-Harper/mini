@@ -214,7 +214,7 @@ Bundle and scripts (detail in signing-release-codecs.md):
 ## Verification
 
 - `make run` builds, bundles, signs and launches. Gates: app launches, page renders in the content card, tabs create/switch/close/nest, Cmd shortcuts work while a page has focus, Cmd-Q quits cleanly (no crash report), session restores on relaunch.
-- `cargo clippy` and `cargo test` in `core/`, `swift build` in `shell/`; `make test` runs `cargo test` and the Swift `MiniRulesTests`.
+- `cargo fmt --check`, `cargo clippy` and `cargo test` in `core/`, `swift build` in `shell/`; `make test` runs `cargo test` and the Swift `MiniRulesTests`.
 - Scenario testing runs a separate scratch-bundle instance in the background; rules in testing-harness.md.
 
 ## Status

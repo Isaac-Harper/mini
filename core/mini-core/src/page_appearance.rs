@@ -62,6 +62,9 @@ mod tests {
         assert_eq!(features["features"][0]["value"], "dark");
         assert_eq!(features["features"][1]["name"], "prefers-reduced-motion");
         assert_eq!(features["features"][1]["value"], "reduce");
-        assert_eq!(media_features(COLOR_SCHEME_LIGHT, false)["features"][0]["value"], "light");
+        assert_eq!(
+            media_features(COLOR_SCHEME_LIGHT, false)["features"][0]["value"],
+            "light"
+        );
     }
 }

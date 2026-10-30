@@ -71,11 +71,18 @@ pub fn script(frame: &Frame, token: &str) -> String {
 }
 
 fn first_of(tags: &HashMap<String, String>, names: &[&str]) -> String {
-    names.iter().find_map(|name| tags.get(*name)).cloned().unwrap_or_default()
+    names
+        .iter()
+        .find_map(|name| tags.get(*name))
+        .cloned()
+        .unwrap_or_default()
 }
 
 fn dimension(tags: &HashMap<String, String>, name: &str) -> u32 {
-    tags.get(name).and_then(|value| value.parse::<u32>().ok()).filter(|value| *value <= 100_000).unwrap_or(0)
+    tags.get(name)
+        .and_then(|value| value.parse::<u32>().ok())
+        .filter(|value| *value <= 100_000)
+        .unwrap_or(0)
 }
 
 pub fn parse(payload: &str) -> Option<PreviewTags> {
@@ -169,7 +176,10 @@ mod tests {
 
     #[test]
     fn rejects_non_web_documents_and_bad_sizes() {
-        assert_eq!(parse(r#"{"tags":{},"title":"","base":"file:///tmp/a.html"}"#), None);
+        assert_eq!(
+            parse(r#"{"tags":{},"title":"","base":"file:///tmp/a.html"}"#),
+            None
+        );
         assert_eq!(parse(r#"{"tags":{},"title":""}"#), None);
         assert_eq!(parse("not json"), None);
         let tags = parse(r#"{"tags":{"og:image:width":"wide","og:image:height":"9999999"},"title":"","base":"http://localhost:3000/"}"#)

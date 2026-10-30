@@ -49,7 +49,15 @@ pub fn visit_entries(browser: &Browser, visitor: EntryVisitor, context: *mut c_v
         let url = c_string(&entry.url);
         let title = c_string(&entry.title);
         let index = i32::try_from(index).expect("navigation history longer than i32");
-        unsafe { visitor(context, index, entry.is_current, url.as_ptr(), title.as_ptr()) };
+        unsafe {
+            visitor(
+                context,
+                index,
+                entry.is_current,
+                url.as_ptr(),
+                title.as_ptr(),
+            )
+        };
     }
 }
 
@@ -57,5 +65,9 @@ pub fn go_to_offset(browser: &Browser, offset: i32) {
     let frame = browser.main_frame().expect("browser has no main frame");
     let script = format!("history.go({offset})");
     let frame_url = CefString::from(&frame.url()).to_string();
-    frame.execute_java_script(Some(&CefString::from(script.as_str())), Some(&CefString::from(frame_url.as_str())), 0);
+    frame.execute_java_script(
+        Some(&CefString::from(script.as_str())),
+        Some(&CefString::from(frame_url.as_str())),
+        0,
+    );
 }

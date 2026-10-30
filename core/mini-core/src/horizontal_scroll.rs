@@ -37,7 +37,10 @@ pub fn handle_signal(tab: MiniTabId, browser: &Browser, rest: &str) -> bool {
     let Some((frame_id, payload)) = rest.split_once(':') else {
         return true;
     };
-    if browser.frame_by_identifier(Some(&CefString::from(frame_id))).is_none() {
+    if browser
+        .frame_by_identifier(Some(&CefString::from(frame_id)))
+        .is_none()
+    {
         return true;
     }
     let Ok(edges) = payload.parse::<u8>() else {

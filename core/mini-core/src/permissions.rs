@@ -175,7 +175,12 @@ pub fn request_prompt(
 }
 
 pub fn request_notifications(tab: MiniTabId, origin: &str, browser: Browser, frame_id: String) {
-    request(tab, origin, NOTIFICATIONS, PendingCallback::Notifications { browser, frame_id });
+    request(
+        tab,
+        origin,
+        NOTIFICATIONS,
+        PendingCallback::Notifications { browser, frame_id },
+    );
 }
 
 pub fn respond(request: u64, granted: u32) {
@@ -251,12 +256,14 @@ pub fn dismiss_for_tab(tab: MiniTabId) {
     for (request, entry) in dismissed {
         match entry.callback {
             PendingCallback::Media { callback, .. } => callback.cancel(),
-            PendingCallback::Notifications { browser, frame_id } => notifications::deliver_permission_result(
-                &browser,
-                &frame_id,
-                login::token(),
-                notifications::DEFAULT,
-            ),
+            PendingCallback::Notifications { browser, frame_id } => {
+                notifications::deliver_permission_result(
+                    &browser,
+                    &frame_id,
+                    login::token(),
+                    notifications::DEFAULT,
+                )
+            }
             PendingCallback::Prompt { .. } => {}
         }
         unsafe { (callbacks().permission_dismissed)(request) };

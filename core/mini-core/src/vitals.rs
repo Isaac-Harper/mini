@@ -43,7 +43,10 @@ pub fn script(frame: &Frame, token: &str) -> String {
 pub fn parse(payload: &str) -> Option<Vitals> {
     let vitals = serde_json::from_str::<Vitals>(payload).ok()?;
     let values = [vitals.lcp, vitals.cls, vitals.inp, vitals.ttfb, vitals.load];
-    values.iter().all(|value| value.is_finite() && *value >= -1.0 && *value < 3_600_000.0).then_some(vitals)
+    values
+        .iter()
+        .all(|value| value.is_finite() && *value >= -1.0 && *value < 3_600_000.0)
+        .then_some(vitals)
 }
 
 pub fn handle_signal(tab: MiniTabId, browser: &Browser, rest: &str) -> bool {
@@ -57,7 +60,16 @@ pub fn handle_signal(tab: MiniTabId, browser: &Browser, rest: &str) -> bool {
         .frame_by_identifier(Some(&CefString::from(frame_id)))
         .is_some_and(|frame| frame.is_main() == 1);
     if let (true, Some(vitals)) = (is_main_frame, parse(payload)) {
-        unsafe { (callbacks().page_vitals_changed)(tab, vitals.lcp, vitals.inp, vitals.cls, vitals.ttfb, vitals.load) };
+        unsafe {
+            (callbacks().page_vitals_changed)(
+                tab,
+                vitals.lcp,
+                vitals.inp,
+                vitals.cls,
+                vitals.ttfb,
+                vitals.load,
+            )
+        };
     }
     true
 }
@@ -70,16 +82,31 @@ mod tests {
     fn parses_the_reported_numbers() {
         assert_eq!(
             parse(r#"{"lcp":1234.5,"cls":0.12,"inp":-1,"ttfb":88,"load":-1}"#),
-            Some(Vitals { lcp: 1234.5, cls: 0.12, inp: -1.0, ttfb: 88.0, load: -1.0 })
+            Some(Vitals {
+                lcp: 1234.5,
+                cls: 0.12,
+                inp: -1.0,
+                ttfb: 88.0,
+                load: -1.0
+            })
         );
     }
 
     #[test]
     fn rejects_anything_but_four_sane_numbers() {
-        assert_eq!(parse(r#"{"lcp":"x","cls":0,"inp":0,"ttfb":0,"load":0}"#), None);
+        assert_eq!(
+            parse(r#"{"lcp":"x","cls":0,"inp":0,"ttfb":0,"load":0}"#),
+            None
+        );
         assert_eq!(parse(r#"{"lcp":1,"cls":0,"inp":0,"ttfb":0}"#), None);
-        assert_eq!(parse(r#"{"lcp":-5,"cls":0,"inp":0,"ttfb":0,"load":0}"#), None);
-        assert_eq!(parse(r#"{"lcp":1e12,"cls":0,"inp":0,"ttfb":0,"load":0}"#), None);
+        assert_eq!(
+            parse(r#"{"lcp":-5,"cls":0,"inp":0,"ttfb":0,"load":0}"#),
+            None
+        );
+        assert_eq!(
+            parse(r#"{"lcp":1e12,"cls":0,"inp":0,"ttfb":0,"load":0}"#),
+            None
+        );
         assert_eq!(parse("not json"), None);
     }
 }

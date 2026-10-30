@@ -71,17 +71,28 @@ pub struct MiniCallbacks {
     pub render_process_terminated: Option<unsafe extern "C" fn(MiniTabId, i32)>,
     pub login_form_presence_changed: Option<unsafe extern "C" fn(MiniTabId, bool)>,
     pub notification_show: Option<
-        unsafe extern "C" fn(MiniTabId, *const c_char, u32, *const c_char, *const c_char, *const c_char, *const c_char, bool),
+        unsafe extern "C" fn(
+            MiniTabId,
+            *const c_char,
+            u32,
+            *const c_char,
+            *const c_char,
+            *const c_char,
+            *const c_char,
+            bool,
+        ),
     >,
     pub notification_close: Option<unsafe extern "C" fn(MiniTabId, *const c_char, u32)>,
-    pub audio_state_changed: Option<unsafe extern "C" fn(MiniTabId, bool, *const c_char, *const c_char)>,
+    pub audio_state_changed:
+        Option<unsafe extern "C" fn(MiniTabId, bool, *const c_char, *const c_char)>,
     pub status_message_changed: Option<unsafe extern "C" fn(MiniTabId, *const c_char)>,
     pub fullscreen_mode_changed: Option<unsafe extern "C" fn(MiniTabId, bool)>,
     pub loading_progress_changed: Option<unsafe extern "C" fn(MiniTabId, f64)>,
     pub theme_color_changed: Option<unsafe extern "C" fn(MiniTabId, u32)>,
     pub page_background_changed: Option<unsafe extern "C" fn(MiniTabId, u32)>,
     pub horizontal_scroll_reported: Option<unsafe extern "C" fn(MiniTabId, bool, bool)>,
-    pub context_menu_requested: Option<unsafe extern "C" fn(MiniTabId, *const context_menu::MiniContextMenu)>,
+    pub context_menu_requested:
+        Option<unsafe extern "C" fn(MiniTabId, *const context_menu::MiniContextMenu)>,
     pub image_copied: Option<unsafe extern "C" fn(MiniTabId, *const u8, usize)>,
     pub media_artwork_changed: Option<unsafe extern "C" fn(MiniTabId, *const u8, usize)>,
     pub video_handed_off: Option<unsafe extern "C" fn(MiniTabId, *const c_char, f64)>,
@@ -90,9 +101,11 @@ pub struct MiniCallbacks {
     pub main_frame_load_failed: Option<unsafe extern "C" fn(MiniTabId, i32, *const c_char)>,
     pub page_vitals_changed: Option<unsafe extern "C" fn(MiniTabId, f64, f64, f64, f64, f64)>,
     pub main_frame_headers_received: Option<unsafe extern "C" fn(MiniTabId, *const c_char)>,
-    pub link_preview_reported: Option<unsafe extern "C" fn(MiniTabId, *const link_preview::MiniLinkPreview)>,
-    pub page_snapshot_received:
-        Option<unsafe extern "C" fn(MiniTabId, u64, *const u8, usize, *const screenshot::MiniElementBox)>,
+    pub link_preview_reported:
+        Option<unsafe extern "C" fn(MiniTabId, *const link_preview::MiniLinkPreview)>,
+    pub page_snapshot_received: Option<
+        unsafe extern "C" fn(MiniTabId, u64, *const u8, usize, *const screenshot::MiniElementBox),
+    >,
     pub scroll_fraction_received: Option<unsafe extern "C" fn(MiniTabId, f64)>,
     pub page_health_wanted: Option<unsafe extern "C" fn(MiniTabId, *const c_char) -> bool>,
     pub page_errors_reported: Option<unsafe extern "C" fn(MiniTabId, u32, *const c_char)>,
@@ -223,7 +236,10 @@ pub extern "C" fn mini_space_create(space: *const c_char, cache_path: *const c_c
     };
     with_core(|core| {
         let previous = core.request_contexts.insert(space.clone(), context);
-        assert!(previous.is_none(), "mini_space_create called twice for space {space}");
+        assert!(
+            previous.is_none(),
+            "mini_space_create called twice for space {space}"
+        );
     });
 }
 
@@ -489,7 +505,10 @@ pub extern "C" fn mini_browser_save_url(tab: MiniTabId, url: *const c_char, path
     let url = borrowed_text(url, "url");
     let path = borrowed_text(path, "path");
     if let Some(browser) = created_browser(tab) {
-        with_core(|core| core.pending_save_paths.insert(url.to_owned(), path.to_owned()));
+        with_core(|core| {
+            core.pending_save_paths
+                .insert(url.to_owned(), path.to_owned())
+        });
         host(&browser).start_download(Some(&CefString::from(url)));
     }
 }
@@ -553,7 +572,11 @@ pub extern "C" fn mini_browser_request_source(tab: MiniTabId, request: u64) {
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn mini_browser_set_emulated_media(tab: MiniTabId, color_scheme: i32, reduced_motion: bool) {
+pub extern "C" fn mini_browser_set_emulated_media(
+    tab: MiniTabId,
+    color_scheme: i32,
+    reduced_motion: bool,
+) {
     if let Some(browser) = created_browser(tab) {
         page_appearance::set_emulated_media(&browser, color_scheme, reduced_motion);
     }
@@ -577,11 +600,18 @@ pub extern "C" fn mini_browser_capture_snapshot(
 ) {
     let format = screenshot::CaptureFormat::from_raw(format);
     assert!(
-        !measures_element || (format == screenshot::CaptureFormat::Png && x.is_finite() && y.is_finite()),
+        !measures_element
+            || (format == screenshot::CaptureFormat::Png && x.is_finite() && y.is_finite()),
         "element point {x}, {y} needs a PNG capture and a finite point"
     );
     if let Some(browser) = created_browser(tab) {
-        screenshot::capture(tab, &browser, request, format, measures_element.then_some((x, y)));
+        screenshot::capture(
+            tab,
+            &browser,
+            request,
+            format,
+            measures_element.then_some((x, y)),
+        );
     }
 }
 
@@ -693,7 +723,11 @@ pub extern "C" fn mini_set_notification_permission(origin: *const c_char, state:
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn mini_notification_clicked(tab: MiniTabId, frame_id: *const c_char, notification: u32) {
+pub extern "C" fn mini_notification_clicked(
+    tab: MiniTabId,
+    frame_id: *const c_char,
+    notification: u32,
+) {
     let frame_id = borrowed_text(frame_id, "frame_id");
     if let Some(browser) = created_browser(tab) {
         notifications::deliver_click(&browser, frame_id, login::token(), notification);

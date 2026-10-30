@@ -124,7 +124,10 @@ pub fn shim_script(frame: &Frame, token: &str) -> String {
             "__FRAME__",
             &javascript_string_literal(&CefString::from(&frame.identifier()).to_string()),
         )
-        .replace("__PERMISSION__", &javascript_string_literal(permission_name(state)))
+        .replace(
+            "__PERMISSION__",
+            &javascript_string_literal(permission_name(state)),
+        )
 }
 
 fn api_call(token: &str, call: &str) -> String {
@@ -136,14 +139,20 @@ fn api_call(token: &str, call: &str) -> String {
 
 pub fn deliver_permission_result(browser: &Browser, frame_id: &str, token: &str, state: i32) {
     if let Some(frame) = browser.frame_by_identifier(Some(&CefString::from(frame_id))) {
-        let call = format!("permissionResult({})", javascript_string_literal(permission_name(state)));
+        let call = format!(
+            "permissionResult({})",
+            javascript_string_literal(permission_name(state))
+        );
         run(&frame, &api_call(token, &call));
     }
 }
 
 pub fn deliver_click(browser: &Browser, frame_id: &str, token: &str, notification: u32) {
     if let Some(frame) = browser.frame_by_identifier(Some(&CefString::from(frame_id))) {
-        run(&frame, &api_call(token, &format!("clicked({notification})")));
+        run(
+            &frame,
+            &api_call(token, &format!("clicked({notification})")),
+        );
     }
 }
 
@@ -219,7 +228,12 @@ pub fn handle_signal(tab: MiniTabId, browser: &Browser, token: &str, rest: &str)
             if state != DEFAULT {
                 deliver_permission_result(browser, frame_id, token, state);
             } else {
-                permissions::request_notifications(tab, &origin, browser.clone(), frame_id.to_owned());
+                permissions::request_notifications(
+                    tab,
+                    &origin,
+                    browser.clone(),
+                    frame_id.to_owned(),
+                );
             }
         }
         _ => {}
