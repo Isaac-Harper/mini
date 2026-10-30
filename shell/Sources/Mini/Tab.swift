@@ -46,9 +46,12 @@ final class Tab: Identifiable {
     var themeColor: NSColor?
     var vitals = WebVitals()
     var edge: EdgeSummary?
+    var health = PageHealth()
     var reloadDurationText: String?
     @ObservationIgnored var reloadDurationGeneration = 0
     @ObservationIgnored var awaitsReloadTiming = false
+    @ObservationIgnored var reloadTemperature = ReloadTemperature.plain
+    @ObservationIgnored var lastColdReload: ColdReload?
     var idleFade = 1.0
     var dayFold: DayFold?
     @ObservationIgnored var horizontalScrollRoom = HorizontalScrollRoom()

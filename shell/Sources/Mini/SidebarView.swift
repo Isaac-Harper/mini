@@ -360,14 +360,15 @@ private struct AddressPill: View {
                         .accessibilityLabel("Reloaded in \(reloadDuration)")
                 }
                 if let selected, !selected.url.isEmpty {
+                    let reloadsCold = !selected.isLoading && shell.reloadOptionKey.isHeld
                     Button {
                         if selected.isLoading {
                             shell.stopLoading(nil)
                         } else {
-                            shell.reloadByUser(selected)
+                            shell.reloadByUser(selected, ignoringCache: NSEvent.modifierFlags.contains(.option))
                         }
                     } label: {
-                        Image(systemName: selected.isLoading ? "xmark" : "arrow.clockwise")
+                        Image(systemName: selected.isLoading ? "xmark" : reloadsCold ? "snowflake" : "arrow.clockwise")
                             .contentTransition(reduceMotion ? .opacity : .symbolEffect(.replace))
                             .font(InterfaceFont.controlSymbol)
                             .foregroundStyle(.secondary)
@@ -377,7 +378,8 @@ private struct AddressPill: View {
                     .buttonStyle(.plain)
                     .focusable(false)
                     .hapticFeedback(.press)
-                    .glassTooltip(selected.isLoading ? "Stop" : "Reload")
+                    .glassTooltip(selected.isLoading ? "Stop" : reloadsCold ? "Reload Without Cache" : "Reload")
+                    .onHover { shell.reloadOptionKey.hoverChanged($0) }
                 }
             }
             .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: selected?.reloadDurationText)

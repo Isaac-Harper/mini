@@ -88,6 +88,10 @@ enum MainMenu {
         menu.addItem(item("Close the Day Automatically", #selector(ShellController.toggleClosingTheDay(_:)), "", target: commands, symbol: "moon.zzz"))
         menu.addItem(.separator())
         menu.addItem(item("Reload Page", #selector(ShellController.reloadPage(_:)), "r", target: commands, symbol: "arrow.clockwise"))
+        let reloadWithoutCacheItem = item("Reload Without Cache", #selector(ShellController.reloadPageIgnoringCache(_:)), "r", [.command, .option],
+                                          target: commands, symbol: "snowflake")
+        reloadWithoutCacheItem.isAlternate = true
+        menu.addItem(reloadWithoutCacheItem)
         menu.addItem(item("Stop", #selector(ShellController.stopLoading(_:)), ".", target: commands, symbol: "xmark"))
         menu.addItem(.separator())
         menu.addItem(item("Zoom In", #selector(ShellController.zoomInPage(_:)), "=", target: commands, symbol: "plus.magnifyingglass"))

@@ -167,6 +167,10 @@ extension ShellController: NSMenuItemValidation {
         if let tab = commandBrowserTab { reloadByUser(tab) }
     }
 
+    @objc func reloadPageIgnoringCache(_ sender: Any?) {
+        if let tab = commandBrowserTab { reloadByUser(tab, ignoringCache: true) }
+    }
+
     @objc func stopLoading(_ sender: Any?) {
         if let tab = commandBrowserTab { mini_browser_stop(tab.id) }
     }
@@ -430,7 +434,7 @@ extension ShellController: NSMenuItemValidation {
             return SourceWindowController.keyController != nil || mainWindowBrowserTab != nil
         case #selector(fillPassword(_:)):
             return mainWindowBrowserTab != nil
-        case #selector(reloadPage(_:)), #selector(zoomInPage(_:)), #selector(zoomOutPage(_:)),
+        case #selector(reloadPage(_:)), #selector(reloadPageIgnoringCache(_:)), #selector(zoomInPage(_:)), #selector(zoomOutPage(_:)),
              #selector(actualSizePage(_:)), #selector(showDeveloperTools(_:)), #selector(printPage(_:)), #selector(viewSource(_:)):
             return commandBrowserTab != nil
         case #selector(largerInterface(_:)):

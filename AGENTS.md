@@ -47,7 +47,7 @@ Each line is expanded in the doc named at its end.
 - Every `mini_browser_*` call needs `Tab.browserState == .created`; Rust panics otherwise. Tab ids are never reused. (cef-and-core)
 - CEF never opens a top-level window: popups go into a tab or little window, a second launch goes through `app_relaunched`; only DevTools and Chromium's PiP window are exceptions. (cef-and-core)
 - Popups with an opener become child tabs via `popup_requested`; opener-less new-tab links use `open_tab_requested`. (cef-and-core)
-- Login values are never logged, persisted or echoed, and the fill origin is always derived browser-side. Notification titles, bodies and tags are never logged. (cef-and-core)
+- Login values are never logged, persisted or echoed, and the fill origin is always derived browser-side. Notification titles, bodies and tags, page error messages and failed request URLs are never logged. (cef-and-core)
 - App shortcuts beat the page through `pre_key_event`, except Edit-menu shortcuts; Cmd-Z goes to tab undo only when the page has no editable focus. (shell-ui)
 - Every undoable tab action goes through `performUndoable` on the dedicated `tabUndoManager`, one explicit group per action. (tabs-and-undo)
 - Tab kind follows the tree: a saved root's whole subtree is saved; closing a saved or pinned tab resets it, `remove` is the real close. (tabs-and-undo)
@@ -89,6 +89,7 @@ Rust core (`core/`, detail in cef-and-core.md):
 - `src/theme_color.rs`: theme-color and page background script and parser.
 - `src/horizontal_scroll.rs`: page horizontal scroll room for swipe navigation.
 - `src/vitals.rs`: Core Web Vitals script and report parsing.
+- `src/page_health.rs`: dev and preview page health: uncaught error script, failed subresource reports from the IO thread.
 - `src/response_headers.rs`: the main-frame response's edge headers for the edge badge.
 - `src/resource_requests.rs`: ad block request cancelling (IO thread).
 - `src/ad_blocking/`: Brave `adblock` engine, lists, resources, matching.
@@ -130,8 +131,8 @@ Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 - `Sources/MiniRules/AddressEmphasis.swift`: address pill split around the registrable domain from an injected resolver (the core's public suffix list), unit tested. (shell-ui)
 - `AddressPillBadges.swift`: the pill's caption chips (preview, dev port, vitals warning dot). (shell-ui)
 - `HoverPreloader.swift`, `Sources/MiniRules/HoverPreload.swift`: Preload on Hover (speculation rules prefetch of the hovered same-site link), unit tested rules. (shell-ui)
-- `ReloadTiming.swift`: the reload time label after a user reload. (shell-ui)
-- `VitalsPeek.swift`, `Sources/MiniRules/WebVitals.swift`, `Sources/MiniRules/EdgeHeaders.swift`: the pill's Core Web Vitals popover with the edge badge, unit tested thresholds and header parsing. (shell-ui)
+- `ReloadTiming.swift`, `Sources/MiniRules/ReloadTemperature.swift`: the reload time label after a user reload, cold and warm reloads, the reload button's Option state; unit tested labels. (shell-ui)
+- `VitalsPeek.swift`, `Sources/MiniRules/WebVitals.swift`, `Sources/MiniRules/EdgeHeaders.swift`, `Sources/MiniRules/PageHealth.swift`: the pill's Core Web Vitals popover with the edge badge and the dev and preview page health lines, unit tested thresholds, header parsing, counting and truncation. (shell-ui)
 - `Sources/MiniRules/LocalDevelopment.swift`, `LocalServers.swift`, `DevServerReconnect.swift`: localhost dev tabs, the command bar's local server list from lsof, and the wait-and-reload after connection refused, unit tested rules. (shell-ui)
 - `Sources/MiniRules/PreviewDeployment.swift`, `PreviewSwitching.swift`: preview deployment hosts and the preview/production switch from history, unit tested. (shell-ui)
 - `Sources/MiniRules/EveningTint.swift`: pure evening tint strength curve, in its own target so `Tests/MiniRulesTests` can test it without linking the app. (shell-ui)

@@ -29,6 +29,8 @@ Mini is an open source exploration project: a personal, minimal browser built to
 - Tabs left unselected for 12 hours archive themselves (they fade gently from 6 hours on, back to full on hover); find them again in the command bar
 - Downloads progress in the sidebar; click to cancel, or to show the file in Finder
 - A crashed page shows a Reload button instead of a blank tab
+- Hold Option over the reload button (it turns into a snowflake) or press ⌥⌘R to reload without the cache; the time beside the button then reads "cold 1.4s", and the next normal reload of that page "warm 210ms"
+- On local dev servers and preview deployments, uncaught errors, unhandled promise rejections and failed requests light the address pill's warning dot; hover the pill for the first one, click it to open the developer tools
 - Web notifications appear as macOS notifications after you allow them for a site (View > Allow Notifications from This Site turns them on or off); clicking one returns you to its tab
 - A Now Playing row with the track's artwork (or the video poster, or the site icon), softly tinted to match, and play/pause for the tab that last started audio; a speaker icon on playing tabs mutes them
 - AirPlay from the Now Playing row: a video with its own file or HLS source plays on an Apple TV or AirPlay TV through the native device list, picking up where the page was and handing back when it ends; streamed video (YouTube and other MediaSource players) can't be handed over, so the button offers the Mac's sound output and display mirroring instead
@@ -104,6 +106,7 @@ The stock CEF build plays VP8, VP9, AV1, Opus and other open formats, but not H.
 | ⌘Y | Show all history |
 | ⌘[, ⌘] | Back and forward (right-click or hold the arrow buttons for the history list) |
 | ⌘R, ⌘. | Reload and stop |
+| ⌥⌘R | Reload without the cache |
 | ⌘F, ⌘G, ⇧⌘G | Find, next, previous |
 | ⌘=, ⌘-, ⌘0 | Zoom in, out, actual size (remembered per site) |
 | ⌘P | Print the page |

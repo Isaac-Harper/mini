@@ -31,8 +31,8 @@ struct AddressPillBadges: View {
                 AddressPillChip(text: preview.branch.map { "Preview \u{00B7} \($0)" } ?? "Preview",
                                 help: preview.branch.map { "Preview deployment of \(preview.project), branch \($0)" } ?? "Preview deployment of \(preview.project)")
             }
-            if tab.vitals.needsWarning {
-                VitalsWarningDot()
+            if let tooltip = PageHealth.warningTooltip(health: tab.health, slowVitals: tab.vitals.needsWarning) {
+                VitalsWarningDot(tooltip: tooltip)
             }
         }
     }

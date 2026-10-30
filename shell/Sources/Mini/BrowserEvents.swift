@@ -271,6 +271,20 @@ extension ShellController {
         tab.edge = edge
     }
 
+    func pageHealthWanted(_ identifier: MiniTabId, url: String) -> Bool {
+        guard let tab = liveTab(identifier) else { return false }
+        if tab.health != PageHealth() { tab.health = PageHealth() }
+        return PageHealth.isCollected(for: url)
+    }
+
+    func pageErrorsReported(_ identifier: MiniTabId, count: Int, firstMessage: String) {
+        liveTab(identifier)?.health.recordErrors(count, firstMessage: firstMessage)
+    }
+
+    func requestFailed(_ identifier: MiniTabId, request: FailedRequest) {
+        liveTab(identifier)?.health.recordFailedRequest(request)
+    }
+
     func sourceReceived(_ identifier: MiniTabId, request: UInt64, source: String) {
         SourceWindowController.sourceReceived(request: request, source: source)
     }
