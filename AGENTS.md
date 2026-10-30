@@ -122,7 +122,7 @@ Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 - `LaunchReveal.swift`: the once-per-launch sidebar and page card reveal. (shell-ui)
 - `FocusRing.swift`: the space-colored keyboard focus ring. (shell-ui)
 - `HoverHighlight.swift`: the shared hover highlight for SwiftUI and AppKit controls. (shell-ui)
-- `InterfaceMetrics.swift`: every sidebar and command bar metric on the 4pt grid, and the shared fonts. (shell-ui)
+- `InterfaceMetrics.swift`, `Sources/MiniRules/InterfaceSize.swift`: every sidebar and command bar metric on the 4pt grid and the shared fonts, all scaled by the one `InterfaceScale` (View > Interface Size); levels and stepping unit tested. (shell-ui)
 - `SiteTintView.swift`: sidebar tint from space color, page theme color and the evening tint. (shell-ui)
 - `Sources/MiniRules/FaviconTone.swift`: favicon luminance and coverage, and when a backing plate is needed, unit tested. (shell-ui)
 - `Sources/MiniRules/UnreadTitle.swift`, `UnreadBadgeView.swift`: unread counts parsed from titles (pure, unit tested) and the favicon badge. (shell-ui)

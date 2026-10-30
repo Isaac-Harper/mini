@@ -1,45 +1,68 @@
+import MiniRules
 import SwiftUI
 
+@Observable
+final class InterfaceScale: @unchecked Sendable {
+    static let shared = InterfaceScale()
+    private static let levelKey = "interfaceSizeLevel"
+
+    private(set) var level = InterfaceSize.level(stored: UserDefaults.standard.object(forKey: levelKey) as? Int)
+
+    var factor: Double { InterfaceSize.scales[level] }
+
+    static func scaled(_ value: CGFloat) -> CGFloat {
+        CGFloat(InterfaceSize.scaled(Double(value), by: shared.factor))
+    }
+
+    func setLevel(_ newLevel: Int) {
+        level = InterfaceSize.level(stored: newLevel)
+        UserDefaults.standard.set(level, forKey: Self.levelKey)
+    }
+}
+
 enum SidebarMetrics {
-    static let rowHeight: CGFloat = 28
-    static let rowCornerRadius: CGFloat = 8
-    static let edgeInset: CGFloat = 8
-    static let indentation: CGFloat = 16
-    static let rowLeadingPadding: CGFloat = 4
-    static let rowTrailingPadding: CGFloat = 8
-    static let footerRowPadding: CGFloat = 8
-    static let disclosureSize: CGFloat = 12
-    static let iconSize: CGFloat = 16
-    static let iconSpacing: CGFloat = 8
-    static let accessorySize: CGFloat = 16
-    static let accessorySpacing: CGFloat = 4
-    static let titleFadeWidth: CGFloat = 16
-    static let topPadding: CGFloat = 4
-    static let sectionSpacing: CGFloat = 12
-    static let addressPillHeight: CGFloat = 32
-    static let addressPillTextInset: CGFloat = 12
-    static let addressPillButtonWidth: CGFloat = 32
-    static let addressPillChipHeight: CGFloat = 16
-    static let addressPillChipPadding: CGFloat = 6
-    static let addressPillChipMaximumTextWidth: CGFloat = 92
-    static let pinnedTileHeight: CGFloat = 40
-    static let pinnedTileSpacing: CGFloat = 8
-    static let pinnedTileCornerRadius: CGFloat = 12
-    static let pinnedTileMinimumWidth: CGFloat = 44
-    static let artworkSize: CGFloat = 20
-    static let rowBadgeHeight: CGFloat = 12
-    static let tileBadgeHeight: CGFloat = 16
-    static let badgeRingWidth: CGFloat = 1.5
-    static let sectionHeaderHeight: CGFloat = 20
-    static let sectionDividerHeight: CGFloat = 12
-    static let downloadVerticalPadding: CGFloat = 4
-    static let spaceButtonSize = CGSize(width: 28, height: 24)
-    static let spaceButtonSpacing: CGFloat = 4
-    static let spaceBarTopPadding: CGFloat = 8
-    static let playerControlSize: CGFloat = 28
-    static let playerPrimaryControlSize: CGFloat = 36
-    static let playerControlSpacing: CGFloat = 8
-    static let playerControlInset: CGFloat = 8
+    static var rowHeight: CGFloat { InterfaceScale.scaled(28) }
+    static var rowCornerRadius: CGFloat { InterfaceScale.scaled(8) }
+    static var edgeInset: CGFloat { InterfaceScale.scaled(8) }
+    static var indentation: CGFloat { InterfaceScale.scaled(16) }
+    static var rowLeadingPadding: CGFloat { InterfaceScale.scaled(4) }
+    static var rowTrailingPadding: CGFloat { InterfaceScale.scaled(8) }
+    static var footerRowPadding: CGFloat { InterfaceScale.scaled(8) }
+    static var disclosureSize: CGFloat { InterfaceScale.scaled(12) }
+    static var iconSize: CGFloat { InterfaceScale.scaled(16) }
+    static var iconSpacing: CGFloat { InterfaceScale.scaled(8) }
+    static var accessorySize: CGFloat { InterfaceScale.scaled(16) }
+    static var accessorySpacing: CGFloat { InterfaceScale.scaled(4) }
+    static var titleFadeWidth: CGFloat { InterfaceScale.scaled(16) }
+    static var topPadding: CGFloat { InterfaceScale.scaled(4) }
+    static var sectionSpacing: CGFloat { InterfaceScale.scaled(12) }
+    static var addressPillHeight: CGFloat { InterfaceScale.scaled(32) }
+    static var addressPillTextInset: CGFloat { InterfaceScale.scaled(12) }
+    static var addressPillButtonWidth: CGFloat { InterfaceScale.scaled(32) }
+    static var addressPillChipHeight: CGFloat { InterfaceScale.scaled(16) }
+    static var addressPillChipPadding: CGFloat { InterfaceScale.scaled(6) }
+    static var addressPillChipMaximumTextWidth: CGFloat { InterfaceScale.scaled(92) }
+    static var pinnedTileHeight: CGFloat { InterfaceScale.scaled(40) }
+    static var pinnedTileSpacing: CGFloat { InterfaceScale.scaled(8) }
+    static var pinnedTileCornerRadius: CGFloat { InterfaceScale.scaled(12) }
+    static var pinnedTileMinimumWidth: CGFloat { InterfaceScale.scaled(44) }
+    static var artworkSize: CGFloat { InterfaceScale.scaled(20) }
+    static var rowBadgeHeight: CGFloat { InterfaceScale.scaled(12) }
+    static var tileBadgeHeight: CGFloat { InterfaceScale.scaled(16) }
+    static var badgeRingWidth: CGFloat { InterfaceScale.scaled(1.5) }
+    static var sectionHeaderHeight: CGFloat { InterfaceScale.scaled(20) }
+    static var sectionDividerHeight: CGFloat { InterfaceScale.scaled(12) }
+    static var downloadVerticalPadding: CGFloat { InterfaceScale.scaled(4) }
+    static var spaceButtonSize: CGSize { CGSize(width: InterfaceScale.scaled(28), height: InterfaceScale.scaled(24)) }
+    static var spaceButtonSpacing: CGFloat { InterfaceScale.scaled(4) }
+    static var spaceBarTopPadding: CGFloat { InterfaceScale.scaled(8) }
+    static var playerControlSize: CGFloat { InterfaceScale.scaled(28) }
+    static var playerPrimaryControlSize: CGFloat { InterfaceScale.scaled(36) }
+    static var playerControlSpacing: CGFloat { InterfaceScale.scaled(8) }
+    static var playerControlInset: CGFloat { InterfaceScale.scaled(8) }
+    static var minimumWidth: CGFloat { InterfaceScale.scaled(200) }
+    static var defaultWidth: CGFloat { InterfaceScale.scaled(240) }
+    static var maximumWidth: CGFloat { InterfaceScale.scaled(400) }
 
     static func indent(depth: Int) -> CGFloat {
         rowLeadingPadding + CGFloat(depth) * indentation
@@ -47,37 +70,54 @@ enum SidebarMetrics {
 }
 
 enum CommandBarMetrics {
-    static let cornerRadius: CGFloat = 20
-    static let contentInset: CGFloat = 8
-    static let fieldInset: CGFloat = 20
-    static let fieldTopInset: CGFloat = 16
-    static let fieldIconWidth: CGFloat = 20
-    static let fieldIconSpacing: CGFloat = 12
-    static let fieldIconPointSize: CGFloat = 16
-    static let suggestionsTopSpacing: CGFloat = 12
-    static let suggestionsBottomInset: CGFloat = 4
-    static let rowHeight: CGFloat = 36
-    static let rowPadding: CGFloat = 12
-    static let rowIconSize: CGFloat = 16
-    static let rowIconSpacing: CGFloat = 12
-    static let previewRowHeight: CGFloat = 24
-    static let previewIconSize: CGFloat = 16
-    static let previewIconSpacing: CGFloat = 8
+    static var cornerRadius: CGFloat { InterfaceScale.scaled(20) }
+    static var contentInset: CGFloat { InterfaceScale.scaled(8) }
+    static var fieldInset: CGFloat { InterfaceScale.scaled(20) }
+    static var fieldTopInset: CGFloat { InterfaceScale.scaled(16) }
+    static var fieldIconWidth: CGFloat { InterfaceScale.scaled(20) }
+    static var fieldIconSpacing: CGFloat { InterfaceScale.scaled(12) }
+    static var fieldIconPointSize: CGFloat { InterfaceScale.scaled(16) }
+    static var suggestionsTopSpacing: CGFloat { InterfaceScale.scaled(12) }
+    static var suggestionsBottomInset: CGFloat { InterfaceScale.scaled(4) }
+    static var rowHeight: CGFloat { InterfaceScale.scaled(36) }
+    static var rowPadding: CGFloat { InterfaceScale.scaled(12) }
+    static var rowIconSize: CGFloat { InterfaceScale.scaled(16) }
+    static var rowIconSpacing: CGFloat { InterfaceScale.scaled(12) }
+    static var previewRowHeight: CGFloat { InterfaceScale.scaled(24) }
+    static var previewIconSize: CGFloat { InterfaceScale.scaled(16) }
+    static var previewIconSpacing: CGFloat { InterfaceScale.scaled(8) }
 }
 
 enum InterfaceFont {
-    static let body = Font.system(size: 13)
-    static let caption = Font.system(size: 11)
-    static let sectionHeader = Font.system(size: 11, weight: .semibold)
-    static let rowSymbol = Font.system(size: 13, weight: .regular)
-    static let controlSymbol = Font.system(size: 12, weight: .medium)
-    static let accessorySymbol = Font.system(size: 10, weight: .semibold)
+    static var body: Font { .system(size: InterfaceScale.scaled(13)) }
+    static var caption: Font { .system(size: InterfaceScale.scaled(11)) }
+    static var sectionHeader: Font { .system(size: InterfaceScale.scaled(11), weight: .semibold) }
+    static var rowSymbol: Font { .system(size: InterfaceScale.scaled(13), weight: .regular) }
+    static var controlSymbol: Font { .system(size: InterfaceScale.scaled(12), weight: .medium) }
+    static var accessorySymbol: Font { .system(size: InterfaceScale.scaled(10), weight: .semibold) }
+    static var pastedLink: Font { .system(size: InterfaceScale.scaled(12)) }
+    static var commandField: NSFont { .systemFont(ofSize: InterfaceScale.scaled(20)) }
+    static var toast: NSFont { .systemFont(ofSize: InterfaceScale.scaled(13), weight: .medium) }
+    static var tooltip: NSFont { .systemFont(ofSize: InterfaceScale.scaled(11)) }
+    static var littleWindowAddress: NSFont { .systemFont(ofSize: InterfaceScale.scaled(13), weight: .medium) }
+
+    static func unreadBadge(onTile: Bool) -> Font {
+        .system(size: InterfaceScale.scaled(onTile ? 10 : 9), weight: .bold, design: .rounded)
+    }
+}
+
+enum OverlayMetrics {
+    static var toastHeight: CGFloat { InterfaceScale.scaled(32) }
+    static var toastPadding: CGFloat { InterfaceScale.scaled(16) }
+    static var tooltipHeight: CGFloat { InterfaceScale.scaled(24) }
+    static var tooltipPadding: CGFloat { InterfaceScale.scaled(8) }
 }
 
 enum CornerMetrics {
     static let window: CGFloat = 26
-    static let sidebarGlass = concentric(outer: window, inset: SidebarMetrics.edgeInset)
-    static let playerSlot = concentric(outer: sidebarGlass, inset: SidebarMetrics.edgeInset)
+    static let windowInset: CGFloat = 8
+    static let sidebarGlass = concentric(outer: window, inset: windowInset)
+    static var playerSlot: CGFloat { concentric(outer: sidebarGlass, inset: SidebarMetrics.edgeInset) }
 
     static func concentric(outer: CGFloat, inset: CGFloat) -> CGFloat {
         max(0, outer - inset)

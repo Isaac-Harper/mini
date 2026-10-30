@@ -88,7 +88,7 @@ private struct NowPlayingArtworkView: View {
     let artwork: NSImage?
     let favicon: NSImage?
 
-    private static let side = SidebarMetrics.artworkSize
+    private static var side: CGFloat { SidebarMetrics.artworkSize }
 
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: SidebarMetrics.rowCornerRadius - SidebarMetrics.rowLeadingPadding, style: .continuous)

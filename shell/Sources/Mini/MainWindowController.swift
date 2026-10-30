@@ -12,7 +12,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
     private let windowToolbar: WindowToolbar
     private var controlsCluster: WindowControlsCluster?
     private var peekSidebar: PeekSidebarController?
-    private var expandedSidebarWidth: CGFloat = 240
+    private var expandedSidebarWidth = SidebarMetrics.defaultWidth
     private var sidebarCollapseDetent = DetentChange<Bool>()
     private var sidebarEdgeDetent = DetentEntry<SidebarWidthEdge>()
     private weak var sidebarSnapEvent: NSEvent?
@@ -49,12 +49,12 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
         sidebarHostingView.onKeyDown = { [weak shell] event in shell?.sidebarKeyDown(event) ?? false }
         sidebarHostingView.onResignKeyboardFocus = { [weak shell] in shell?.sidebarResignedKeyboardFocus() }
         sidebarHostingView.sizingOptions = []
-        sidebarHostingView.frame = NSRect(x: 0, y: 0, width: 240, height: 820)
+        sidebarHostingView.frame = NSRect(x: 0, y: 0, width: SidebarMetrics.defaultWidth, height: 820)
         sidebarController.view = sidebarHostingView
 
         sidebarItem = NSSplitViewItem(sidebarWithViewController: sidebarController)
-        sidebarItem.minimumThickness = 200
-        sidebarItem.maximumThickness = 400
+        sidebarItem.minimumThickness = SidebarMetrics.minimumWidth
+        sidebarItem.maximumThickness = SidebarMetrics.maximumWidth
         sidebarItem.canCollapse = true
 
         let contentItem = NSSplitViewItem(viewController: webContentController)
@@ -145,6 +145,26 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
 
     func toggleSidebar() {
         splitViewController.toggleSidebar(nil)
+    }
+
+    func applyInterfaceScale(from oldScale: Double, to newScale: Double) {
+        let current = sidebarItem.isCollapsed ? expandedSidebarWidth : sidebarHostingView.frame.width
+        let width = CGFloat(InterfaceSize.sidebarWidth(Double(current), from: oldScale, to: newScale,
+                                                       minimum: Double(SidebarMetrics.minimumWidth), maximum: Double(SidebarMetrics.maximumWidth)))
+        sidebarItem.minimumThickness = min(sidebarItem.minimumThickness, SidebarMetrics.minimumWidth)
+        sidebarItem.maximumThickness = max(sidebarItem.maximumThickness, SidebarMetrics.maximumWidth)
+        if sidebarItem.isCollapsed {
+            expandedSidebarWidth = width
+        } else {
+            guard let pane = splitViewController.splitView.arrangedSubviews.first else { preconditionFailure("Split view without a sidebar pane") }
+            splitViewController.splitView.setPosition(width + pane.frame.width - sidebarHostingView.frame.width, ofDividerAt: 0)
+        }
+        sidebarItem.minimumThickness = SidebarMetrics.minimumWidth
+        sidebarItem.maximumThickness = SidebarMetrics.maximumWidth
+        updateCollapsedControls()
+        if showsCollapsedControls {
+            peekSidebar?.setEnabled(true, sidebarWidth: expandedSidebarWidth)
+        }
     }
 
     func setSidebarCollapsed(_ collapsed: Bool, animated: Bool = false) {

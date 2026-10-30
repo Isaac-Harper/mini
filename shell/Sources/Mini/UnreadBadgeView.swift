@@ -35,7 +35,7 @@ struct UnreadBadgeView: View {
     private func badge(count: Int?) -> some View {
         if let count {
             Text(UnreadTitle.badgeLabel(count: count))
-                .font(.system(size: isOnTile ? 10 : 9, weight: .bold, design: .rounded))
+                .font(InterfaceFont.unreadBadge(onTile: isOnTile))
                 .monospacedDigit()
                 .foregroundStyle(.white)
                 .lineLimit(1)

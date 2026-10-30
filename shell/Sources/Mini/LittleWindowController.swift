@@ -86,7 +86,7 @@ final class LittleWindowController: NSWindowController, NSWindowDelegate, NSTool
         addressField.isEditable = false
         addressField.isSelectable = false
         addressField.alignment = .center
-        addressField.font = .systemFont(ofSize: 13, weight: .medium)
+        addressField.font = InterfaceFont.littleWindowAddress
         addressField.textColor = .secondaryLabelColor
         addressField.lineBreakMode = .byClipping
         addressField.cell?.usesSingleLineMode = true
@@ -127,6 +127,10 @@ final class LittleWindowController: NSWindowController, NSWindowDelegate, NSTool
         addressField.stringValue = URLInput.host(of: tab.url) ?? tab.url
         window?.title = tab.displayTitle
         toolbar.validateVisibleItems()
+    }
+
+    func applyInterfaceScale() {
+        addressField.font = InterfaceFont.littleWindowAddress
     }
 
     func editAddress() {

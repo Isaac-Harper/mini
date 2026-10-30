@@ -227,7 +227,7 @@ private struct PastedLinkPreviews: View {
                 HStack(spacing: CommandBarMetrics.previewIconSpacing) {
                     FaviconView(image: faviconLookup(link.url), size: CommandBarMetrics.previewIconSize)
                     Text(link.title ?? URLInput.host(of: link.url) ?? link.url)
-                        .font(.system(size: 12))
+                        .font(InterfaceFont.pastedLink)
                         .lineLimit(1)
                         .truncationMode(.tail)
                     Spacer(minLength: CommandBarMetrics.previewIconSpacing)

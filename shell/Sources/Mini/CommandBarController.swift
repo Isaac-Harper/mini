@@ -13,6 +13,7 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
     private var suggestionsView: OverlayHostingView<CommandSuggestionsView>!
     private let offsetGuide = NSLayoutGuide()
     private var suggestionsHeight: NSLayoutConstraint!
+    private var scaledConstraints: [(constraint: NSLayoutConstraint, constant: () -> CGFloat)] = []
     private let content = NSView()
     private let searchSuggestionFetcher = SearchSuggestionFetcher()
     private var mode: CommandBarMode = .newTab
@@ -39,7 +40,6 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
         field.isBezeled = false
         field.drawsBackground = false
         field.focusRingType = .none
-        field.font = .systemFont(ofSize: 20)
         field.placeholderString = "Search or enter address"
         field.cell?.usesSingleLineMode = true
         field.cell?.isScrollable = true
@@ -50,7 +50,6 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
             return self.pasteLinks(text)
         }
 
-        iconView.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: CommandBarMetrics.fieldIconPointSize, weight: .regular)
         iconView.contentTintColor = .secondaryLabelColor
         updateIcon()
 
@@ -62,28 +61,29 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
         content.addSubview(field)
         content.addSubview(suggestionsView)
         focusRing.translatesAutoresizingMaskIntoConstraints = false
-        focusRing.cornerRadius = CornerMetrics.concentric(outer: CommandBarMetrics.cornerRadius, inset: CommandBarMetrics.contentInset) - FocusRingMetrics.offset
         content.addSubview(focusRing)
-        NSLayoutConstraint.activate([
-            iconView.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: CommandBarMetrics.fieldInset),
-            iconView.widthAnchor.constraint(equalToConstant: CommandBarMetrics.fieldIconWidth),
+        scaledConstraints = [
+            (iconView.leadingAnchor.constraint(equalTo: content.leadingAnchor), { CommandBarMetrics.fieldInset }),
+            (iconView.widthAnchor.constraint(equalToConstant: 0), { CommandBarMetrics.fieldIconWidth }),
+            (field.leadingAnchor.constraint(equalTo: iconView.trailingAnchor), { CommandBarMetrics.fieldIconSpacing }),
+            (field.trailingAnchor.constraint(equalTo: content.trailingAnchor), { -CommandBarMetrics.fieldInset }),
+            (field.topAnchor.constraint(equalTo: content.topAnchor), { CommandBarMetrics.fieldTopInset }),
+            (focusRing.leadingAnchor.constraint(equalTo: content.leadingAnchor), { CommandBarMetrics.contentInset }),
+            (focusRing.trailingAnchor.constraint(equalTo: content.trailingAnchor), { -CommandBarMetrics.contentInset }),
+            (focusRing.topAnchor.constraint(equalTo: content.topAnchor), { CommandBarMetrics.contentInset }),
+            (focusRing.bottomAnchor.constraint(equalTo: field.bottomAnchor), { CommandBarMetrics.contentInset }),
+            (suggestionsView.topAnchor.constraint(equalTo: field.bottomAnchor), { CommandBarMetrics.suggestionsTopSpacing }),
+            (suggestionsView.bottomAnchor.constraint(equalTo: content.bottomAnchor), { -CommandBarMetrics.suggestionsBottomInset }),
+        ]
+        NSLayoutConstraint.activate(scaledConstraints.map(\.constraint) + [
             iconView.centerYAnchor.constraint(equalTo: field.centerYAnchor),
-            field.leadingAnchor.constraint(equalTo: iconView.trailingAnchor, constant: CommandBarMetrics.fieldIconSpacing),
-            field.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -CommandBarMetrics.fieldInset),
-            field.topAnchor.constraint(equalTo: content.topAnchor, constant: CommandBarMetrics.fieldTopInset),
-            focusRing.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: CommandBarMetrics.contentInset),
-            focusRing.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -CommandBarMetrics.contentInset),
-            focusRing.topAnchor.constraint(equalTo: content.topAnchor, constant: CommandBarMetrics.contentInset),
-            focusRing.bottomAnchor.constraint(equalTo: field.bottomAnchor, constant: CommandBarMetrics.contentInset),
             suggestionsView.leadingAnchor.constraint(equalTo: content.leadingAnchor),
             suggestionsView.trailingAnchor.constraint(equalTo: content.trailingAnchor),
-            suggestionsView.topAnchor.constraint(equalTo: field.bottomAnchor, constant: CommandBarMetrics.suggestionsTopSpacing),
-            suggestionsView.bottomAnchor.constraint(equalTo: content.bottomAnchor, constant: -CommandBarMetrics.suggestionsBottomInset),
         ])
+        applyInterfaceScale()
         suggestionsHeight = suggestionsView.heightAnchor.constraint(equalToConstant: 0)
         suggestionsHeight.isActive = true
 
-        glassView.cornerRadius = CommandBarMetrics.cornerRadius
         glassView.style = .regular
         glassView.tintColor = NSColor.windowBackgroundColor.withAlphaComponent(0.55)
         let backing = CommandBarBackingView()
@@ -109,6 +109,18 @@ final class CommandBarController: NSObject, NSTextFieldDelegate {
         dismissView.onClickOutside = { [weak self] in
             self?.close(restoringWebFocus: true)
         }
+    }
+
+    func applyInterfaceScale() {
+        field.font = InterfaceFont.commandField
+        iconView.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: CommandBarMetrics.fieldIconPointSize, weight: .regular)
+        focusRing.cornerRadius = CornerMetrics.concentric(outer: CommandBarMetrics.cornerRadius, inset: CommandBarMetrics.contentInset) - FocusRingMetrics.offset
+        glassView.cornerRadius = CommandBarMetrics.cornerRadius
+        for (constraint, constant) in scaledConstraints {
+            constraint.constant = constant()
+        }
+        content.subviews.forEach { $0.needsDisplay = true }
+        fitSuggestions(animated: false)
     }
 
     func open(mode: CommandBarMode) {

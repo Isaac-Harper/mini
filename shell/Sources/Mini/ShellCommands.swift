@@ -1,6 +1,7 @@
 import AppKit
 import CMiniCore
 import MiniRules
+import SwiftUI
 
 extension ShellController: NSToolbarItemValidation {
     func validateToolbarItem(_ item: NSToolbarItem) -> Bool {
@@ -162,6 +163,34 @@ extension ShellController: NSMenuItemValidation {
 
     @objc func stopLoading(_ sender: Any?) {
         if let tab = commandBrowserTab { mini_browser_stop(tab.id) }
+    }
+
+    @objc func largerInterface(_ sender: Any?) {
+        setInterfaceSize(InterfaceSize.larger(than: InterfaceScale.shared.level))
+    }
+
+    @objc func smallerInterface(_ sender: Any?) {
+        setInterfaceSize(InterfaceSize.smaller(than: InterfaceScale.shared.level))
+    }
+
+    @objc func actualInterfaceSize(_ sender: Any?) {
+        setInterfaceSize(InterfaceSize.actualLevel)
+    }
+
+    private func setInterfaceSize(_ level: Int) {
+        let scale = InterfaceScale.shared
+        guard level != scale.level else { return }
+        let oldFactor = scale.factor
+        if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
+            scale.setLevel(level)
+        } else {
+            withAnimation(.easeOut(duration: 0.18)) { scale.setLevel(level) }
+        }
+        windowController.applyInterfaceScale(from: oldFactor, to: scale.factor)
+        commandBar.applyInterfaceScale()
+        for littleWindow in littleWindows.values {
+            littleWindow.applyInterfaceScale()
+        }
     }
 
     @objc func zoomInPage(_ sender: Any?) {
@@ -398,6 +427,12 @@ extension ShellController: NSMenuItemValidation {
         case #selector(reloadPage(_:)), #selector(zoomInPage(_:)), #selector(zoomOutPage(_:)),
              #selector(actualSizePage(_:)), #selector(showDeveloperTools(_:)), #selector(printPage(_:)), #selector(viewSource(_:)):
             return commandBrowserTab != nil
+        case #selector(largerInterface(_:)):
+            return InterfaceScale.shared.level < InterfaceSize.scales.count - 1
+        case #selector(smallerInterface(_:)):
+            return InterfaceScale.shared.level > 0
+        case #selector(actualInterfaceSize(_:)):
+            return InterfaceScale.shared.level != InterfaceSize.actualLevel
         case #selector(stopLoading(_:)):
             return commandBrowserTab?.isLoading ?? false
         case #selector(goBackInHistory(_:)):

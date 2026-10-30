@@ -14,11 +14,11 @@ final class GlassTooltip {
     private var isVisible = false
     private var hiddenAt = -TimeInterval.infinity
     private var dismissMonitor: Any?
+    private var leadingInset: NSLayoutConstraint!
+    private var trailingInset: NSLayoutConstraint!
 
     private static let initialDelay: TimeInterval = 0.6
     private static let neighborInterval: TimeInterval = 0.5
-    private static let height: CGFloat = 24
-    private static let horizontalPadding: CGFloat = 8
     private static let gap: CGFloat = 4
     private static let edgeMargin: CGFloat = 8
     private static let maximumWidth: CGFloat = 420
@@ -31,20 +31,16 @@ final class GlassTooltip {
         panel.ignoresMouseEvents = true
         panel.isReleasedWhenClosed = false
         panel.animationBehavior = .none
-        label.font = .systemFont(ofSize: 11)
         label.textColor = .labelColor
         label.lineBreakMode = .byTruncatingMiddle
         label.maximumNumberOfLines = 1
         label.translatesAutoresizingMaskIntoConstraints = false
         let content = NSView()
         content.addSubview(label)
-        NSLayoutConstraint.activate([
-            label.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: Self.horizontalPadding),
-            label.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -Self.horizontalPadding),
-            label.centerYAnchor.constraint(equalTo: content.centerYAnchor),
-        ])
+        leadingInset = label.leadingAnchor.constraint(equalTo: content.leadingAnchor)
+        trailingInset = label.trailingAnchor.constraint(equalTo: content.trailingAnchor)
+        NSLayoutConstraint.activate([leadingInset, trailingInset, label.centerYAnchor.constraint(equalTo: content.centerYAnchor)])
         glassView.contentView = content
-        glassView.cornerRadius = SidebarMetrics.rowCornerRadius
         panel.contentView = glassView
     }
 
@@ -91,16 +87,21 @@ final class GlassTooltip {
         guard let window = view.window else { return }
         anchor = view
         label.stringValue = text
-        let width = min(Self.maximumWidth, ceil(label.intrinsicContentSize.width) + Self.horizontalPadding * 2)
+        label.font = InterfaceFont.tooltip
+        leadingInset.constant = OverlayMetrics.tooltipPadding
+        trailingInset.constant = -OverlayMetrics.tooltipPadding
+        glassView.cornerRadius = SidebarMetrics.rowCornerRadius
+        let height = OverlayMetrics.tooltipHeight
+        let width = min(Self.maximumWidth, ceil(label.intrinsicContentSize.width) + OverlayMetrics.tooltipPadding * 2)
         let anchorFrame = window.convertToScreen(view.convert(view.bounds, to: nil))
-        var origin = NSPoint(x: anchorFrame.midX - width / 2, y: anchorFrame.minY - Self.gap - Self.height)
+        var origin = NSPoint(x: anchorFrame.midX - width / 2, y: anchorFrame.minY - Self.gap - height)
         let bounds = window.frame.insetBy(dx: Self.edgeMargin, dy: 0)
         origin.x = min(max(origin.x, bounds.minX), bounds.maxX - width)
         if let screen = window.screen ?? NSScreen.main, origin.y < screen.visibleFrame.minY {
             origin.y = anchorFrame.maxY + Self.gap
         }
         panel.appearance = window.effectiveAppearance
-        panel.setFrame(NSRect(origin: origin, size: NSSize(width: width, height: Self.height)), display: true)
+        panel.setFrame(NSRect(origin: origin, size: NSSize(width: width, height: height)), display: true)
         if panel.parent !== window {
             panel.parent?.removeChildWindow(panel)
             window.addChildWindow(panel, ordered: .above)
