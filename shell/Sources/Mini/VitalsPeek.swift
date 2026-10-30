@@ -90,14 +90,10 @@ struct VitalsPeekView: View {
                 }
             }
             Divider()
-            Grid(alignment: .leading, horizontalSpacing: InterfaceScale.scaled(16), verticalSpacing: InterfaceScale.scaled(4)) {
-                GridRow {
-                    VitalsValue(metric: .largestContentfulPaint, value: tab.vitals.largestContentfulPaint)
-                    VitalsValue(metric: .interactionToNextPaint, value: tab.vitals.interactionToNextPaint)
-                }
-                GridRow {
-                    VitalsValue(metric: .cumulativeLayoutShift, value: tab.vitals.cumulativeLayoutShift)
-                    VitalsValue(metric: .timeToFirstByte, value: tab.vitals.timeToFirstByte)
+            HStack(alignment: .top, spacing: 0) {
+                ForEach(WebVitalsMetric.allCases, id: \.self) { metric in
+                    VitalsValue(metric: metric, value: tab.vitals.value(of: metric))
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
             if PageHealth.isCollected(for: tab.url) {
@@ -215,17 +211,17 @@ private struct VitalsValue: View {
     let value: Double?
 
     var body: some View {
-        HStack(spacing: InterfaceScale.scaled(8)) {
-            PageStatusDot(color: color)
-            Text(metric.rawValue)
-                .font(InterfaceFont.caption)
-                .foregroundStyle(.secondary)
-                .frame(width: InterfaceScale.scaled(32), alignment: .leading)
+        VStack(alignment: .leading, spacing: InterfaceScale.scaled(2)) {
+            HStack(spacing: InterfaceScale.scaled(4)) {
+                PageStatusDot(color: color)
+                Text(metric.rawValue)
+                    .font(InterfaceFont.caption)
+                    .foregroundStyle(.secondary)
+            }
             Text(WebVitals.formatted(metric, value: value))
                 .font(InterfaceFont.body.monospacedDigit())
-                .frame(minWidth: InterfaceScale.scaled(48), alignment: .trailing)
+                .foregroundStyle(value == nil ? .tertiary : .primary)
         }
-        .frame(height: InterfaceScale.scaled(24))
         .accessibilityElement(children: .combine)
     }
 
