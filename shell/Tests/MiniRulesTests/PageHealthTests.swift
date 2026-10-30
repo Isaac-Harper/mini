@@ -22,24 +22,28 @@ struct PageHealthTests {
         health.recordErrors(0, firstMessage: "ignored")
         #expect(health.errorCount == 3)
         #expect(health.firstError == "TypeError: cannot read 'map'")
-        #expect(health.errorLine == "3 errors \u{00B7} TypeError: cannot read 'map'")
+        #expect(health.errorTitle == "3 errors")
+        #expect(health.errorDetail == "TypeError: cannot read 'map'")
         #expect(health.hasProblems)
     }
 
     @Test func oneErrorIsSingularAndAnEmptyMessageShowsTheCountOnly() {
         var health = PageHealth()
         health.recordErrors(1, firstMessage: "  \n ")
-        #expect(health.errorLine == "1 error")
+        #expect(health.errorTitle == "1 error")
+        #expect(health.errorDetail == nil)
     }
 
     @Test func countsFailedRequestsAndNamesTheFirst() {
         var health = PageHealth()
         health.recordFailedRequest(FailedRequest(status: 404, url: "http://localhost:5173/api/user?id=1"))
-        #expect(health.failedRequestLine(onPage: "http://localhost:5173/") == "1 failed request \u{00B7} 404 /api/user")
+        #expect(health.failedRequestTitle == "1 failed request")
+        #expect(health.failedRequestDetail(onPage: "http://localhost:5173/") == "404 /api/user")
         health.recordFailedRequest(FailedRequest(status: -102, url: "http://localhost:9999/socket"))
         #expect(health.failedRequestCount == 2)
-        #expect(health.failedRequestLine(onPage: "http://localhost:5173/") == "2 failed requests \u{00B7} 404 /api/user")
-        #expect(health.errorLine == nil)
+        #expect(health.failedRequestTitle == "2 failed requests")
+        #expect(health.failedRequestDetail(onPage: "http://localhost:5173/") == "404 /api/user")
+        #expect(health.errorTitle == nil)
     }
 
     @Test func requestsElsewhereShowTheirHostAndNetErrorsAWord() {
@@ -59,7 +63,7 @@ struct PageHealthTests {
         #expect(PageHealth.tailTruncated("abcdefg", limit: 6) == "abcde\u{2026}")
         var health = PageHealth()
         health.recordErrors(1, firstMessage: String(repeating: "x", count: 200))
-        #expect(health.errorLine == "1 error \u{00B7} " + String(repeating: "x", count: 79) + "\u{2026}")
+        #expect(health.errorDetail == String(repeating: "x", count: 79) + "\u{2026}")
     }
 
     @Test func pathsAreMiddleTruncated() {

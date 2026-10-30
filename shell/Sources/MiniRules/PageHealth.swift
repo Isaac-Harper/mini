@@ -43,19 +43,24 @@ public struct PageHealth: Equatable, Sendable {
         if firstFailedRequest == nil { firstFailedRequest = request }
     }
 
-    public var errorLine: String? {
-        guard errorCount > 0 else { return nil }
-        let count = Self.counted(errorCount, "error", "errors")
-        guard let firstError, !Self.singleLine(firstError).isEmpty else { return count }
-        return "\(count) \u{00B7} \(Self.tailTruncated(Self.singleLine(firstError), limit: Self.messageLimit))"
+    public var errorTitle: String? {
+        errorCount > 0 ? Self.counted(errorCount, "error", "errors") : nil
     }
 
-    public func failedRequestLine(onPage pageURL: String) -> String? {
-        guard failedRequestCount > 0 else { return nil }
-        let count = Self.counted(failedRequestCount, "failed request", "failed requests")
-        guard let firstFailedRequest else { return count }
+    public var errorDetail: String? {
+        guard errorCount > 0, let firstError else { return nil }
+        let line = Self.singleLine(firstError)
+        return line.isEmpty ? nil : Self.tailTruncated(line, limit: Self.messageLimit)
+    }
+
+    public var failedRequestTitle: String? {
+        failedRequestCount > 0 ? Self.counted(failedRequestCount, "failed request", "failed requests") : nil
+    }
+
+    public func failedRequestDetail(onPage pageURL: String) -> String? {
+        guard failedRequestCount > 0, let firstFailedRequest else { return nil }
         let place = Self.middleTruncated(Self.requestPlace(firstFailedRequest.url, onPage: pageURL), limit: Self.pathLimit)
-        return "\(count) \u{00B7} \(Self.statusText(firstFailedRequest.status)) \(place)"
+        return "\(Self.statusText(firstFailedRequest.status)) \(place)"
     }
 
     public var summary: String? {

@@ -75,8 +75,22 @@ struct VitalsPeekView: View {
     let onOpenDeveloperTools: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 6) {
+        VStack(alignment: .leading, spacing: InterfaceScale.scaled(8)) {
+            VStack(alignment: .leading, spacing: InterfaceScale.scaled(2)) {
+                Text(host)
+                    .font(InterfaceFont.body.weight(.semibold))
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                if !attributes.isEmpty {
+                    Text(attributes.joined(separator: " \u{00B7} "))
+                        .font(InterfaceFont.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            Divider()
+            Grid(alignment: .leading, horizontalSpacing: InterfaceScale.scaled(16), verticalSpacing: InterfaceScale.scaled(4)) {
                 GridRow {
                     VitalsValue(metric: .largestContentfulPaint, value: tab.vitals.largestContentfulPaint)
                     VitalsValue(metric: .interactionToNextPaint, value: tab.vitals.interactionToNextPaint)
@@ -86,51 +100,110 @@ struct VitalsPeekView: View {
                     VitalsValue(metric: .timeToFirstByte, value: tab.vitals.timeToFirstByte)
                 }
             }
-            if let edge = tab.edge {
-                Text(edge.text)
-                    .font(InterfaceFont.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .padding(.horizontal, SidebarMetrics.addressPillChipPadding)
-                    .frame(height: SidebarMetrics.addressPillChipHeight + 4)
-                    .background(Capsule().fill(.fill.tertiary))
-                    .accessibilityLabel("Served by \(edge.text)")
-            }
-            if let errorLine = tab.health.errorLine {
-                PageHealthLine(text: errorLine, truncation: .tail, action: onOpenDeveloperTools)
-            }
-            if let failedRequestLine = tab.health.failedRequestLine(onPage: tab.url) {
-                PageHealthLine(text: failedRequestLine, truncation: .middle, action: onOpenDeveloperTools)
+            if PageHealth.isCollected(for: tab.url) {
+                Divider()
+                VStack(alignment: .leading, spacing: 0) {
+                    if let title = tab.health.errorTitle {
+                        PageHealthRow(title: title, detail: tab.health.errorDetail, detailTruncation: .tail, action: onOpenDeveloperTools)
+                    }
+                    if let title = tab.health.failedRequestTitle {
+                        PageHealthRow(title: title, detail: tab.health.failedRequestDetail(onPage: tab.url), detailTruncation: .middle, action: onOpenDeveloperTools)
+                    }
+                    if !tab.health.hasProblems {
+                        HStack(spacing: InterfaceScale.scaled(8)) {
+                            PageStatusDot(color: .green)
+                            Text("No errors or failed requests")
+                                .font(InterfaceFont.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .frame(height: InterfaceScale.scaled(24))
+                    }
+                }
             }
         }
-        .padding(12)
+        .padding(InterfaceScale.scaled(12))
+        .frame(width: InterfaceScale.scaled(272), alignment: .leading)
         .background(Color(nsColor: .windowBackgroundColor).opacity(0.75))
         .onHover(perform: onHover)
     }
+
+    private var host: String {
+        guard let components = URLComponents(string: tab.url), let host = components.host else { return tab.url }
+        return components.port.map { "\(host):\(String($0))" } ?? host
+    }
+
+    private var attributes: [String] {
+        var parts: [String] = []
+        if let port = LocalDevelopment.port(ofLocalAddress: tab.url) {
+            parts.append("Local server on port \(String(port))")
+        } else if let host = URLInput.host(of: tab.url), let preview = PreviewDeployment.of(host: host) {
+            parts.append(preview.branch.map { "Preview of \(preview.project), \($0)" } ?? "Preview of \(preview.project)")
+        }
+        if let edge = tab.edge {
+            parts.append(edge.text)
+        }
+        if tab.pageColorScheme != .system {
+            parts.append("Shown \(tab.pageColorScheme.name.lowercased())")
+        }
+        if tab.pageReducesMotion {
+            parts.append("Reduced motion")
+        }
+        if let width = tab.pageWidth {
+            parts.append("\(String(Int(width.rounded()))) wide")
+        }
+        return parts
+    }
 }
 
-private struct PageHealthLine: View {
-    let text: String
-    let truncation: Text.TruncationMode
+private struct PageStatusDot: View {
+    let color: Color
+
+    var body: some View {
+        Circle()
+            .fill(color)
+            .frame(width: InterfaceScale.scaled(6), height: InterfaceScale.scaled(6))
+    }
+}
+
+private struct PageHealthRow: View {
+    let title: String
+    let detail: String?
+    let detailTruncation: Text.TruncationMode
     let action: () -> Void
+
+    @State private var isHovered = false
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 6) {
-                Circle()
-                    .fill(Color.orange.opacity(0.7))
-                    .frame(width: 5, height: 5)
-                Text(text)
-                    .font(InterfaceFont.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .truncationMode(truncation)
+            HStack(alignment: .top, spacing: InterfaceScale.scaled(8)) {
+                PageStatusDot(color: .orange)
+                    .frame(height: InterfaceScale.scaled(16))
+                VStack(alignment: .leading, spacing: InterfaceScale.scaled(2)) {
+                    Text(title)
+                        .font(InterfaceFont.body)
+                    if let detail {
+                        Text(detail)
+                            .font(InterfaceFont.caption.monospaced())
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .truncationMode(detailTruncation)
+                    }
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "arrow.up.forward")
+                    .font(InterfaceFont.accessorySymbol)
+                    .foregroundStyle(.tertiary)
+                    .frame(height: InterfaceScale.scaled(16))
+                    .opacity(isHovered ? 1 : 0)
             }
-            .frame(maxWidth: 280, alignment: .leading)
+            .padding(.vertical, InterfaceScale.scaled(4))
+            .padding(.horizontal, InterfaceScale.scaled(4))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .focusable(false)
+        .padding(.horizontal, InterfaceScale.scaled(-4))
+        .hoverHighlight(cornerRadius: SidebarMetrics.rowCornerRadius, isHovered: $isHovered)
         .hapticFeedback(.press)
         .glassTooltip("Open Developer Tools")
         .accessibilityHint("Opens Developer Tools")
@@ -142,18 +215,17 @@ private struct VitalsValue: View {
     let value: Double?
 
     var body: some View {
-        HStack(spacing: 6) {
-            Circle()
-                .fill(color)
-                .frame(width: 7, height: 7)
+        HStack(spacing: InterfaceScale.scaled(8)) {
+            PageStatusDot(color: color)
             Text(metric.rawValue)
                 .font(InterfaceFont.caption)
                 .foregroundStyle(.secondary)
-                .frame(width: 32, alignment: .leading)
+                .frame(width: InterfaceScale.scaled(32), alignment: .leading)
             Text(WebVitals.formatted(metric, value: value))
                 .font(InterfaceFont.body.monospacedDigit())
-                .frame(minWidth: 48, alignment: .trailing)
+                .frame(minWidth: InterfaceScale.scaled(48), alignment: .trailing)
         }
+        .frame(height: InterfaceScale.scaled(24))
         .accessibilityElement(children: .combine)
     }
 
