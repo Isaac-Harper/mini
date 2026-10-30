@@ -148,6 +148,10 @@ extension ShellController: NSMenuItemValidation {
         closeTheDayNow()
     }
 
+    @objc func togglePreloadOnHover(_ sender: Any?) {
+        hoverPreloader.isEnabled.toggle()
+    }
+
     @objc func toggleSplitViewCommand(_ sender: Any?) {
         toggleSplitView()
     }
@@ -459,6 +463,9 @@ extension ShellController: NSMenuItemValidation {
             let isPreview = selected.flatMap { URLInput.host(of: $0.url) }.flatMap(PreviewDeployment.of(host:)) != nil
             menuItem.title = isPreview ? "Switch to Production" : "Switch to Preview"
             return keyLittleWindow == nil && selected.flatMap(previewCounterpartURL(of:)) != nil
+        case #selector(togglePreloadOnHover(_:)):
+            menuItem.state = hoverPreloader.isEnabled ? .on : .off
+            return true
         case #selector(toggleEveningTint(_:)):
             menuItem.state = showsEveningTint ? .on : .off
             return true

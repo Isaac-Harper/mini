@@ -242,6 +242,9 @@ extension ShellController {
     func statusMessageChanged(_ identifier: MiniTabId, text: String) {
         guard let tab = liveTab(identifier) else { return }
         statusBubble.statusChanged(for: tab, text: text)
+        if tab === store.selectedTab {
+            hoverPreloader.hoverChanged(tab, url: text)
+        }
     }
 
     func appRelaunched(arguments: [String]) {

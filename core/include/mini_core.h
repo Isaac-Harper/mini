@@ -281,6 +281,10 @@ void mini_browser_exit_fullscreen(MiniTabId tab);
 // caches, service workers) for origin (scheme://host[:port]) in the tab's
 // space, then reloads the tab.
 void mini_browser_clear_site_data(MiniTabId tab, const char *origin);
+// Adds a speculation rules prefetch for url to the main frame's document,
+// replacing the previous one, so a click on that link starts from the
+// prefetched response. "" removes it, which cancels an unfinished prefetch.
+void mini_browser_preload(MiniTabId tab, const char *url);
 // Fetches the main frame's source from the renderer, no network request;
 // source_received delivers it with the same request number.
 void mini_browser_request_source(MiniTabId tab, uint64_t request);

@@ -14,6 +14,7 @@ mod navigation;
 mod notifications;
 mod page_source;
 mod permissions;
+mod preload;
 mod registrable_domain;
 mod resource_requests;
 mod response_headers;
@@ -496,6 +497,14 @@ pub extern "C" fn mini_browser_clear_site_data(tab: MiniTabId, origin: *const c_
     let origin = borrowed_text(origin, "origin");
     if let Some(browser) = created_browser(tab) {
         site_data::clear(tab, &browser, origin);
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn mini_browser_preload(tab: MiniTabId, url: *const c_char) {
+    let url = borrowed_text(url, "url");
+    if let Some(browser) = created_browser(tab) {
+        preload::set(&browser, login::token(), url);
     }
 }
 

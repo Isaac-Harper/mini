@@ -20,6 +20,7 @@ final class ShellController: NSObject {
     let airPlay = AirPlayVideo()
     let soundOutput = SoundOutput()
     @ObservationIgnored let localServers = LocalServerScanner()
+    @ObservationIgnored let hoverPreloader = HoverPreloader()
     private(set) var nowPlayingTab: Tab?
     private(set) var eveningTintDate = Date()
     var showsEveningTint = UserDefaults.standard.object(forKey: ShellController.showsEveningTintKey) as? Bool ?? true {
