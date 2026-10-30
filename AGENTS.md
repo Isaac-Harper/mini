@@ -146,7 +146,7 @@ Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 - `PastedLinks.swift`: pasted link lists in the command bar. (shell-ui)
 - `CommandActions.swift`, `Sources/MiniRules/FuzzyMatch.swift`, `Sources/MiniRules/KeyEquivalentText.swift`: the command bar's `>` action list from the main menu, unit tested matching. (shell-ui)
 - `SearchSuggestions.swift`: Google suggestions. (shell-ui)
-- `URLInput.swift`: input to URL or search. (shell-ui)
+- `URLInput.swift`: host, registrable domain and insecure checks; `interpret` delegates to `Sources/MiniRules/AddressInput.swift`, unit tested. (shell-ui)
 - `OverlayAnimation.swift`: shared overlay appear and disappear. (shell-ui)
 - `FindBarController.swift`: find in page. (shell-ui)
 - `StatusBubbleController.swift`: link hover bubble. (shell-ui)
