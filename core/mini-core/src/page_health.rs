@@ -25,9 +25,12 @@ var token=__TOKEN__,frameId=__FRAME__,signal=console.debug.bind(console);
 var count=0,first=null,scheduled=false;
 function report(){scheduled=false;var text=JSON.stringify({count:count,message:first||''});count=0;first=null;signal(token+':health:'+frameId+':'+text);}
 function describe(value){try{if(value instanceof Error)return value.name+': '+value.message;if(value&&typeof value==='object'&&'message' in value)return String(value.message);return String(value);}catch(error){return 'Error';}}
-function record(message){count++;if(first===null)first=String(message).split('\n')[0].slice(0,300);if(!scheduled){scheduled=true;setTimeout(report,250);}}
-window.addEventListener('error',function(event){if(!(event instanceof ErrorEvent))return;record(event.error!==undefined&&event.error!==null?describe(event.error):event.message);});
-window.addEventListener('unhandledrejection',function(event){var reason=event.reason;record(reason instanceof Error?describe(reason):'Unhandled rejection: '+describe(reason));});
+function message(event){if(event.type==='error')return event.error!==undefined&&event.error!==null?describe(event.error):event.message;var reason=event.reason;return reason instanceof Error?describe(reason):'Unhandled rejection: '+describe(reason);}
+function record(event,amount){count+=amount;if(first===null)first=String(message(event)).split('\n')[0].slice(0,300);if(!scheduled){scheduled=true;setTimeout(report,250);}}
+window.addEventListener('error',function(event){if(!(event instanceof ErrorEvent))return;record(event,1);});
+window.addEventListener('unhandledrejection',function(event){record(event,1);});
+var early=window[Symbol.for(__EARLY_KEY__)];
+if(typeof early==='function'){var taken=early();if(taken.count>0)record(taken.event,taken.count);}
 })();"#;
 
 static TRACKED_PAGES: Mutex<Option<HashMap<MiniTabId, u64>>> = Mutex::new(None);
@@ -69,6 +72,7 @@ fn script(frame: &Frame, token: &str) -> String {
             "__FRAME__",
             &javascript_string_literal(&CefString::from(&frame.identifier()).to_string()),
         )
+        .replace("__EARLY_KEY__", &javascript_string_literal(early_errors::KEY))
 }
 
 #[derive(Deserialize, Debug, PartialEq)]

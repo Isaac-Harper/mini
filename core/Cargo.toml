@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["mini-core", "mini-helper"]
+members = ["early-errors", "mini-core", "mini-helper"]
 
 [workspace.package]
 edition = "2024"

@@ -72,7 +72,8 @@ Rust core (`core/`, detail in cef-and-core.md):
 
 - `core/include/mini_core.h`: the C ABI.
 - `core/Cargo.toml`, `core/.cargo/config.toml`: workspace (edition 2024, `cef = "=156.2.0"`, release `panic = "abort"`), deployment target pinned to 26.0.
-- `core/mini-helper/`: helper executable (sandbox init + `cef_execute_process`).
+- `core/mini-helper/`: helper executable (sandbox init + `cef_execute_process`; its render process handler installs the early errors script).
+- `core/early-errors/`: the early errors script and key shared by the helper and `page_health.rs`.
 - `core/mini-core/src/lib.rs` (the `src/` entries below are in `core/mini-core/`): the exported ABI functions and `#[repr(C)]` mirrors of the header types.
 - `src/application.rs`: `MiniApp`; second-launch relaunch handler.
 - `src/state.rs`: main-thread core state (callbacks, request contexts per space, `TabState` per tab, pending ids).

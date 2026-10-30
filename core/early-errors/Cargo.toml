@@ -1,0 +1,9 @@
+[package]
+name = "early-errors"
+edition.workspace = true
+version.workspace = true
+publish.workspace = true
+
+[lib]
+name = "early_errors"
+path = "src/lib.rs"

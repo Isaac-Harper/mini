@@ -365,6 +365,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "early-errors"
+version = "0.1.0"
+
+[[package]]
 name = "either"
 version = "1.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -728,6 +732,7 @@ dependencies = [
  "adblock",
  "base64 0.22.1",
  "cef",
+ "early-errors",
  "objc2",
  "objc2-app-kit",
  "objc2-foundation",
@@ -744,6 +749,7 @@ name = "mini-helper"
 version = "0.1.0"
 dependencies = [
  "cef",
+ "early-errors",
 ]
 
 [[package]]

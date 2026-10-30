@@ -10,3 +10,4 @@ path = "src/main.rs"
 
 [dependencies]
 cef = { workspace = true, features = ["sandbox"] }
+early-errors = { path = "../early-errors" }
