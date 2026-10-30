@@ -21,7 +21,7 @@ Controls use a small semantic vocabulary on top of the same gate: `ControlFeedba
 
 Context menu items, multi-select group actions chosen from the menu, Cmd-W, Delete, Ctrl-1/2 and the sidebar keyboard stay silent. The toolbar sidebar toggle's click also reaches `sidebarSnappedCollapsed` (the collapse happens inside a `leftMouseUp`), which the 90 ms gate drops, so one click still gives one haptic. Verified with posted (queued) mouse and key events: one admitted haptic per row, space button, New Tab and toolbar toggle click; two clicks 12 ms apart admit one and drop one; Down/Return in the focused sidebar, Ctrl-1, Cmd-Ctrl-S, pointer movement over rows and programmatic selection or back record nothing. Now Playing has no skip control, so there is no skip haptic.
 
-`Haptics.swift` also holds the pure detent rules (`HapticGate`, `ThresholdCrossing`, `DetentEntry`, `DetentChange`, `TabDragDetent`, `SidebarWidthEdge`, `SplitDividerDetent`, `TabPlacement`). The split divider's magnetic center snap lives here too.
+`Haptics.swift` also holds the pure detent rules (`HapticGate`, `ThresholdCrossing`, `DetentEntry`, `DetentChange`, `TabDragDetent`, `SidebarWidthEdge`, `SplitDividerDetent`, `TabPlacement`). The split divider's magnetic center snap lives here too; the page width detent table and snap are `PageWidth` in `Sources/MiniRules` (unit tested).
 
 | Moment | Method | Pattern / time | Trigger |
 | --- | --- | --- | --- |
@@ -30,6 +30,7 @@ Context menu items, multi-select group actions chosen from the menu, Cmd-W, Dele
 | Split divider snaps to the center | `splitSnappedToCenter` | alignment / drawCompleted | `WebAreaView.dragDivider`: `SplitDividerDetent.snappedLeadingWidth` pulls the leading width to exactly half within 8pt |
 | Split divider hits the 320pt minimum on either side | `splitReachedMinimum` | alignment / drawCompleted | same, `DetentEntry<SplitDividerDetent>` reset when the drag ends |
 | Tab drag target changes kind | `tabDragTargetChanged` | alignment / drawCompleted | `SidebarDragModel.target` / `isPastTearOff` didSet: `TabDragDetent` (reorder or nest per saved/regular section, pinned area, tear-off) through `DetentChange`: nil gaps between drop targets are ignored, the first target of a drag is silent, the same detent never repeats; moving between reorder slots in one section is silent |
+| Page edge drag reaches 375, 768, 1024 or 1280 | `pageWidthReachedDetent` | alignment / drawCompleted | `PageWidthDrag.drag`: `PageWidth.dragged` snaps the width to a detent narrower than the full width within 6pt, `DetentEntry<Double>` on `PageWidth.detent(at:)`, seeded at mouse down with the tab's current width so a drag that starts on a detent is silent; double-click restore and tab switches record nothing |
 | Peek sidebar slides open | `peekSidebarOpened` | alignment / drawCompleted | `PeekSidebarController.peek` |
 | Completed drop changed kind or nesting | `tabDropChangedPlacement` | levelChange / drawCompleted | `SidebarDragModel.drop` compares `TabPlacement` (pinned/saved/regular plus parent id) before and after the drop delegates' action |
 | Page swipe crosses its commit point | `swipeNavigationCrossedThreshold` | levelChange / drawCompleted | `SwipeNavigationController`, `ThresholdCrossing` per gesture: fires at progress 1, rearms only below 0.9 |

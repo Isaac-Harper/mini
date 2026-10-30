@@ -102,6 +102,18 @@ enum MainMenu {
         interfaceSizeMenu.addItem(item("Actual Interface Size", #selector(ShellController.actualInterfaceSize(_:)), "0", [.command, .control], target: commands, symbol: "textformat.size"))
         interfaceSizeItem.submenu = interfaceSizeMenu
         menu.addItem(interfaceSizeItem)
+        let appearanceItem = NSMenuItem(title: "Page Appearance", action: nil, keyEquivalent: "")
+        appearanceItem.image = symbolImage("circle.lefthalf.filled")
+        let appearanceMenu = NSMenu(title: "Page Appearance")
+        for scheme in [PageColorScheme.system, .light, .dark] {
+            let schemeItem = item(scheme.name, #selector(ShellController.setPageColorScheme(_:)), "", target: commands)
+            schemeItem.tag = scheme.rawValue
+            appearanceMenu.addItem(schemeItem)
+        }
+        appearanceMenu.addItem(.separator())
+        appearanceMenu.addItem(item("Reduce Motion", #selector(ShellController.togglePageReducedMotion(_:)), "", target: commands))
+        appearanceItem.submenu = appearanceMenu
+        menu.addItem(appearanceItem)
         menu.addItem(.separator())
         menu.addItem(item("Block Ads on This Site", #selector(ShellController.toggleAdBlockForSite(_:)), "", target: commands, symbol: "hand.raised"))
         menu.addItem(item("Allow Notifications from This Site", #selector(ShellController.toggleNotificationsForSite(_:)), "", target: commands, symbol: "bell"))

@@ -203,6 +203,10 @@ final class BrowserEngine {
                     BrowserEngine.shared.requiredShell.mainFrameHeadersReceived(identifier, edge: EdgeHeaders.summary(of: EdgeHeaders.parse(lines: headers)))
                 }
             },
+            page_snapshot_received: { identifier, request, bytes, length in
+                let image = length > 0 && bytes != nil ? Data(bytes: bytes!, count: length) : Data()
+                MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.pageSnapshotReceived(identifier, request: request, image: image) }
+            },
             browser_closed: { identifier in
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.browserClosed(identifier) }
             },

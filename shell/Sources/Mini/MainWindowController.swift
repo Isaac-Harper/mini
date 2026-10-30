@@ -8,7 +8,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
     private let splitViewController = NSSplitViewController()
     private let sidebarItem: NSSplitViewItem
     let sidebarHostingView: SidebarHostingView
-    private let webContentController = WebContentViewController()
+    let webContentController = WebContentViewController()
     private let windowToolbar: WindowToolbar
     private var controlsCluster: WindowControlsCluster?
     private var peekSidebar: PeekSidebarController?
@@ -234,6 +234,8 @@ final class WebContentViewController: NSViewController {
 
     let webAreaView = WebAreaView()
     let cardView = PageCardView()
+    let pageArea = NSLayoutGuide()
+    private(set) var narrowWidthConstraint: NSLayoutConstraint!
     private let emptyStateView = EmptyPageView()
     private var insetConstraints: [NSLayoutConstraint] = []
 
@@ -250,13 +252,23 @@ final class WebContentViewController: NSViewController {
         emptyStateView.wantsLayer = true
         cardView.addSubview(emptyStateView)
         container.addSubview(cardView)
+        container.addLayoutGuide(pageArea)
         insetConstraints = [
-            cardView.leadingAnchor.constraint(equalTo: container.safeAreaLayoutGuide.leadingAnchor, constant: Self.cardInset),
-            container.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: Self.cardInset),
-            cardView.topAnchor.constraint(equalTo: container.topAnchor, constant: Self.cardInset),
-            container.bottomAnchor.constraint(equalTo: cardView.bottomAnchor, constant: Self.cardInset),
+            pageArea.leadingAnchor.constraint(equalTo: container.safeAreaLayoutGuide.leadingAnchor, constant: Self.cardInset),
+            container.trailingAnchor.constraint(equalTo: pageArea.trailingAnchor, constant: Self.cardInset),
+            pageArea.topAnchor.constraint(equalTo: container.topAnchor, constant: Self.cardInset),
+            container.bottomAnchor.constraint(equalTo: pageArea.bottomAnchor, constant: Self.cardInset),
         ]
+        let fullWidth = cardView.widthAnchor.constraint(equalTo: pageArea.widthAnchor)
+        fullWidth.priority = .defaultLow
+        narrowWidthConstraint = cardView.widthAnchor.constraint(equalToConstant: 0)
+        narrowWidthConstraint.priority = .init(999)
         NSLayoutConstraint.activate(insetConstraints + [
+            cardView.centerXAnchor.constraint(equalTo: pageArea.centerXAnchor),
+            cardView.widthAnchor.constraint(lessThanOrEqualTo: pageArea.widthAnchor),
+            fullWidth,
+            cardView.topAnchor.constraint(equalTo: pageArea.topAnchor),
+            cardView.bottomAnchor.constraint(equalTo: pageArea.bottomAnchor),
             webAreaView.leadingAnchor.constraint(equalTo: cardView.leadingAnchor),
             webAreaView.trailingAnchor.constraint(equalTo: cardView.trailingAnchor),
             webAreaView.topAnchor.constraint(equalTo: cardView.topAnchor),

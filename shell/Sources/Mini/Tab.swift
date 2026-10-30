@@ -47,6 +47,9 @@ final class Tab: Identifiable {
     var vitals = WebVitals()
     var edge: EdgeSummary?
     var reloadDurationText: String?
+    var pageColorScheme = PageColorScheme.system
+    var pageReducesMotion = false
+    @ObservationIgnored var pageWidth: CGFloat?
     @ObservationIgnored var reloadDurationGeneration = 0
     @ObservationIgnored var awaitsReloadTiming = false
     var idleFade = 1.0

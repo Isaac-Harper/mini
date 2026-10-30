@@ -14,13 +14,14 @@ enum HapticMoment: String {
     case spaceSwipeThreshold
     case tabTornOff
     case littleWindowDocked
+    case pageWidthDetent
     case press
     case toggle
     case snap
 
     var pattern: NSHapticFeedbackManager.FeedbackPattern {
         switch self {
-        case .sidebarWidthLimit, .splitCenter, .splitMinimum, .tabDragTarget, .peekSidebarOpened, .snap: .alignment
+        case .sidebarWidthLimit, .splitCenter, .splitMinimum, .tabDragTarget, .peekSidebarOpened, .pageWidthDetent, .snap: .alignment
         case .sidebarCollapseSnap, .tabDropChangedPlacement, .swipeNavigationThreshold, .spaceSwipeThreshold, .tabTornOff, .littleWindowDocked, .toggle: .levelChange
         case .press: .generic
         }
@@ -186,6 +187,7 @@ enum Haptics {
     static func spaceSwipeCrossedThreshold() { perform(.spaceSwipeThreshold) }
     static func tabTornOff() { perform(.tabTornOff) }
     static func littleWindowDocked() { perform(.littleWindowDocked) }
+    static func pageWidthReachedDetent() { perform(.pageWidthDetent) }
 
     static func controlActivated(_ feedback: ControlFeedback) {
         guard NSApp.currentEvent?.type == .leftMouseUp else { return }

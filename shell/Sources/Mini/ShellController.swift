@@ -47,6 +47,8 @@ final class ShellController: NSObject {
     @ObservationIgnored private(set) var crashOverlay: CrashOverlayController!
     @ObservationIgnored private(set) var toast: ToastController!
     @ObservationIgnored private(set) var statusBubble: StatusBubbleController!
+    @ObservationIgnored private(set) var pageWidthDrag: PageWidthDrag!
+    @ObservationIgnored private(set) var pageAppearance: PageAppearanceTransitions!
     @ObservationIgnored private var swipeNavigation: SwipeNavigationController?
     @ObservationIgnored private var spaceSwipeController: SpaceSwipeController?
     @ObservationIgnored let spaceSwipe = SpaceSwipeModel()
@@ -133,6 +135,8 @@ final class ShellController: NSObject {
         crashOverlay = CrashOverlayController(shell: self, windowController: windowController)
         toast = ToastController(windowController: windowController)
         statusBubble = StatusBubbleController(shell: self, windowController: windowController)
+        pageWidthDrag = PageWidthDrag(shell: self, windowController: windowController)
+        pageAppearance = PageAppearanceTransitions(shell: self)
         swipeNavigation = SwipeNavigationController(shell: self, windowController: windowController)
         spaceSwipeController = SpaceSwipeController(shell: self, sidebarView: windowController.sidebarHostingView)
         tearOff = TabTearOffTracker(shell: self)
@@ -565,6 +569,7 @@ final class ShellController: NSObject {
         }
         windowController.display(hostViews, split: arrangement, awaitsHostView: awaitsHostView)
         windowController.webAreaView.showLoadingProgress(of: pageFullscreen == nil ? selected : nil)
+        pageWidthDrag.update(tab: pageFullscreen == nil && split == nil ? selected : nil)
         for tab in shownTabs where !displayedTabs.contains(where: { $0 === tab }) {
             if tab.hasBrowser {
                 mini_browser_set_hidden(tab.id, false)

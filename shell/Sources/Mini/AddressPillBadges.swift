@@ -22,9 +22,19 @@ struct AddressPillChip: View {
 
 struct AddressPillBadges: View {
     let tab: Tab
+    let resetAppearance: () -> Void
 
     var body: some View {
         HStack(spacing: SidebarMetrics.accessorySpacing) {
+            if let chip = tab.pageAppearanceChip {
+                Button(action: resetAppearance) {
+                    AddressPillChip(text: chip.text, help: chip.help)
+                }
+                .buttonStyle(.plain)
+                .focusable(false)
+                .hapticFeedback(.press)
+                .accessibilityLabel("\(chip.text), reset page appearance")
+            }
             if let port = LocalDevelopment.port(ofLocalAddress: tab.url) {
                 AddressPillChip(text: "dev :\(String(port))", help: "Local development server on port \(String(port))")
             } else if let host = URLInput.host(of: tab.url), let preview = PreviewDeployment.of(host: host) {
