@@ -221,6 +221,7 @@ private struct VitalsValue: View {
             Text(WebVitals.formatted(metric, value: value))
                 .font(InterfaceFont.body.monospacedDigit())
                 .foregroundStyle(value == nil ? .tertiary : .primary)
+                .padding(.leading, InterfaceScale.scaled(10))
         }
         .accessibilityElement(children: .combine)
     }
