@@ -8,6 +8,7 @@ This file is the onboarding summary. Detail lives in `docs/agents/`:
 | --- | --- |
 | `docs/agents/cef-and-core.md` | Rust core sources, injected page scripts, C ABI rules, verified CEF 156 and toolchain facts, ad blocking |
 | `docs/agents/shell-ui.md` | Swift coordinator, keys and menus, window and page card, sidebar, command bar, overlays, page features, AppKit facts |
+| `docs/agents/command-bar.md` | Command bar state matrix: entry points, typing, sections, async, keys, mouse, closing, environment, and the decisions (Escape, modifiers, wrapping, inline completion) |
 | `docs/agents/tabs-and-undo.md` | Tab kinds, tab undo, auto-archive and idle fade, split view, drag and drop, little windows, tear-off and dock |
 | `docs/agents/spaces-and-session.md` | Spaces and profiles, space colors, space swipe, session.json shape and migrations, history |
 | `docs/agents/haptics.md` | The haptic map and detent rules |
