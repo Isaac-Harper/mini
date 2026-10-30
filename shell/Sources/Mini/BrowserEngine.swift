@@ -186,7 +186,10 @@ final class BrowserEngine {
             },
             main_frame_load_failed: { identifier, errorCode, failedURL in
                 let failedURL = requiredString(failedURL)
-                MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.mainFrameLoadFailed(identifier, errorCode: errorCode, failedURL: failedURL) }
+                MainActor.assumeIsolated {
+                    BrowserEngine.shared.requiredShell.mainFrameLoadFailed(identifier, errorCode: errorCode, failedURL: failedURL)
+                    BrowserEngine.shared.requiredShell.showErrorPage(identifier, errorCode: errorCode, failedURL: failedURL)
+                }
             },
             page_vitals_changed: { identifier, lcp, inp, cls, ttfb, load in
                 MainActor.assumeIsolated {

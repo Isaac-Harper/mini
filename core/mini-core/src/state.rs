@@ -180,6 +180,7 @@ pub struct TabState {
     pub artwork_generation: u64,
     pub site_data_observer: Option<Registration>,
     pub editable_focus: crate::editable_focus::EditableFocus,
+    pub pending_error_page: Option<String>,
 }
 
 pub struct CoreState {

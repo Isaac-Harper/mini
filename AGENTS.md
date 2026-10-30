@@ -84,6 +84,7 @@ Rust core (`core/`, detail in cef-and-core.md):
 - `src/notifications.rs`: Web Notifications shim.
 - `src/editable_focus.rs`: editable-focus script and rule.
 - `src/media.rs`: playing state, media metadata and artwork.
+- `src/error_page.rs`: injects Mini's error page into Chromium's and handles its buttons.
 - `src/theme_color.rs`: theme-color and page background script and parser.
 - `src/horizontal_scroll.rs`: page horizontal scroll room for swipe navigation.
 - `src/vitals.rs`: Core Web Vitals script and report parsing.
@@ -147,6 +148,7 @@ Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 - `FindBarController.swift`: find in page. (shell-ui)
 - `StatusBubbleController.swift`: link hover bubble. (shell-ui)
 - `ToastController.swift`: transient toast. (shell-ui)
+- `ErrorPages.swift`, `Sources/MiniRules/LoadErrorPage.swift`: styled error pages and offline auto retry. (shell-ui)
 - `CrashOverlayController.swift`: crashed page and waiting-for-localhost overlay. (shell-ui)
 - `SitePromptController.swift`, `SitePromptViews.swift`: permission and auth cards. (shell-ui)
 - `LoginFillController.swift`, `LoginFillCardView.swift`: password fill card. (shell-ui)

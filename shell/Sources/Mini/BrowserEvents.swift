@@ -61,6 +61,10 @@ extension ShellController {
 
     func loadingStateChanged(_ identifier: MiniTabId, isLoading: Bool, canGoBack: Bool, canGoForward: Bool) {
         guard let tab = liveTab(identifier) else { return }
+        if isLoading, tab.certificateErrorPage != nil {
+            tab.certificateErrorPage = nil
+            crashOverlay.refresh()
+        }
         if isLoading, tab.hasCrashed {
             tab.hasCrashed = false
             crashOverlay.refresh()

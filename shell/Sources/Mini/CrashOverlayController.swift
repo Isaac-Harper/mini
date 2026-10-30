@@ -1,5 +1,6 @@
 import AppKit
 import CMiniCore
+import MiniRules
 import SwiftUI
 
 @MainActor
@@ -9,7 +10,7 @@ final class CrashOverlayController {
 
     init(shell: ShellController, windowController: MainWindowController) {
         self.shell = shell
-        hostingView = NSHostingView(rootView: CrashOverlayView(content: .crashed, reload: {}, retry: {}))
+        hostingView = NSHostingView(rootView: CrashOverlayView(content: .crashed, reload: {}, retry: {}, goBack: {}))
         hostingView.sizingOptions = []
         hostingView.translatesAutoresizingMaskIntoConstraints = false
         hostingView.isHidden = true
@@ -29,12 +30,16 @@ final class CrashOverlayController {
             .crashed
         } else if let wait = selected?.devServerWait {
             .waitingForDevServer(port: wait.port, hasGivenUp: wait.hasGivenUp)
+        } else if let selected, let page = selected.certificateErrorPage {
+            .certificateError(page, canGoBack: selected.canGoBack)
         } else {
             nil
         }
         if let content {
             hostingView.rootView = CrashOverlayView(content: content, reload: { [weak shell] in shell?.reloadCrashedTab() },
-                                                    retry: { [weak shell] in shell?.retryDevServer() })
+                                                    retry: { [weak shell] in shell?.retryDevServer() },
+                                                    goBack: { [weak shell] in shell?.goBackFromCertificateError() },
+                                                    accent: shell.currentSpace.color.accent)
         }
         let shouldShow = content != nil
         guard shouldShow == hostingView.isHidden else { return }
@@ -48,12 +53,15 @@ final class CrashOverlayController {
 enum PageOverlayContent: Equatable {
     case crashed
     case waitingForDevServer(port: Int, hasGivenUp: Bool)
+    case certificateError(LoadErrorPage, canGoBack: Bool)
 }
 
 struct CrashOverlayView: View {
     let content: PageOverlayContent
     let reload: () -> Void
     let retry: () -> Void
+    let goBack: () -> Void
+    var accent: NSColor?
 
     var body: some View {
         VStack(spacing: 12) {
@@ -84,8 +92,32 @@ struct CrashOverlayView: View {
                 Button("Try Again", action: retry)
                     .buttonStyle(.glassProminent)
                     .controlSize(.large)
+            case .certificateError(let page, let canGoBack):
+                Image(systemName: page.symbolName)
+                    .font(.system(size: 28, weight: .regular))
+                    .foregroundStyle(.tint)
+                Text(page.title)
+                    .font(.system(size: 15, weight: .semibold))
+                Text(page.detail)
+                    .font(InterfaceFont.body)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 400)
+                HStack(spacing: 8) {
+                    if canGoBack {
+                        Button("Go Back", action: goBack)
+                            .buttonStyle(.glassProminent)
+                        Button("Try Again", action: reload)
+                            .buttonStyle(.glass)
+                    } else {
+                        Button("Try Again", action: reload)
+                            .buttonStyle(.glassProminent)
+                    }
+                }
+                .controlSize(.large)
             }
         }
+        .tint(accent.map { Color(nsColor: $0) })
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(nsColor: .windowBackgroundColor))
     }

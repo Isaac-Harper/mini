@@ -2,7 +2,7 @@ use cef::*;
 use std::ffi::c_void;
 
 use crate::{
-    MiniTabId, ad_blocking, authentication, context_menu, downloads, editable_focus, favicon, horizontal_scroll, login, media, notifications, permissions, theme_color, vitals, webauthn,
+    MiniTabId, ad_blocking, authentication, context_menu, downloads, editable_focus, error_page, favicon, horizontal_scroll, login, media, notifications, permissions, theme_color, vitals, webauthn,
     resource_requests::MiniResourceRequestHandler,
     state::{TabState, c_string, callbacks, with_core},
 };
@@ -243,6 +243,18 @@ wrap_load_handler! {
             let failed_url = c_string(&text(failed_url));
             let error_code = *error_code.as_ref() as i32;
             unsafe { (callbacks().main_frame_load_failed)(self.tab, error_code, failed_url.as_ptr()) };
+        }
+
+        fn on_load_end(
+            &self,
+            _browser: Option<&mut Browser>,
+            frame: Option<&mut Frame>,
+            _http_status_code: ::std::os::raw::c_int,
+        ) {
+            let frame = frame.expect("load end without a frame");
+            if frame.is_main() == 1 {
+                error_page::main_frame_loaded(self.tab, frame);
+            }
         }
 
         fn on_load_start(

@@ -16,6 +16,7 @@ final class ShellController: NSObject {
     let sidebarKeyboard = SidebarKeyboardFocus()
     let undoToast = UndoToastModel()
     let launchReveal = LaunchReveal()
+    @ObservationIgnored let offlineRetry = OfflineRetry()
     let airPlay = AirPlayVideo()
     let soundOutput = SoundOutput()
     @ObservationIgnored let localServers = LocalServerScanner()
@@ -162,6 +163,7 @@ final class ShellController: NSObject {
             return event
         }
         sidebarTabKeyMonitor = installSidebarTabKeyMonitor()
+        offlineRetry.onNetworkReturned = { [weak self] waiting in self?.networkReturned(waiting) }
         if launchReveal.phase == .waiting { windowController.hidePageCardUntilRevealed() }
         showWindow()
         for saved in savedSession.spaces {

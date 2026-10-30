@@ -5,6 +5,7 @@ mod client;
 mod context_menu;
 mod downloads;
 mod editable_focus;
+mod error_page;
 mod favicon;
 mod horizontal_scroll;
 mod login;
@@ -309,6 +310,11 @@ pub extern "C" fn mini_browser_go_to_history_offset(tab: MiniTabId, offset: i32)
     if let Some(browser) = created_browser(tab) {
         navigation::go_to_offset(&browser, offset);
     }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn mini_browser_show_error_page(tab: MiniTabId, html: *const c_char) {
+    error_page::show(tab, borrowed_text(html, "html"));
 }
 
 #[unsafe(no_mangle)]

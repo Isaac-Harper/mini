@@ -231,6 +231,10 @@ void mini_space_destroy(const char *space);
 // background_rgb (0xRRGGBB) is what the browser shows until its first paint.
 void mini_browser_create(MiniTabId tab, void *parent_view, const char *url, const char *space, uint32_t background_rgb);
 void mini_browser_load_url(MiniTabId tab, const char *url);
+// Replaces Chromium's error page for the tab's failed main-frame navigation
+// with html, now if the error page is showing, else when it finishes loading.
+// Elements with data-mini-action="retry" reload, "back" goes back.
+void mini_browser_show_error_page(MiniTabId tab, const char *html);
 void mini_browser_go_back(MiniTabId tab);
 void mini_browser_go_forward(MiniTabId tab);
 // Calls visitor synchronously once per entry of the tab's session history,
