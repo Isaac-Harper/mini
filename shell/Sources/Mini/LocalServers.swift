@@ -38,7 +38,7 @@ final class LocalServerScanner {
         }
     }
 
-    nonisolated private static func userListeners() -> [LocalListener] {
+    nonisolated static func userListeners() -> [LocalListener] {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/sbin/lsof")
         process.arguments = ["-nP", "-a", "-iTCP", "-sTCP:LISTEN", "-u", String(getuid()), "-F", "pcn", "+c", "0"]

@@ -3,11 +3,13 @@ import SwiftUI
 
 struct AddressPillChip: View {
     let text: String?
+    let fixedSuffix: String?
     let symbol: String?
     let help: String
 
-    init(text: String?, symbol: String? = nil, help: String) {
+    init(text: String?, fixedSuffix: String? = nil, symbol: String? = nil, help: String) {
         self.text = text
+        self.fixedSuffix = fixedSuffix
         self.symbol = symbol
         self.help = help
     }
@@ -15,10 +17,18 @@ struct AddressPillChip: View {
     var body: some View {
         HStack(spacing: SidebarMetrics.accessorySpacing) {
             if let text {
-                Text(text)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                    .frame(maxWidth: SidebarMetrics.addressPillChipMaximumTextWidth)
+                HStack(spacing: 0) {
+                    Text(text)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                    if let fixedSuffix {
+                        Text(fixedSuffix)
+                            .lineLimit(1)
+                            .fixedSize()
+                            .layoutPriority(1)
+                    }
+                }
+                .frame(maxWidth: SidebarMetrics.addressPillChipMaximumTextWidth)
             }
             if let symbol {
                 Image(systemName: symbol)
@@ -39,6 +49,8 @@ struct EnvironmentChip: View {
     let shell: ShellController
     let tab: Tab
     let text: String
+    var fixedSuffix: String?
+    var help = "Switch environment"
     let description: String
 
     @State private var anchor = PillAnchor()
@@ -48,7 +60,7 @@ struct EnvironmentChip: View {
             guard let view = anchor.view else { return }
             shell.showEnvironmentMenu(for: tab, under: view)
         } label: {
-            AddressPillChip(text: text, help: "Switch environment")
+            AddressPillChip(text: text, fixedSuffix: fixedSuffix, help: help)
                 .contentShape(Capsule())
         }
         .buttonStyle(.plain)
@@ -76,7 +88,12 @@ struct AddressPillBadges: View {
                 .accessibilityLabel(chip.help)
             }
             if let port = LocalDevelopment.port(ofLocalAddress: tab.url) {
-                EnvironmentChip(shell: shell, tab: tab, text: "dev :\(String(port))", description: "Local development server on port \(String(port))")
+                if let project = tab.localProject(onPort: port) {
+                    let description = "Local server for \(project.serverDescription(port: port))"
+                    EnvironmentChip(shell: shell, tab: tab, text: project.name, fixedSuffix: " :\(String(port))", help: description, description: description)
+                } else {
+                    EnvironmentChip(shell: shell, tab: tab, text: "dev :\(String(port))", description: "Local development server on port \(String(port))")
+                }
             } else if let host = URLInput.host(of: tab.url), let preview = PreviewDeployment.of(host: host) {
                 EnvironmentChip(shell: shell, tab: tab, text: preview.branch.map { "Preview \u{00B7} \($0)" } ?? "Preview",
                                 description: preview.branch.map { "Preview deployment of \(preview.project), branch \($0)" } ?? "Preview deployment of \(preview.project)")

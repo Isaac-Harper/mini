@@ -131,7 +131,7 @@ struct VitalsPeekView: View {
     private var attributes: [String] {
         var parts: [String] = []
         if let port = LocalDevelopment.port(ofLocalAddress: tab.url) {
-            parts.append("Local server on port \(String(port))")
+            parts.append(tab.localProject(onPort: port)?.serverDescription(port: port) ?? "Local server on port \(String(port))")
         } else if let host = URLInput.host(of: tab.url), let preview = PreviewDeployment.of(host: host) {
             parts.append(preview.branch.map { "Preview of \(preview.project), \($0)" } ?? "Preview of \(preview.project)")
         }

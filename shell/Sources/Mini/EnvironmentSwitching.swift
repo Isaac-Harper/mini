@@ -63,6 +63,9 @@ extension ShellController {
         let menu = NSMenu()
         menu.autoenablesItems = false
         let ages = RelativeDateTimeFormatter()
+        if let port = LocalDevelopment.port(ofLocalAddress: tab.url), let project = tab.localProject(onPort: port) {
+            addProjectItems(for: project, to: menu)
+        }
         var listedKind: DeploymentEnvironment.Kind?
         for environment in environments {
             if environment.kind != listedKind {
@@ -130,6 +133,24 @@ extension ShellController {
         if let scrollFraction, scrollFraction > 0 {
             tab.environmentScrollRestore = EnvironmentScrollRestore(fraction: scrollFraction, hasStartedLoading: tab.isLoading)
         }
+    }
+
+    private func addProjectItems(for project: LocalProject, to menu: NSMenu) {
+        menu.addItem(.sectionHeader(title: project.branch.map { "\(project.name) \u{00B7} \($0)" } ?? project.name))
+        let reveal = NSMenuItem(title: "Reveal Project in Finder", action: #selector(revealLocalProject(_:)), keyEquivalent: "")
+        reveal.target = self
+        reveal.representedObject = project.root
+        menu.addItem(reveal)
+        if let (editor, application) = ProjectEditor.firstInstalled() {
+            let open = NSMenuItem(title: "Open in \(editor.name)", action: #selector(openLocalProjectInEditor(_:)), keyEquivalent: "")
+            open.target = self
+            open.representedObject = project.root
+            let icon = NSWorkspace.shared.icon(forFile: application.path)
+            icon.size = NSSize(width: 16, height: 16)
+            open.image = icon
+            menu.addItem(open)
+        }
+        menu.addItem(.separator())
     }
 
     private static func sectionTitle(of kind: DeploymentEnvironment.Kind) -> String {
