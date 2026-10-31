@@ -337,6 +337,10 @@ extension ShellController: NSMenuItemValidation {
         toast.show("Copied")
     }
 
+    @objc func pickColor(_ sender: Any?) {
+        pickColor()
+    }
+
     @objc func copyScreenshot(_ sender: Any?) {
         if let tab = mainWindowBrowserTab { PageScreenshot.capture(tab, in: self, elementAt: nil) }
     }

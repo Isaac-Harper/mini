@@ -43,6 +43,10 @@ public enum TextStyle {
 
     public static func oklch(fromComputedColor text: String) -> String? {
         guard let (red, green, blue, alpha) = parseRGB(text) else { return nil }
+        return oklch(red: red, green: green, blue: blue, alpha: alpha)
+    }
+
+    public static func oklch(red: Double, green: Double, blue: Double, alpha: Double) -> String {
         let (lightness, chroma, hue) = oklchComponents(red: red, green: green, blue: blue)
         var result = "oklch(\(format(lightness, places: 2)) \(format(chroma, places: 2)) \(format(hue, places: 0))"
         if alpha < 1 {

@@ -73,8 +73,9 @@ enum MainMenu {
         pageMarkdownItem.isAlternate = true
         menu.addItem(pageMarkdownItem)
         menu.addItem(item("Copy Screenshot", #selector(ShellController.copyScreenshot(_:)), "S", [.command], target: commands, symbol: "camera.viewfinder"))
+        menu.addItem(item("Pick Color", #selector(ShellController.pickColor(_:)), "K", [.command], target: commands, symbol: "eyedropper"))
         menu.addItem(.separator())
-        menu.addItem(item("Find", #selector(ShellController.showFindBar(_:)), "f", target: commands, symbol: "magnifyingglass"))
+        menu.addItem(item("Find",#selector(ShellController.showFindBar(_:)), "f", target: commands, symbol: "magnifyingglass"))
         menu.addItem(item("Find Next", #selector(ShellController.findNextMatch(_:)), "g", target: commands, symbol: "chevron.down"))
         menu.addItem(item("Find Previous", #selector(ShellController.findPreviousMatch(_:)), "g", [.command, .shift], target: commands, symbol: "chevron.up"))
         menu.addItem(.separator())
