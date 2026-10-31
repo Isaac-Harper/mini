@@ -77,6 +77,17 @@ struct LocalProjectTests {
         #expect(tree.project(workingDirectory: "/") == nil)
     }
 
+    @Test func privacyProtectedFoldersAreNeverInspected() {
+        var tree = FileTree()
+        tree.directories = ["/Users/me/Documents/site/.git"]
+        tree.files = ["/Users/me/Documents/site/.git/HEAD": "ref: refs/heads/main\n"]
+        #expect(tree.project(workingDirectory: "/Users/me/Documents/site") == nil)
+        #expect(tree.project(workingDirectory: "/Users/me/Downloads") == nil)
+        #expect(LocalProjectResolution.isPrivacyProtected("/Users/me/Desktop/a", homeDirectory: "/Users/me"))
+        #expect(!LocalProjectResolution.isPrivacyProtected("/Users/me/Development/a", homeDirectory: "/Users/me"))
+        #expect(!LocalProjectResolution.isPrivacyProtected("/Users/me/DocumentsArchive", homeDirectory: "/Users/me"))
+    }
+
     @Test func serverDescriptionNamesBranchWhenKnown() {
         #expect(LocalProject(name: "mini", root: "/a/mini", branch: "main").serverDescription(port: 3000) == "mini on main, port 3000")
         #expect(LocalProject(name: "site", root: "/tmp/site", branch: nil).serverDescription(port: 8000) == "site, port 8000")

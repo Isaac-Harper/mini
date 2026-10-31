@@ -22,9 +22,21 @@ public enum LocalFileKind: Sendable {
 }
 
 public enum LocalProjectResolution {
+    public static let privacyProtectedFolders = ["Desktop", "Documents", "Downloads", "Library"]
+
+    public static func isPrivacyProtected(_ directory: String, homeDirectory: String) -> Bool {
+        let home = standardized(homeDirectory)
+        let path = standardized(directory)
+        return privacyProtectedFolders.contains { folder in
+            let protected = home + "/" + folder
+            return path == protected || path.hasPrefix(protected + "/")
+        }
+    }
+
     public static func project(workingDirectory: String, homeDirectory: String, kind: (String) -> LocalFileKind?,
                                read: (String) -> String?) -> LocalProject? {
         let directory = standardized(workingDirectory)
+        guard !isPrivacyProtected(directory, homeDirectory: homeDirectory) else { return nil }
         guard let root = repositoryRoot(containing: directory, homeDirectory: homeDirectory, kind: kind) else {
             guard directory != "/", directory != standardized(homeDirectory) else { return nil }
             return LocalProject(name: lastComponent(of: directory), root: directory, branch: nil)
