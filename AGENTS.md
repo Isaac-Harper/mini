@@ -219,4 +219,4 @@ Bundle and scripts (detail in signing-release-codecs.md):
 
 ## Status
 
-v0.2.0 is the latest release (signed, notarized, stock CEF): spaces, saved tabs, undo, tear-off, space colors and swipe, haptics, history, context menu, fullscreen, peek sidebar, evening tint and the rest since v0.1.0. Local builds and `make install` use the proprietary-codecs CEF when installed; releases never do. `git log v0.2.0..HEAD` lists unreleased work.
+v0.3.0 is the latest release (signed, notarized, stock CEF): the command bar rework, Interface Size, the Player tab, and the developer and design tools (environment switcher, cold reload, page health in the pill's page inspector, link unfurl on copy, Copy Screenshot, Page Appearance, breakpoint width drag, Copy Text Style, Copy Page as Markdown) since v0.2.0. Local builds and `make install` use the proprietary-codecs CEF when installed; releases never do. `git log v0.3.0..HEAD` lists unreleased work.
