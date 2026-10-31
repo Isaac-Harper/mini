@@ -21,6 +21,12 @@ struct LocalDevelopmentTests {
         #expect(LocalDevelopment.port(ofLocalAddress: "") == nil)
     }
 
+    @Test func movedAddressKeepsPathQueryAndHashOnTheNewPort() {
+        #expect(LocalDevelopment.address("http://localhost:3000/docs/a?tab=2#intro", movedToPort: 3001) == "http://localhost:3001/docs/a?tab=2#intro")
+        #expect(LocalDevelopment.address("http://127.0.0.1/", movedToPort: 5173) == "http://127.0.0.1:5173/")
+        #expect(LocalDevelopment.address("https://example.com:3000/", movedToPort: 3001) == nil)
+    }
+
     @Test func lsofFieldOutputBecomesLoopbackListenersByPort() {
         let output = """
         p4012

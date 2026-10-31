@@ -26,6 +26,12 @@ public enum LocalDevelopment {
         return components.port ?? (scheme == "https" ? 443 : 80)
     }
 
+    public static func address(_ address: String, movedToPort port: Int) -> String? {
+        guard self.port(ofLocalAddress: address) != nil, var components = URLComponents(string: address) else { return nil }
+        components.port = port
+        return components.string
+    }
+
     public static func listeners(fromLsofFields output: String) -> [LocalListener] {
         var listeners: [LocalListener] = []
         var processIdentifier: Int32?

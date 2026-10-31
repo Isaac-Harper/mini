@@ -43,11 +43,23 @@ extension ShellController {
             for delay in LocalDevelopment.retryDelays(totalSeconds: Self.reconnectBudget) {
                 try? await Task.sleep(for: .seconds(delay))
                 if Task.isCancelled { return }
-                guard await LocalServerScanner.answersHTTP(port: port, session: session) else { continue }
+                if await LocalServerScanner.answersHTTP(port: port, session: session) {
+                    guard let self, let tab, let wait, tab.devServerWait === wait, tab.hasBrowser else { return }
+                    tab.devServerWait = nil
+                    self.crashOverlay.refresh()
+                    url.withCString { mini_browser_load_url(tab.id, $0) }
+                    return
+                }
+                guard let root = tab?.localProject(onPort: port)?.root,
+                      let movedPort = await self?.movedServerPort(ofProjectAt: root, from: port, session: session),
+                      let movedURL = LocalDevelopment.address(url, movedToPort: movedPort) else { continue }
                 guard let self, let tab, let wait, tab.devServerWait === wait, tab.hasBrowser else { return }
                 tab.devServerWait = nil
                 self.crashOverlay.refresh()
-                url.withCString { mini_browser_load_url(tab.id, $0) }
+                movedURL.withCString { mini_browser_load_url(tab.id, $0) }
+                if tab === self.store.selectedTab {
+                    self.toast.show("Moved to :\(String(movedPort))")
+                }
                 return
             }
             guard let self, let tab, let wait, tab.devServerWait === wait else { return }

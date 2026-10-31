@@ -69,6 +69,7 @@ final class Tab: Identifiable {
     @ObservationIgnored var hasCrashed = false
     @ObservationIgnored var zoomedHost: String?
     @ObservationIgnored var devServerWait: DevServerWait?
+    var localProject: LocalProjectBinding?
     @ObservationIgnored var pendingEnvironmentAddress: String?
     @ObservationIgnored var environmentScrollRestore: EnvironmentScrollRestore?
     @ObservationIgnored var certificateErrorPage: LoadErrorPage?

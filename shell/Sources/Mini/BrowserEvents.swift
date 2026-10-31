@@ -22,6 +22,9 @@ extension ShellController {
         }
         cancelDevServerWait(of: tab, unlessShowing: url)
         tab.url = url
+        if tab.localProject != nil, LocalDevelopment.port(ofLocalAddress: url) == nil {
+            tab.localProject = nil
+        }
         let host = SitePreferences.host(of: url)
         if host != tab.zoomedHost {
             tab.zoomedHost = host
@@ -82,6 +85,7 @@ extension ShellController {
         }
         if !isLoading {
             playerDock.pageFinishedLoading(tab)
+            refreshLocalProject(of: tab)
         }
         environmentLoadingChanged(tab, isLoading: isLoading)
         tab.canGoBack = canGoBack
