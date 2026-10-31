@@ -113,6 +113,8 @@ extension ShellController: NSMenuItemValidation {
     @objc func closeTab(_ sender: Any?) {
         if let littleWindow = keyLittleWindow {
             littleWindow.close()
+        } else if isSettingsWindowKey {
+            settingsWindow?.close()
         } else if isHistoryWindowKey {
             historyWindow?.close()
         } else if commandBar.isOpen {
@@ -187,7 +189,7 @@ extension ShellController: NSMenuItemValidation {
         setInterfaceSize(InterfaceSize.actualLevel)
     }
 
-    private func setInterfaceSize(_ level: Int) {
+    func setInterfaceSize(_ level: Int) {
         let scale = InterfaceScale.shared
         guard level != scale.level else { return }
         let oldFactor = scale.factor
@@ -436,7 +438,7 @@ extension ShellController: NSMenuItemValidation {
         case #selector(closeTab(_:)):
             let count = keyLittleWindow == nil && !commandBar.isOpen && store.rowSelection.isMultiple ? store.rowSelection.identifiers.count : 1
             menuItem.title = count > 1 ? "Close \(count) Tabs" : "Close Tab"
-            return keyLittleWindow != nil || commandBar.isOpen || selected != nil
+            return keyLittleWindow != nil || isSettingsWindowKey || commandBar.isOpen || selected != nil
         case #selector(openLittleWindowInMini(_:)):
             return keyLittleWindow != nil
         case #selector(newChildTab(_:)):

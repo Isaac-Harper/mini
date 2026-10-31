@@ -1,7 +1,10 @@
 import CMiniCore
 import Foundation
+import MiniRules
+import Observation
 
 @MainActor
+@Observable
 final class SitePreferences {
     struct PermissionDecision: Codable {
         var allowed: UInt32 = 0
@@ -45,7 +48,7 @@ final class SitePreferences {
         return decision.allowed & permissions
     }
 
-    var onNotificationsGranted: (() -> Void)?
+    @ObservationIgnored var onNotificationsGranted: (() -> Void)?
 
     private static let notificationsBit = MINI_PERMISSION_NOTIFICATIONS.rawValue
 
@@ -128,6 +131,29 @@ final class SitePreferences {
         for host in adBlockExemptHosts {
             host.withCString { mini_adblock_set_host_exempt($0, true) }
         }
+    }
+
+    private static let permissionKinds = [
+        SitePermissionKind(bit: MINI_PERMISSION_CAMERA.rawValue, name: "Camera"),
+        SitePermissionKind(bit: MINI_PERMISSION_MICROPHONE.rawValue, name: "Microphone"),
+        SitePermissionKind(bit: MINI_PERMISSION_SCREEN_CAPTURE.rawValue, name: "Screen sharing"),
+        SitePermissionKind(bit: MINI_PERMISSION_GEOLOCATION.rawValue, name: "Location"),
+        SitePermissionKind(bit: MINI_PERMISSION_NOTIFICATIONS.rawValue, name: "Notifications", isNotifications: true),
+        SitePermissionKind(bit: MINI_PERMISSION_CLIPBOARD.rawValue, name: "Clipboard"),
+        SitePermissionKind(bit: MINI_PERMISSION_MIDI.rawValue, name: "MIDI devices"),
+        SitePermissionKind(bit: MINI_PERMISSION_STORAGE.rawValue, name: "Storage"),
+        SitePermissionKind(bit: MINI_PERMISSION_WINDOW_MANAGEMENT.rawValue, name: "Window management"),
+        SitePermissionKind(bit: MINI_PERMISSION_LOCAL_NETWORK.rawValue, name: "Local network"),
+        SitePermissionKind(bit: MINI_PERMISSION_OTHER.rawValue, name: "Other features"),
+    ]
+
+    var storedSites: [StoredSite] {
+        StoredSites.sites(
+            permissionDecisions: permissionDecisions.mapValues { StoredPermissionDecision(allowed: $0.allowed, denied: $0.denied) },
+            adBlockExemptHosts: adBlockExemptHosts,
+            zoomLevels: zoomLevels,
+            kinds: Self.permissionKinds
+        )
     }
 
     private static func load<Value: Decodable>(_ type: Value.Type, from fileURL: URL) -> Value? {
