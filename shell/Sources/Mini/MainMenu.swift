@@ -27,6 +27,8 @@ enum MainMenu {
     private static func applicationMenu(_ commands: ShellController) -> NSMenu {
         let menu = NSMenu(title: "Mini")
         menu.addItem(item("About Mini", #selector(NSApplication.orderFrontStandardAboutPanel(_:)), "", [], symbol: "info.circle"))
+        menu.addItem(.separator())
+        menu.addItem(item("Settings\u{2026}", #selector(ShellController.showSettings(_:)), ",", target: commands, symbol: "gear"))
         menu.addItem(item("Set as Default Browser", #selector(ShellController.setAsDefaultBrowser(_:)), "", target: commands, symbol: "globe"))
         menu.addItem(.separator())
         menu.addItem(item("Hide Mini", #selector(NSApplication.hide(_:)), "h", symbol: "eye.slash"))

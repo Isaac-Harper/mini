@@ -49,7 +49,8 @@ Mini is an open source exploration project: a personal, minimal browser built to
 - Copy Screenshot (Edit menu, ⇧⌘S, or right-click the page) copies the visible page as a PNG with the card's rounded corners and no scrollbars; Copy Screenshot of Element copies just the element you right-clicked. The thumbnail in the confirmation can be dragged into other apps
 - Pick Color (Edit menu, ⇧⌘K) opens the system color loupe, copies the picked pixel as OKLCH and shows a swatch with the hex value
 - Hovering a link shows its address in a small bubble at the bottom of the page
-- No extensions, sync, accounts or settings window
+- Mini > Settings (⌘,) gathers the preferences in one window: default browser, Close the Day, interface size, evening tint, Preload on Hover, and every site you have answered a permission prompt for, allowed ads on or zoomed, with a search field and a Reset for each; the menu items stay in sync with it
+- No extensions, sync or accounts
 
 ## Download
 
@@ -115,6 +116,7 @@ The stock CEF build plays VP8, VP9, AV1, Opus and other open formats, but not H.
 | ⇧⌘C | Copy the page address (shows its link preview) |
 | ⇧⌘S | Copy a screenshot of the page |
 | ⇧⌘K | Pick a color from anywhere on screen (copies OKLCH) |
+| ⌘, | Settings |
 | ⌘Y | Show all history |
 | ⌘[, ⌘] | Back and forward (right-click or hold the arrow buttons for the history list) |
 | ⌘R, ⌘. | Reload and stop |

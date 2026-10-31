@@ -122,6 +122,7 @@ Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 - `ShellCommands.swift`: menu actions and validation. (shell-ui)
 - `MenuKeyEquivalents.swift`: page key events to menu items; Cmd-Z detection. (shell-ui)
 - `MainMenu.swift`: the main menu, built in code. (shell-ui)
+- `SettingsWindowController.swift`, `SettingsPanes.swift`, `SettingsSitesPane.swift`, `Sources/MiniRules/StoredSites.swift`: the Settings window (Cmd-,), its General, Appearance and Browsing panes bound to the menu toggles' values, and the Sites pane over every stored site decision (pure merge, summary, sort and search, unit tested). (shell-ui)
 - `BrowserHostView.swift`: the view CEF embeds into. (shell-ui)
 - `MainWindowController.swift`: split view window, page card, `WebAreaView`, split divider, loading line, empty page. (shell-ui)
 - `WindowToolbar.swift`: toolbar items inside the sidebar. (shell-ui)

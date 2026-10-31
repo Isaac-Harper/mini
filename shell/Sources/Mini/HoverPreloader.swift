@@ -2,8 +2,10 @@ import CMiniCore
 import Foundation
 import MiniRules
 import Network
+import Observation
 
 @MainActor
+@Observable
 final class HoverPreloader {
     private static let dwell: TimeInterval = 0.15
     private static let enabledKey = "PreloadsOnHover"
@@ -15,10 +17,10 @@ final class HoverPreloader {
         }
     }
 
-    private weak var preloadedTab: Tab?
-    private var preloadedURL: String?
-    private var generation = 0
-    private var isNetworkCostly = false
+    @ObservationIgnored private weak var preloadedTab: Tab?
+    @ObservationIgnored private var preloadedURL: String?
+    @ObservationIgnored private var generation = 0
+    @ObservationIgnored private var isNetworkCostly = false
     private let pathMonitor = NWPathMonitor()
 
     init() {

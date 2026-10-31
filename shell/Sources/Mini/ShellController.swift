@@ -39,6 +39,7 @@ final class ShellController: NSObject {
     @ObservationIgnored let siteBackgrounds: SiteBackgroundCache
     @ObservationIgnored let history: HistoryLibrary
     @ObservationIgnored var historyWindow: HistoryWindowController?
+    @ObservationIgnored var settingsWindow: SettingsWindowController?
     @ObservationIgnored private var archiveTimer: Timer?
     @ObservationIgnored let sessionStore: SessionStore
     @ObservationIgnored private(set) var windowController: MainWindowController!
