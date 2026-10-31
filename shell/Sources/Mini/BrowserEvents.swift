@@ -277,10 +277,21 @@ extension ShellController {
         tab.edge = edge
     }
 
-    func pageHealthWanted(_ identifier: MiniTabId, url: String) -> Bool {
-        guard let tab = liveTab(identifier) else { return false }
+    func pageHealthWanted(_ identifier: MiniTabId, url: String) -> Int32 {
+        guard let tab = liveTab(identifier) else { return Int32(MINI_PAGE_HEALTH_NONE.rawValue) }
         if tab.health != PageHealth() { tab.health = PageHealth() }
-        return PageHealth.isCollected(for: url)
+        if tab.devBuild != DevBuildStatus() { tab.devBuild = DevBuildStatus() }
+        if PageHealth.collectsBuilds(for: url) { return Int32(MINI_PAGE_HEALTH_ERRORS_AND_BUILDS.rawValue) }
+        return Int32(PageHealth.isCollected(for: url) ? MINI_PAGE_HEALTH_ERRORS.rawValue : MINI_PAGE_HEALTH_NONE.rawValue)
+    }
+
+    func devBuildReported(_ identifier: MiniTabId, event: DevBuildEvent) {
+        guard let tab = liveTab(identifier) else { return }
+        tab.devBuild.apply(event, at: Date())
+        if case let .ready(milliseconds?) = event, tab === store.selectedTab {
+            showRefreshDuration(milliseconds, of: tab)
+        }
+        if case .rebuilding = event { scheduleRebuildExpiry(of: tab) }
     }
 
     func pageErrorsReported(_ identifier: MiniTabId, count: Int, firstMessage: String) {

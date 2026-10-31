@@ -49,6 +49,9 @@ final class Tab: Identifiable {
     var health = PageHealth()
     @ObservationIgnored var linkPreviewTags: LinkPreviewTags?
     var reloadDurationText: String?
+    @ObservationIgnored var reloadDurationSpokenText = ""
+    var devBuild = DevBuildStatus()
+    @ObservationIgnored var devBuildExpiryGeneration = 0
     var pageColorScheme = PageColorScheme.system
     var pageReducesMotion = false
     @ObservationIgnored var pageWidth: CGFloat?

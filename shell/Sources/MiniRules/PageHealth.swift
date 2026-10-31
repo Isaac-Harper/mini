@@ -28,6 +28,10 @@ public struct PageHealth: Equatable, Sendable {
         return PreviewDeployment.of(host: host) != nil
     }
 
+    public static func collectsBuilds(for url: String) -> Bool {
+        LocalDevelopment.port(ofLocalAddress: url) != nil
+    }
+
     public var hasProblems: Bool {
         errorCount > 0 || failedRequestCount > 0
     }

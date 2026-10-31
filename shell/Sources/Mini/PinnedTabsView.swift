@@ -72,6 +72,7 @@ private struct PinnedTabTile: View {
                 }
             }
             TabIconView(tab: tab, size: SidebarMetrics.iconSize)
+                .devBuildState(of: tab, isOnTile: true)
                 .overlay(alignment: .topTrailing) { UnreadBadgeView(tab: tab, isOnTile: true) }
         }
         .frame(maxWidth: .infinity)
@@ -88,7 +89,7 @@ private struct PinnedTabTile: View {
         }
         .overlay { SidebarFocusRing(shell: shell, tab: tab, cornerRadius: SidebarMetrics.pinnedTileCornerRadius) }
         .contentShape(shape)
-        .glassTooltip(tab.displayTitle)
+        .glassTooltip(tab.devBuild.hasCompileError ? "\(tab.displayTitle): Build error" : tab.displayTitle)
         .onTapGesture {
             Haptics.controlActivated(.press)
             shell.clearRowSelection()

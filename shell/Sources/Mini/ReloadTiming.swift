@@ -18,10 +18,21 @@ extension ShellController {
     }
 
     func showReloadDuration(_ milliseconds: Double, of tab: Tab) {
+        let text = ReloadTemperatures.label(milliseconds: milliseconds, temperature: tab.reloadTemperature)
+        showReloadLabel(text, spoken: "Reloaded in \(text)", holding: ReloadTemperatures.hold(for: tab.reloadTemperature), of: tab)
+    }
+
+    func showRefreshDuration(_ milliseconds: Double, of tab: Tab) {
+        showReloadLabel(DevBuildStatus.refreshLabel(milliseconds: milliseconds),
+                        spoken: "Refreshed in \(DurationText.milliseconds(milliseconds))", holding: ReloadTemperatures.labeledHold, of: tab)
+    }
+
+    private func showReloadLabel(_ text: String, spoken: String, holding hold: TimeInterval, of tab: Tab) {
         tab.reloadDurationGeneration += 1
         let generation = tab.reloadDurationGeneration
-        tab.reloadDurationText = ReloadTemperatures.label(milliseconds: milliseconds, temperature: tab.reloadTemperature)
-        DispatchQueue.main.asyncAfter(deadline: .now() + ReloadTemperatures.hold(for: tab.reloadTemperature)) { [weak tab] in
+        tab.reloadDurationSpokenText = spoken
+        tab.reloadDurationText = text
+        DispatchQueue.main.asyncAfter(deadline: .now() + hold) { [weak tab] in
             MainActor.assumeIsolated {
                 guard let tab, tab.reloadDurationGeneration == generation else { return }
                 tab.reloadDurationText = nil

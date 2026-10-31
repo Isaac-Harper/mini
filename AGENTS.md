@@ -30,7 +30,7 @@ Mini.app/Contents/Frameworks/
 - Swift owns: window, sidebar, tab tree, selection, command bar, menus and key equivalents, focus decisions, session persistence. Tab ids are minted in Swift.
 - Rust owns: CEF init/shutdown, the tab-id -> Browser map, every CEF handler (display, load, life span, request, keyboard, focus, download, permission, context menu). It never draws UI.
 - The boundary is the C ABI in `core/include/mini_core.h`, nothing else. Rust calls back through the `MiniCallbacks` function-pointer table; Swift calls `mini_*` functions.
-- Page-side features (login detection, WebAuthn suppression, notifications, editable focus, media, theme color, horizontal scroll room) are scripts injected at `on_load_start` that report over one console channel keyed by a per-process token.
+- Page-side features (login detection, dev build overlays, WebAuthn suppression, notifications, editable focus, media, theme color, horizontal scroll room) are scripts injected at `on_load_start` that report over one console channel keyed by a per-process token.
 - Each tab has a `BrowserHostView`; CEF creates the windowed (non-OSR) browser NSView inside it. `ShellController.refreshDisplayedTabs` is the only code that shows or hides host views.
 - Spaces: `ShellController.spaces` holds `Space` objects, each with its own `TabStore` and CEF request context (`Profile/Default` for the default-profile space, `Profile/Spaces/<id>` for the rest); `store` is always `currentSpace.store`.
 - Browsers are created lazily: restored tabs have no browser until first selected (or shown as the other side of a split).
@@ -88,6 +88,7 @@ Rust core (`core/`, detail in cef-and-core.md):
 - `src/media.rs`: playing state, media metadata and artwork.
 - `src/error_page.rs`: injects Mini's error page into Chromium's and handles its buttons.
 - `src/theme_color.rs`: theme-color and page background script and parser.
+- `src/dev_build.rs`: Next.js and Vite rebuild console lines and build error overlay script for dev tabs.
 - `src/horizontal_scroll.rs`: page horizontal scroll room for swipe navigation.
 - `src/vitals.rs`: Core Web Vitals script and report parsing.
 - `src/page_health.rs`: dev and preview page health: uncaught error script, failed subresource reports from the IO thread.
@@ -139,7 +140,8 @@ Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 - `Sources/MiniRules/AddressEmphasis.swift`: address pill split around the registrable domain from an injected resolver (the core's public suffix list), unit tested. (shell-ui)
 - `AddressPillBadges.swift`: the pill's caption chips (the preview or dev port environment chip, vitals warning dot). (shell-ui)
 - `HoverPreloader.swift`, `Sources/MiniRules/HoverPreload.swift`: Preload on Hover (speculation rules prefetch of the hovered same-site link), unit tested rules. (shell-ui)
-- `ReloadTiming.swift`, `Sources/MiniRules/ReloadTemperature.swift`: the reload time label after a user reload, cold and warm reloads, the reload button's Option state; unit tested labels. (shell-ui)
+- `ReloadTiming.swift`, `Sources/MiniRules/ReloadTemperature.swift`: the reload time label after a user reload, cold and warm reloads, the reload button's Option state, the dev server refresh time; unit tested labels. (shell-ui)
+- `DevBuildRows.swift`, `Sources/MiniRules/DevBuild.swift`: dev build state on rows (rebuilding pulse, build error dot) and its rebuild timeout; pure state rules unit tested. (shell-ui)
 - `PageAppearance.swift`: View > Page Appearance per tab (light, dark, reduced motion), its crossfade and the pill chip. (shell-ui)
 - `PageWidthDrag.swift`, `Sources/MiniRules/PageWidth.swift`: Option-drag the page card's right edge to narrow the page for breakpoints; detent, snap and clamp rules unit tested. (shell-ui)
 - `VitalsPeek.swift`, `Sources/MiniRules/WebVitals.swift`, `Sources/MiniRules/EdgeHeaders.swift`, `Sources/MiniRules/PageHealth.swift`: the pill's Core Web Vitals popover with the edge badge and the dev and preview page health lines, unit tested thresholds, header parsing, counting and truncation. (shell-ui)

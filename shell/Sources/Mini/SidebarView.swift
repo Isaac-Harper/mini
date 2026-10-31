@@ -357,7 +357,7 @@ private struct AddressPill: View {
                         .lineLimit(1)
                         .fixedSize()
                         .transition(.opacity)
-                        .accessibilityLabel("Reloaded in \(reloadDuration)")
+                        .accessibilityLabel(selected.reloadDurationSpokenText)
                 }
                 if let selected, !selected.url.isEmpty {
                     let reloadsCold = !selected.isLoading && shell.reloadOptionKey.isHeld
