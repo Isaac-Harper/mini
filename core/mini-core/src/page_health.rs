@@ -33,11 +33,21 @@ var early=window[Symbol.for(__EARLY_KEY__)];
 if(typeof early==='function'){var taken=early();if(taken.count>0)record(taken.event,taken.count);}
 })();"#;
 
-static TRACKED_PAGES: Mutex<Option<HashMap<MiniTabId, u64>>> = Mutex::new(None);
+const COLLECTS_NONE: i32 = 0;
+const COLLECTS_ERRORS: i32 = 1;
+const COLLECTS_ERRORS_AND_BUILDS: i32 = 2;
+
+#[derive(Clone, Copy)]
+struct TrackedPage {
+    number: u64,
+    builds: bool,
+}
+
+static TRACKED_PAGES: Mutex<Option<HashMap<MiniTabId, TrackedPage>>> = Mutex::new(None);
 static NEXT_PAGE: AtomicU64 = AtomicU64::new(1);
 
 fn with_tracked_pages<Output>(
-    action: impl FnOnce(&mut HashMap<MiniTabId, u64>) -> Output,
+    action: impl FnOnce(&mut HashMap<MiniTabId, TrackedPage>) -> Output,
 ) -> Output {
     let mut pages = TRACKED_PAGES.lock().expect("page health lock poisoned");
     action(pages.get_or_insert_with(HashMap::new))
@@ -46,13 +56,17 @@ fn with_tracked_pages<Output>(
 pub fn main_frame_navigation_started(tab: MiniTabId, url: &str) {
     let url = c_string(url);
     let wanted = unsafe { (callbacks().page_health_wanted)(tab, url.as_ptr()) };
-    with_tracked_pages(|pages| {
-        if wanted {
-            pages.insert(tab, NEXT_PAGE.fetch_add(1, Ordering::Relaxed));
-        } else {
-            pages.remove(&tab);
+    let builds = match wanted {
+        COLLECTS_NONE => {
+            with_tracked_pages(|pages| pages.remove(&tab));
+            return;
         }
-    });
+        COLLECTS_ERRORS => false,
+        COLLECTS_ERRORS_AND_BUILDS => true,
+        other => panic!("page_health_wanted returned unknown MiniPageHealth {other}"),
+    };
+    let number = NEXT_PAGE.fetch_add(1, Ordering::Relaxed);
+    with_tracked_pages(|pages| pages.insert(tab, TrackedPage { number, builds }));
 }
 
 pub fn main_frame_script(tab: MiniTabId, frame: &Frame, token: &str) -> Option<String> {
@@ -64,7 +78,11 @@ pub fn forget(tab: MiniTabId) {
 }
 
 pub fn tracked_page(tab: MiniTabId) -> Option<u64> {
-    with_tracked_pages(|pages| pages.get(&tab).copied())
+    with_tracked_pages(|pages| pages.get(&tab).map(|page| page.number))
+}
+
+pub fn tracks_builds(tab: MiniTabId) -> bool {
+    with_tracked_pages(|pages| pages.get(&tab).is_some_and(|page| page.builds))
 }
 
 fn script(frame: &Frame, token: &str) -> String {

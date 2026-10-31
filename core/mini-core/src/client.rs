@@ -2,8 +2,8 @@ use cef::*;
 use std::ffi::c_void;
 
 use crate::{
-    MiniTabId, ad_blocking, authentication, context_menu, downloads, editable_focus, error_page,
-    favicon, horizontal_scroll, link_preview, login, media, notifications, page_health,
+    MiniTabId, ad_blocking, authentication, context_menu, dev_build, downloads, editable_focus,
+    error_page, favicon, horizontal_scroll, link_preview, login, media, notifications, page_health,
     permissions,
     resource_requests::MiniResourceRequestHandler,
     state::{TabState, c_string, callbacks, with_core},
@@ -173,6 +173,7 @@ wrap_display_handler! {
         ) -> ::std::os::raw::c_int {
             let message = text(message);
             if !login::is_signal(&message) {
+                dev_build::handle_console_message(self.tab, &message);
                 return 0;
             }
             login::handle_signal(self.tab, browser.expect("console message without a browser"), &message);
@@ -303,6 +304,13 @@ wrap_load_handler! {
                 if let Some(health_script) = page_health::main_frame_script(self.tab, frame, login::token()) {
                     frame.execute_java_script(
                         Some(&CefString::from(health_script.as_str())),
+                        Some(&CefString::from(frame_url.as_str())),
+                        0,
+                    );
+                }
+                if let Some(build_script) = dev_build::main_frame_script(self.tab, frame, login::token()) {
+                    frame.execute_java_script(
+                        Some(&CefString::from(build_script.as_str())),
                         Some(&CefString::from(frame_url.as_str())),
                         0,
                     );

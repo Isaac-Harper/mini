@@ -41,6 +41,19 @@ typedef enum MiniRenderTermination {
   MINI_RENDER_INTEGRITY_FAILURE = 5,
 } MiniRenderTermination;
 
+typedef enum MiniPageHealth {
+  MINI_PAGE_HEALTH_NONE = 0,
+  MINI_PAGE_HEALTH_ERRORS = 1,
+  MINI_PAGE_HEALTH_ERRORS_AND_BUILDS = 2,
+} MiniPageHealth;
+
+typedef enum MiniDevBuildEvent {
+  MINI_DEV_BUILD_REBUILDING = 0,
+  MINI_DEV_BUILD_READY = 1,
+  MINI_DEV_BUILD_ERROR_SHOWN = 2,
+  MINI_DEV_BUILD_ERROR_CLEARED = 3,
+} MiniDevBuildEvent;
+
 typedef enum MiniContextMenuFlag {
   MINI_CONTEXT_LINK = 1 << 0,
   MINI_CONTEXT_IMAGE = 1 << 1,
@@ -246,10 +259,11 @@ typedef struct MiniCallbacks {
   // the page cannot scroll.
   void (*scroll_fraction_received)(MiniTabId tab, double fraction);
   // Asked synchronously when a main-frame navigation starts and on each of
-  // its redirects (the previous document's page health is gone): return true
-  // to collect page health (page_errors_reported, request_failed) for url.
-  // Nothing is collected for a tab while it answers false.
-  bool (*page_health_wanted)(MiniTabId tab, const char *url);
+  // its redirects (the previous document's page health is gone): return a
+  // MiniPageHealth saying what to collect for url. ERRORS collects
+  // page_errors_reported and request_failed; ERRORS_AND_BUILDS also
+  // dev_build_reported. Nothing is collected for a tab while it answers NONE.
+  int32_t (*page_health_wanted)(MiniTabId tab, const char *url);
   // Uncaught errors and unhandled promise rejections of the main frame's
   // document, batched: count new ones since the last report and the first
   // one's message (single line, at most 300 characters). Page content: never
@@ -260,6 +274,14 @@ typedef struct MiniCallbacks {
   // negative net error when no response arrived. Aborted and ad block
   // cancelled requests are not reported.
   void (*request_failed)(MiniTabId tab, int32_t status, const char *url);
+  // A dev server's build state on the tab's page (event is a
+  // MiniDevBuildEvent): REBUILDING and READY come from the Next.js Fast
+  // Refresh and Vite HMR console lines (duration in ms for READY when the
+  // line has one, else -1); ERROR_SHOWN and ERROR_CLEARED when the main
+  // frame's Vite or Next.js build error overlay appears or goes, with the
+  // overlay's first line as detail (single line, at most 300 characters,
+  // empty when cleared). Page content: never log or persist it.
+  void (*dev_build_reported)(MiniTabId tab, int32_t event, double duration, const char *detail);
   void (*browser_closed)(MiniTabId tab);
   void (*all_browsers_closed)(void);
   // Mini was launched again on this profile (CEF's already-running relaunch).

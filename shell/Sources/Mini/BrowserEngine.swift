@@ -239,6 +239,17 @@ final class BrowserEngine {
                     BrowserEngine.shared.requiredShell.requestFailed(identifier, request: FailedRequest(status: Int(status), url: url))
                 }
             },
+            dev_build_reported: { identifier, event, duration, detail in
+                let detail = requiredString(detail)
+                let buildEvent: DevBuildEvent = switch UInt32(event) {
+                case MINI_DEV_BUILD_REBUILDING.rawValue: .rebuilding
+                case MINI_DEV_BUILD_READY.rawValue: .ready(milliseconds: duration < 0 ? nil : duration)
+                case MINI_DEV_BUILD_ERROR_SHOWN.rawValue: .compileErrorShown(detail: detail)
+                case MINI_DEV_BUILD_ERROR_CLEARED.rawValue: .compileErrorCleared
+                default: preconditionFailure("dev_build_reported with unknown event \(event)")
+                }
+                MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.devBuildReported(identifier, event: buildEvent) }
+            },
             browser_closed: { identifier in
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.browserClosed(identifier) }
             },

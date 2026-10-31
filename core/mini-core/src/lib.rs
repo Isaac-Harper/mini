@@ -3,6 +3,7 @@ mod application;
 mod authentication;
 mod client;
 mod context_menu;
+mod dev_build;
 mod downloads;
 mod editable_focus;
 mod error_page;
@@ -107,9 +108,10 @@ pub struct MiniCallbacks {
         unsafe extern "C" fn(MiniTabId, u64, *const u8, usize, *const screenshot::MiniElementBox),
     >,
     pub scroll_fraction_received: Option<unsafe extern "C" fn(MiniTabId, f64)>,
-    pub page_health_wanted: Option<unsafe extern "C" fn(MiniTabId, *const c_char) -> bool>,
+    pub page_health_wanted: Option<unsafe extern "C" fn(MiniTabId, *const c_char) -> i32>,
     pub page_errors_reported: Option<unsafe extern "C" fn(MiniTabId, u32, *const c_char)>,
     pub request_failed: Option<unsafe extern "C" fn(MiniTabId, i32, *const c_char)>,
+    pub dev_build_reported: Option<unsafe extern "C" fn(MiniTabId, i32, f64, *const c_char)>,
     pub browser_closed: Option<unsafe extern "C" fn(MiniTabId)>,
     pub all_browsers_closed: Option<unsafe extern "C" fn()>,
     pub app_relaunched: Option<unsafe extern "C" fn(*const *const c_char, usize)>,

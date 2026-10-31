@@ -99,13 +99,16 @@ struct VitalsPeekView: View {
             if PageHealth.isCollected(for: tab.url) {
                 Divider()
                 VStack(alignment: .leading, spacing: 0) {
+                    if tab.devBuild.hasCompileError {
+                        BuildErrorRow(detail: tab.devBuild.compileErrorDetail)
+                    }
                     if let title = tab.health.errorTitle {
                         PageHealthRow(title: title, detail: tab.health.errorDetail, detailTruncation: .tail, action: onOpenDeveloperTools)
                     }
                     if let title = tab.health.failedRequestTitle {
                         PageHealthRow(title: title, detail: tab.health.failedRequestDetail(onPage: tab.url), detailTruncation: .middle, action: onOpenDeveloperTools)
                     }
-                    if !tab.health.hasProblems {
+                    if !tab.health.hasProblems && !tab.devBuild.hasCompileError {
                         HStack(spacing: InterfaceScale.scaled(8)) {
                             PageStatusDot(color: .green)
                             Text("No errors or failed requests")
@@ -203,6 +206,31 @@ private struct PageHealthRow: View {
         .hapticFeedback(.press)
         .glassTooltip("Open Developer Tools")
         .accessibilityHint("Opens Developer Tools")
+    }
+}
+
+private struct BuildErrorRow: View {
+    let detail: String?
+
+    var body: some View {
+        HStack(alignment: .top, spacing: InterfaceScale.scaled(8)) {
+            PageStatusDot(color: .red)
+                .frame(height: InterfaceScale.scaled(16))
+            VStack(alignment: .leading, spacing: InterfaceScale.scaled(2)) {
+                Text("Build error")
+                    .font(InterfaceFont.body)
+                if let detail {
+                    Text(detail)
+                        .font(InterfaceFont.caption.monospaced())
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.vertical, InterfaceScale.scaled(4))
+        .accessibilityElement(children: .combine)
     }
 }
 
