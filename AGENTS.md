@@ -172,6 +172,7 @@ Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 - `NavigationHistory.swift`: back/forward history menus. (shell-ui)
 - `LinkPreviewToast.swift`, `Sources/MiniRules/LinkPreview.swift`: the unfurl card shown on Copy URL, its image fetch, unit tested tag precedence, URL resolution and diagnostics. (shell-ui)
 - `PageScreenshot.swift`, `Sources/MiniRules/ScreenshotGeometry.swift`: Copy Screenshot (page and element), card corner clipping, shutter press and the draggable thumbnail; unit tested geometry. (shell-ui)
+- `ColorPicker.swift`, `Sources/MiniRules/ColorHex.swift`: Edit > Pick Color (system loupe) and its swatch toast card; hex formatting unit tested, OKLCH from `TextStyle`. (shell-ui)
 - `SourceWindowController.swift`, `Sources/MiniRules/SourceHighlighting.swift`: View Source window and its HTML/CSS/JS tokenizer, unit tested. (shell-ui)
 - `SwipeNavigationController.swift`: two-finger swipe back and forward. (shell-ui)
 - `ShellFullscreen.swift`: page fullscreen. (shell-ui)
