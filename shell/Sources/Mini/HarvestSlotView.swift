@@ -12,7 +12,7 @@ struct HarvestSlotView: View {
 
     private var isSelected: Bool { store.selectedTab === tab }
 
-    private var presentation: HarvestSlot.Presentation { HarvestSlot.presentation(url: tab.url, timesheet: tab.harvestTimesheet) }
+    private var presentation: HarvestSlot.Presentation { HarvestSlot.presentation(url: tab.url, timesheet: tab.harvestTimesheet, shownSeconds: tab.harvestShownSeconds) }
 
     var body: some View {
         HStack(spacing: SidebarMetrics.iconSpacing) {
@@ -45,7 +45,7 @@ struct HarvestSlotView: View {
                 .lineLimit(1)
                 .foregroundStyle(.secondary)
             Spacer(minLength: 0)
-        case .running(let timer):
+        case .running(let timer, let todaySeconds):
             entryText(timer.entry)
             Spacer(minLength: 0)
             TimelineView(.periodic(from: .now, by: 1)) { context in
@@ -53,22 +53,22 @@ struct HarvestSlotView: View {
                     .monospacedDigit()
                     .foregroundStyle(.primary)
             }
+            .glassTooltip("Today \(HarvestSlot.duration(todaySeconds))")
             timerButton("stop.fill", help: "Stop Timer") { shell.setHarvestTimer(of: timer.entry, running: false) }
-        case .stopped(let todaySeconds, let last):
+        case .stopped(let last, let lastSeconds, let todaySeconds):
             if let last {
                 entryText(last)
+                Spacer(minLength: 0)
+                Text(HarvestSlot.clock(lastSeconds))
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+                    .glassTooltip("Today \(HarvestSlot.duration(todaySeconds))")
+                timerButton("play.fill", help: "Resume Timer") { shell.setHarvestTimer(of: last, running: true) }
             } else {
                 Text("Harvest")
                     .lineLimit(1)
                     .foregroundStyle(.primary)
-            }
-            Spacer(minLength: 0)
-            Text(HarvestSlot.duration(todaySeconds))
-                .monospacedDigit()
-                .foregroundStyle(.secondary)
-                .glassTooltip("Today")
-            if let last {
-                timerButton("play.fill", help: "Resume Timer") { shell.setHarvestTimer(of: last, running: true) }
+                Spacer(minLength: 0)
             }
         }
     }

@@ -24,7 +24,7 @@ struct HarvestSlotTests {
             entry(1, hours: 2, updatedAt: "2026-01-05T09:00:00Z"),
             entry(2, hours: 1.5, startedAt: "2026-01-05T10:00:00Z"),
         ])
-        guard case .running(let timer) = HarvestSlot.presentation(url: "https://example.harvestapp.com/time", timesheet: timesheet) else {
+        guard case .running(let timer, _) = HarvestSlot.presentation(url: "https://example.harvestapp.com/time", timesheet: timesheet) else {
             Issue.record("expected a running timer")
             return
         }
@@ -40,9 +40,46 @@ struct HarvestSlotTests {
             entry(2, hours: 1.25, updatedAt: "2026-01-05T09:00:00Z"),
         ])
         #expect(HarvestSlot.presentation(url: "https://example.harvestapp.com/time/day/2026/1/5", timesheet: timesheet)
-            == .stopped(todaySeconds: 3.25 * 3600, last: timesheet.entries[0]))
+            == .stopped(last: timesheet.entries[0], lastSeconds: 2 * 3600, todaySeconds: 3.25 * 3600))
         let empty = HarvestTimesheet(fetchedAt: 0, signedIn: true, entries: [])
-        #expect(HarvestSlot.presentation(url: "https://example.harvestapp.com/time", timesheet: empty) == .stopped(todaySeconds: 0, last: nil))
+        #expect(HarvestSlot.presentation(url: "https://example.harvestapp.com/time", timesheet: empty) == .stopped(last: nil, lastSeconds: 0, todaySeconds: 0))
+    }
+
+    @Test func stoppingKeepsTheClockWhereItWasAndResumingNeverStepsBack() throws {
+        let start = "2026-01-05T09:00:00Z"
+        let running = HarvestTimesheet(fetchedAt: fetchedAt.timeIntervalSince1970 * 1000, signedIn: true, entries: [
+            entry(5, hours: 1.5, startedAt: start, updatedAt: start),
+        ])
+        let stoppedAt = fetchedAt.addingTimeInterval(427)
+        let shownAtStop = HarvestSlot.seconds(of: running.entries[0], in: running, shownSeconds: [:], at: stoppedAt)
+        #expect(shownAtStop == 5400 + 427)
+
+        let stopped = HarvestTimesheet(fetchedAt: stoppedAt.timeIntervalSince1970 * 1000, signedIn: true, entries: [
+            entry(5, hours: 1.62, updatedAt: "2026-01-05T10:37:07Z"),
+        ])
+        let carriedAtStop = HarvestSlot.carriedSeconds(from: running, shownSeconds: [:], into: stopped)
+        #expect(HarvestSlot.presentation(url: "https://example.harvestapp.com/time", timesheet: stopped, shownSeconds: carriedAtStop)
+            == .stopped(last: stopped.entries[0], lastSeconds: shownAtStop, todaySeconds: 1.62 * 3600))
+
+        let resumedAt = stoppedAt.addingTimeInterval(60)
+        let resumedStart = resumedAt.ISO8601Format()
+        let resumed = HarvestTimesheet(fetchedAt: resumedAt.timeIntervalSince1970 * 1000, signedIn: true, entries: [
+            entry(5, hours: 1.62, startedAt: resumedStart, updatedAt: resumedStart),
+        ])
+        let carriedAtResume = HarvestSlot.carriedSeconds(from: stopped, shownSeconds: carriedAtStop, into: resumed)
+        guard case .running(let timer, _) = HarvestSlot.presentation(url: "https://example.harvestapp.com/time", timesheet: resumed, shownSeconds: carriedAtResume) else {
+            Issue.record("expected a running timer")
+            return
+        }
+        #expect(timer.elapsedSeconds(at: resumedAt) == shownAtStop)
+        #expect(HarvestSlot.carriedSeconds(from: resumed, shownSeconds: carriedAtResume, into: HarvestTimesheet(fetchedAt: 0, signedIn: true, entries: [])).isEmpty)
+    }
+
+    @Test func editsInHarvestBeyondItsRoundingWin() {
+        #expect(HarvestSlot.reconciled(reported: 5832, shown: 5827) == 5827)
+        #expect(HarvestSlot.reconciled(reported: 5800, shown: 5827) == 5827)
+        #expect(HarvestSlot.reconciled(reported: 7200, shown: 5827) == 7200)
+        #expect(HarvestSlot.reconciled(reported: 5832, shown: nil) == 5832)
     }
 
     @Test func signInPagesAndSignedOutReportsAskToSignIn() {

@@ -308,6 +308,7 @@ extension ShellController {
 
     func harvestReported(_ identifier: MiniTabId, timesheet: HarvestTimesheet?) {
         guard let timesheet, let tab = liveTab(identifier) else { return }
+        tab.harvestShownSeconds = HarvestSlot.carriedSeconds(from: tab.harvestTimesheet, shownSeconds: tab.harvestShownSeconds, into: timesheet)
         tab.harvestTimesheet = timesheet
     }
 

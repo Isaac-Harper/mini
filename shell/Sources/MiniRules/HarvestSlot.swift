@@ -58,8 +58,8 @@ public enum HarvestSlot {
     public enum Presentation: Equatable, Sendable {
         case idle
         case signedOut
-        case running(HarvestRunningTimer)
-        case stopped(todaySeconds: Double, last: HarvestEntry?)
+        case running(HarvestRunningTimer, todaySeconds: Double)
+        case stopped(last: HarvestEntry?, lastSeconds: Double, todaySeconds: Double)
     }
 
     public static let homeURL = "https://harvestapp.com/time"
@@ -74,23 +74,50 @@ public enum HarvestSlot {
         return host == "getharvest.com" || host.hasSuffix(".getharvest.com")
     }
 
-    public static func presentation(url: String, timesheet: HarvestTimesheet?) -> Presentation {
+    public static func presentation(url: String, timesheet: HarvestTimesheet?, shownSeconds: [UInt64: Double] = [:]) -> Presentation {
         if isSignIn(url) { return .signedOut }
         guard isHarvest(url), let timesheet else { return .idle }
         guard timesheet.signedIn else { return .signedOut }
-        if let timer = runningTimer(in: timesheet) { return .running(timer) }
         let todaySeconds = timesheet.entries.reduce(0) { $0 + $1.hours * 3600 }
-        return .stopped(todaySeconds: todaySeconds, last: lastEntry(in: timesheet.entries))
+        if let timer = runningTimer(in: timesheet, shownSeconds: shownSeconds) { return .running(timer, todaySeconds: todaySeconds) }
+        let last = lastEntry(in: timesheet.entries)
+        let lastSeconds = last.map { reconciled(reported: $0.hours * 3600, shown: shownSeconds[$0.id]) } ?? 0
+        return .stopped(last: last, lastSeconds: lastSeconds, todaySeconds: todaySeconds)
     }
 
-    public static func runningTimer(in timesheet: HarvestTimesheet) -> HarvestRunningTimer? {
+    public static func runningTimer(in timesheet: HarvestTimesheet, shownSeconds: [UInt64: Double] = [:]) -> HarvestRunningTimer? {
         for entry in timesheet.entries {
             guard let started = entry.timerStartedAt, let startedAt = try? Date(started, strategy: .iso8601) else { continue }
             let runSecondsAtFetch = max(0, timesheet.fetchDate.timeIntervalSince(startedAt))
-            let priorSeconds = max(0, entry.hours * 3600 - runSecondsAtFetch)
-            return HarvestRunningTimer(entry: entry, startedAt: startedAt, priorSeconds: priorSeconds)
+            let reportedPrior = max(0, entry.hours * 3600 - runSecondsAtFetch)
+            let shownPrior = shownSeconds[entry.id].map { $0 - runSecondsAtFetch }
+            return HarvestRunningTimer(entry: entry, startedAt: startedAt, priorSeconds: reconciled(reported: reportedPrior, shown: shownPrior))
         }
         return nil
+    }
+
+    public static func seconds(of entry: HarvestEntry, in timesheet: HarvestTimesheet, shownSeconds: [UInt64: Double], at date: Date) -> Double {
+        if let timer = runningTimer(in: timesheet, shownSeconds: shownSeconds), timer.entry.id == entry.id {
+            return timer.elapsedSeconds(at: date)
+        }
+        return reconciled(reported: entry.hours * 3600, shown: shownSeconds[entry.id])
+    }
+
+    public static let reportedRounding: Double = 36
+
+    public static func reconciled(reported: Double, shown: Double?) -> Double {
+        guard let shown, abs(reported - shown) <= reportedRounding else { return reported }
+        return max(0, shown)
+    }
+
+    public static func carriedSeconds(from previous: HarvestTimesheet?, shownSeconds: [UInt64: Double], into next: HarvestTimesheet) -> [UInt64: Double] {
+        guard let previous else { return [:] }
+        let nextIdentifiers = Set(next.entries.map(\.id))
+        var carried: [UInt64: Double] = [:]
+        for entry in previous.entries where nextIdentifiers.contains(entry.id) {
+            carried[entry.id] = seconds(of: entry, in: previous, shownSeconds: shownSeconds, at: next.fetchDate)
+        }
+        return carried
     }
 
     public static func lastEntry(in entries: [HarvestEntry]) -> HarvestEntry? {

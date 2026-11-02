@@ -44,6 +44,7 @@ final class Tab: Identifiable {
     var isPausedFromNowPlaying = false
     var playerPhase = PlayerSlot.Phase.idle
     var harvestTimesheet: HarvestTimesheet?
+    @ObservationIgnored var harvestShownSeconds: [UInt64: Double] = [:]
     var themeColor: NSColor?
     var vitals = WebVitals()
     var edge: EdgeSummary?
