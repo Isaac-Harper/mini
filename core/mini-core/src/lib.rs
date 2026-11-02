@@ -8,6 +8,7 @@ mod downloads;
 mod editable_focus;
 mod error_page;
 mod favicon;
+mod harvest;
 mod horizontal_scroll;
 mod link_preview;
 mod login;
@@ -112,6 +113,7 @@ pub struct MiniCallbacks {
     pub page_errors_reported: Option<unsafe extern "C" fn(MiniTabId, u32, *const c_char)>,
     pub request_failed: Option<unsafe extern "C" fn(MiniTabId, i32, *const c_char)>,
     pub dev_build_reported: Option<unsafe extern "C" fn(MiniTabId, i32, f64, *const c_char)>,
+    pub harvest_reported: Option<unsafe extern "C" fn(MiniTabId, *const c_char)>,
     pub browser_closed: Option<unsafe extern "C" fn(MiniTabId)>,
     pub all_browsers_closed: Option<unsafe extern "C" fn()>,
     pub app_relaunched: Option<unsafe extern "C" fn(*const *const c_char, usize)>,
@@ -563,6 +565,13 @@ pub extern "C" fn mini_browser_request_scroll_fraction(tab: MiniTabId) {
 pub extern "C" fn mini_browser_restore_scroll_fraction(tab: MiniTabId, fraction: f64) {
     if let Some(browser) = created_browser(tab) {
         scroll_position::restore(&browser, fraction);
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn mini_browser_set_harvest_timer(tab: MiniTabId, entry: u64, start: bool) {
+    if let Some(browser) = created_browser(tab) {
+        harvest::set_timer(&browser, login::token(), entry, start);
     }
 }
 

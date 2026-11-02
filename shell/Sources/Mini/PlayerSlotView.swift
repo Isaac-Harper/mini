@@ -54,7 +54,7 @@ struct PlayerSlotView: View {
             Spacer(minLength: 0)
             AudioToggleButton(shell: shell, tab: tab)
         }
-        .modifier(PlayerRowChrome(isSelected: isSelected, namespace: namespace))
+        .modifier(SlotRowChrome(isSelected: isSelected, namespace: namespace))
         .overlay { SidebarFocusRing(shell: shell, tab: tab, cornerRadius: SidebarMetrics.rowCornerRadius) }
         .help(tab.displayTitle)
         .onTapGesture {
@@ -85,7 +85,7 @@ struct EmptyPlayerRow: View {
                 .foregroundStyle(.primary)
             Spacer(minLength: 0)
         }
-        .modifier(PlayerRowChrome(isSelected: false, namespace: nil))
+        .modifier(SlotRowChrome(isSelected: false, namespace: nil))
         .help("YouTube")
         .onTapGesture {
             Haptics.controlActivated(.press)
@@ -98,7 +98,7 @@ struct EmptyPlayerRow: View {
     }
 }
 
-private struct PlayerRowChrome: ViewModifier {
+struct SlotRowChrome: ViewModifier {
     let isSelected: Bool
     let namespace: Namespace.ID?
 
