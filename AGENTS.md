@@ -227,4 +227,4 @@ Bundle and scripts (detail in signing-release-codecs.md):
 
 ## Status
 
-v0.4.0 is the latest release (signed, notarized, stock CEF): Settings (Cmd-,) with the Sites pane, dev tabs that know their project and follow their server, dev build state on sidebar rows, Pick Color, and the page inspector card, on top of v0.3.0's developer and design tools. Local builds and `make install` use the proprietary-codecs CEF when installed; releases never do. `git log v0.4.0..HEAD` lists unreleased work.
+v0.5.0 is the latest release (signed, notarized, stock CEF): the Harvest row in the sidebar (Tabs > Show Harvest) with the running timer, stop and resume, on top of v0.4.0's Settings, dev tab projects, build state on rows, Pick Color and the page inspector card. Local builds and `make install` use the proprietary-codecs CEF when installed; releases never do. `git log v0.5.0..HEAD` lists unreleased work.
