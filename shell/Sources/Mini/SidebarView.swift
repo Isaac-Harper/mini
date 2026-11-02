@@ -56,6 +56,9 @@ struct SidebarView: View {
             if let tab = shell.nowPlayingRowTab {
                 NowPlayingRowView(shell: shell, tab: tab)
             }
+            if let meeting = shell.nextMeeting.row {
+                NextMeetingRowView(shell: shell, row: meeting)
+            }
             if let reading = shell.weather.reading {
                 WeatherRowView(reading: reading, presenter: shell.weatherPopover) { shell.openWeatherSearch() }
             }
@@ -70,6 +73,7 @@ struct SidebarView: View {
                 .padding(.top, SidebarMetrics.spaceBarTopPadding)
         }
         .animation(.easeInOut(duration: 0.3), value: shell.downloads.visibleDownloads.map(\.id))
+        .animation(.easeInOut(duration: 0.3), value: shell.nextMeeting.row)
         .padding(.horizontal, SidebarMetrics.edgeInset)
         .padding(.bottom, SidebarMetrics.edgeInset)
         .overlay(alignment: .top) {

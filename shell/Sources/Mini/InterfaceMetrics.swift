@@ -34,6 +34,7 @@ enum SidebarMetrics {
     static var accessorySize: CGFloat { InterfaceScale.scaled(16) }
     static var accessorySpacing: CGFloat { InterfaceScale.scaled(4) }
     static var recordingDotSize: CGFloat { InterfaceScale.scaled(6) }
+    static var calendarDotSize: CGFloat { InterfaceScale.scaled(8) }
     static var titleFadeWidth: CGFloat { InterfaceScale.scaled(16) }
     static var topPadding: CGFloat { InterfaceScale.scaled(4) }
     static var sectionSpacing: CGFloat { InterfaceScale.scaled(12) }

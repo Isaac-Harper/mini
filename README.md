@@ -45,6 +45,7 @@ Mini is an open source exploration project: a personal, minimal browser built to
 - A tab in a call shows a red recording dot and a microphone button that mutes and unmutes the page's microphone; switch away from a video call and its live video docks in the sidebar like the Player (the call takes the dock while it lasts, the Player gets it back after), with mute and return-to-tab on hover
 - A Now Playing row with the track's artwork (or the video poster, or the site icon), softly tinted to match, and play/pause for the tab that last started audio; a speaker icon on playing tabs mutes them
 - AirPlay from the Now Playing row: a video with its own file or HLS source plays on an Apple TV or AirPlay TV through the native device list, picking up where the page was and handing back when it ends; streamed video (YouTube and other MediaSource players) can't be handed over, so the button offers the Mac's sound output and display mirroring instead
+- A Next Meeting row in the sidebar (View > Show Next Meeting, off by default): the meeting that is on now or starts within the hour, from the Mac's own calendars (iCloud, Google, Exchange), with its calendar color and "in 4 min", "now" or "ends in 12 min"; a join button opens the Meet, Zoom, Teams, Webex or Around link in a little window, and clicking the row shows the event in Calendar. Declined and all-day events are skipped
 - A one-line weather row at the bottom of the sidebar (Open-Meteo, city-level location; hover for the 7-day forecast, click to search the weather)
 - Fullscreen video fills the whole screen; the sidebar and page card come back when it ends
 - View > Clear Data for This Site deletes that site's cookies and storage in the current space
@@ -57,7 +58,7 @@ Mini is an open source exploration project: a personal, minimal browser built to
 - Copy Screenshot (Edit menu, ⇧⌘S, or right-click the page) copies the visible page as a PNG with the card's rounded corners and no scrollbars; Copy Screenshot of Element copies just the element you right-clicked. The thumbnail in the confirmation can be dragged into other apps
 - Pick Color (Edit menu, ⇧⌘K) opens the system color loupe, copies the picked pixel as OKLCH and shows a swatch with the hex value
 - Hovering a link shows its address in a small bubble at the bottom of the page
-- Mini > Settings (⌘,) gathers the preferences in one window: default browser, Close the Day, interface size, evening tint, Preload on Hover, and every site you have answered a permission prompt for, allowed ads on or zoomed, with a search field and a Reset for each; the menu items stay in sync with it
+- Mini > Settings (⌘,) gathers the preferences in one window: default browser, Close the Day, interface size, evening tint, Next Meeting, Preload on Hover, and every site you have answered a permission prompt for, allowed ads on or zoomed, with a search field and a Reset for each; the menu items stay in sync with it
 - No extensions, sync or accounts
 
 ## Download
@@ -154,6 +155,7 @@ Passkeys are not supported until that entitlement is granted. Mini turns off Web
 - `~/Library/Application Support/Mini/session.json`: spaces and their open tabs
 - `~/Library/Application Support/Mini/archive.json`: archived tabs (newest 200)
 - Weather: the last reading is cached in Mini's user defaults (`WeatherReading`); coordinates are rounded to two decimals before they are sent to Open-Meteo and are never stored or logged
+- Next Meeting: calendar events are read through EventKit on demand and never stored, logged or sent anywhere; only the on/off setting is kept (`ShowsNextMeeting`)
 - `~/Library/Application Support/Mini/zoom-levels.json`: per-site zoom levels
 - `~/Library/Application Support/Mini/Favicons`: cached site icons, so restored tabs show their icon before they load
 - `~/Library/Application Support/Mini/permissions.json`: per-site permission decisions

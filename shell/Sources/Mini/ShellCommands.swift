@@ -149,6 +149,10 @@ extension ShellController: NSMenuItemValidation {
         showsEveningTint.toggle()
     }
 
+    @objc func toggleNextMeeting(_ sender: Any?) {
+        nextMeeting.isEnabled.toggle()
+    }
+
     @objc func toggleClosingTheDay(_ sender: Any?) {
         closesDayAutomatically.toggle()
     }
@@ -548,6 +552,9 @@ extension ShellController: NSMenuItemValidation {
             return true
         case #selector(toggleEveningTint(_:)):
             menuItem.state = showsEveningTint ? .on : .off
+            return true
+        case #selector(toggleNextMeeting(_:)):
+            menuItem.state = nextMeeting.isEnabled ? .on : .off
             return true
         case #selector(toggleClosingTheDay(_:)):
             menuItem.state = closesDayAutomatically ? .on : .off

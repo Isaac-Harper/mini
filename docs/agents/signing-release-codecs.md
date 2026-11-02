@@ -13,7 +13,7 @@ Detail for bundling, signing, the release script and the proprietary-codecs CEF.
 
 - `bundle/AppIcon-1024.png`, `bundle/AppIcon.icns`: the app icon (masked 1024 PNG source; the committed icns holds 16 through 512@2x, generated once with `sips -z` into an `.iconset` and `iconutil -c icns`, not at build time). `bundle.sh` copies the icns into `Contents/Resources` before signing; the helpers have no icon. JS alert panels show it.
 - `bundle/Info.plist`: main app plist template (`CFBundleIconFile` `AppIcon`, `NSPrincipalClass` `Mini.MiniApplication`, http/https URL types, location usage strings for the weather row, `CFBundleShortVersionString` checked by the release script).
-- `bundle/Mini.entitlements` (main app: `device.audio-input`, `device.camera`, `personal-information.location`, the hardened-runtime resource entitlements for web camera/mic and the weather row), `bundle/MiniHelper.entitlements` (GPU, Renderer and Plugin helpers: `cs.allow-jit`, `cs.allow-unsigned-executable-memory`, `cs.disable-library-validation`; the plain and Alerts helpers get none).
+- `bundle/Mini.entitlements` (main app: `device.audio-input`, `device.camera`, `personal-information.location`, `personal-information.calendars`, the hardened-runtime resource entitlements for web camera/mic, the weather row and the Next Meeting row), `bundle/MiniHelper.entitlements` (GPU, Renderer and Plugin helpers: `cs.allow-jit`, `cs.allow-unsigned-executable-memory`, `cs.disable-library-validation`; the plain and Alerts helpers get none).
 
 ## Signing
 
