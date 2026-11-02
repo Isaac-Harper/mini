@@ -45,6 +45,7 @@ struct TabArrangementSnapshot {
 
     let player: Node?
     let showsPlayerSlot: Bool
+    let harvest: Node?
     let pinned: [Node]
     let savedRoots: [Node]
     let roots: [Node]
@@ -54,6 +55,7 @@ struct TabArrangementSnapshot {
     init(of store: TabStore) {
         player = store.playerTab.map(Node.init)
         showsPlayerSlot = store.showsPlayerSlot
+        harvest = store.harvestTab.map(Node.init)
         pinned = store.pinnedTabs.map(Node.init)
         savedRoots = store.savedRootTabs.map(Node.init)
         roots = store.rootTabs.map(Node.init)
@@ -61,10 +63,10 @@ struct TabArrangementSnapshot {
         selected = store.selectedTab
     }
 
-    var nodes: [Node] { ((player.map { [$0] } ?? []) + pinned + savedRoots + roots).flatMap(\.subtree) }
+    var nodes: [Node] { ([player, harvest].compactMap(\.self) + pinned + savedRoots + roots).flatMap(\.subtree) }
 
     var signature: String {
-        let tree = [player.map { [$0] } ?? [], pinned, savedRoots, roots].map { $0.map(\.signature).joined(separator: ";") }.joined(separator: "/")
+        let tree = [player.map { [$0] } ?? [], harvest.map { [$0] } ?? [], pinned, savedRoots, roots].map { $0.map(\.signature).joined(separator: ";") }.joined(separator: "/")
         let pairs = splits.map { "\($0.leading.id)-\($0.trailing.id)" }.joined(separator: ",")
         return tree + "#" + pairs + "#\(showsPlayerSlot)"
     }
@@ -260,6 +262,7 @@ extension ShellController {
         let extraPlacements = extraRoots.map { tab in
             (tab: tab,
              wasPlayer: tab === store.playerTab,
+             wasHarvest: tab === store.harvestTab,
              wasPinned: tab.isPinned,
              parent: tab.parent.flatMap { targetLive.contains(ObjectIdentifier($0)) ? $0 : nil },
              index: tab.isPinned
@@ -293,10 +296,11 @@ extension ShellController {
             return tab
         }
         var player = target.player.map(build)
+        var harvest = target.harvest.map(build)
         var pinned = target.pinned.map(build)
         var savedRoots = target.savedRoots.map(build)
         var roots = target.roots.map(build)
-        for tab in (player.map { [$0] } ?? []) + pinned + savedRoots + roots {
+        for tab in [player, harvest].compactMap(\.self) + pinned + savedRoots + roots {
             tab.parent = nil
         }
         for tab in extras {
@@ -307,8 +311,11 @@ extension ShellController {
             if placement.wasPlayer, player == nil {
                 tab.parent = nil
                 player = tab
+            } else if placement.wasHarvest, harvest == nil {
+                tab.parent = nil
+                harvest = tab
             } else if placement.wasPinned {
-                if placement.wasPlayer { tab.pinnedURL = tab.url }
+                if placement.wasPlayer || placement.wasHarvest { tab.pinnedURL = tab.url }
                 tab.parent = nil
                 pinned.insert(tab, at: min(placement.index, pinned.count))
             } else if let parent = placement.parent {
@@ -342,6 +349,7 @@ extension ShellController {
         store.restoreArrangement(
             player: player,
             showsPlayerSlot: target.showsPlayerSlot || player != nil,
+            harvest: harvest,
             pinned: pinned,
             savedRoots: savedRoots,
             roots: roots,

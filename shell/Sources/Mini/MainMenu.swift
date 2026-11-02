@@ -170,6 +170,7 @@ enum MainMenu {
         menu.addItem(item("Pin Tab", #selector(ShellController.togglePinnedTab(_:)), "p", [.command, .control], target: commands, symbol: "pin"))
         menu.addItem(item("Make Player Tab", #selector(ShellController.togglePlayerTab(_:)), "", target: commands, symbol: "play.rectangle"))
         menu.addItem(item("Show Player", #selector(ShellController.showPlayerSlot(_:)), "", target: commands, symbol: "play.rectangle.on.rectangle"))
+        menu.addItem(item("Show Harvest", #selector(ShellController.showHarvestSlot(_:)), "", target: commands, symbol: "timer"))
         menu.addItem(item("Save Tab", #selector(ShellController.toggleSavedTab(_:)), "d", target: commands, symbol: "bookmark"))
         menu.addItem(item("Duplicate Tab", #selector(ShellController.duplicateSelectedTab(_:)), "d", [.command, .shift], target: commands, symbol: "plus.square.on.square"))
         menu.addItem(item("Archive Tab", #selector(ShellController.archiveSelectedTabs(_:)), "", target: commands))

@@ -306,6 +306,11 @@ extension ShellController {
         liveTab(identifier)?.linkPreviewTags = tags
     }
 
+    func harvestReported(_ identifier: MiniTabId, timesheet: HarvestTimesheet?) {
+        guard let timesheet, let tab = liveTab(identifier) else { return }
+        tab.harvestTimesheet = timesheet
+    }
+
     func sourceReceived(_ identifier: MiniTabId, request: UInt64, source: String) {
         SourceWindowController.sourceReceived(request: request, source: source)
     }

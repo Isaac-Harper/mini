@@ -43,6 +43,7 @@ final class Tab: Identifiable {
     @ObservationIgnored private(set) var mediaArtworkTint: NSColor?
     var isPausedFromNowPlaying = false
     var playerPhase = PlayerSlot.Phase.idle
+    var harvestTimesheet: HarvestTimesheet?
     var themeColor: NSColor?
     var vitals = WebVitals()
     var edge: EdgeSummary?

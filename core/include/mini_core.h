@@ -282,6 +282,13 @@ typedef struct MiniCallbacks {
   // overlay's first line as detail (single line, at most 300 characters,
   // empty when cleared). Page content: never log or persist it.
   void (*dev_build_reported)(MiniTabId tab, int32_t event, double duration, const char *detail);
+  // Today's Harvest timesheet of a harvestapp.com main frame, read from the
+  // page's own day endpoint with its session: a JSON object
+  // {fetchedAt (ms since 1970), signedIn, entries: [{id, project, client,
+  // task, notes, hours, timerStartedAt (ISO 8601 or null), updatedAt}]}.
+  // Sent on load, when the page's timer changes and at most every 60 s
+  // otherwise, only when it changed. Page content: never log or persist it.
+  void (*harvest_reported)(MiniTabId tab, const char *report);
   void (*browser_closed)(MiniTabId tab);
   void (*all_browsers_closed)(void);
   // Mini was launched again on this profile (CEF's already-running relaunch).
@@ -379,6 +386,10 @@ void mini_browser_request_scroll_fraction(MiniTabId tab);
 // scrollable height, only while it is still at the top, so a page the user
 // already scrolled (or one opened at an anchor) keeps its position.
 void mini_browser_restore_scroll_fraction(MiniTabId tab, double fraction);
+// Starts (start true) or stops Harvest time entry entry through the
+// harvestapp.com main frame's own timer endpoint and session; the next
+// harvest_reported shows the result. Does nothing on any other page.
+void mini_browser_set_harvest_timer(MiniTabId tab, uint64_t entry, bool start);
 // Fetches the main frame's source from the renderer, no network request;
 // source_received delivers it with the same request number.
 void mini_browser_request_source(MiniTabId tab, uint64_t request);

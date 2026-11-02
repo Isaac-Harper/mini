@@ -3,8 +3,8 @@ use std::ffi::c_void;
 
 use crate::{
     MiniTabId, ad_blocking, authentication, context_menu, dev_build, downloads, editable_focus,
-    error_page, favicon, horizontal_scroll, link_preview, login, media, notifications, page_health,
-    permissions,
+    error_page, favicon, harvest, horizontal_scroll, link_preview, login, media, notifications,
+    page_health, permissions,
     resource_requests::MiniResourceRequestHandler,
     state::{TabState, c_string, callbacks, with_core},
     theme_color, vitals, webauthn,
@@ -321,6 +321,13 @@ wrap_load_handler! {
                     Some(&CefString::from(frame_url.as_str())),
                     0,
                 );
+                if let Some(harvest_script) = harvest::main_frame_script(frame, login::token()) {
+                    frame.execute_java_script(
+                        Some(&CefString::from(harvest_script.as_str())),
+                        Some(&CefString::from(frame_url.as_str())),
+                        0,
+                    );
+                }
             }
             let editable_script = editable_focus::script(frame, login::token());
             frame.execute_java_script(

@@ -40,8 +40,11 @@ struct SavedSpaceContents: Codable, Sendable {
     let player: SavedPinnedTab?
     let selectsPlayer: Bool?
     let hidesPlayer: Bool?
+    let harvest: SavedPinnedTab?
+    let selectsHarvest: Bool?
 
-    static let empty = SavedSpaceContents(tabs: [], selectedPath: nil, pinnedTabs: nil, selectedPinnedIndex: nil, splits: nil, player: nil, selectsPlayer: nil, hidesPlayer: nil)
+    static let empty = SavedSpaceContents(tabs: [], selectedPath: nil, pinnedTabs: nil, selectedPinnedIndex: nil, splits: nil, player: nil, selectsPlayer: nil, hidesPlayer: nil,
+                                          harvest: nil, selectsHarvest: nil)
 }
 
 struct SavedSpace: Codable {
@@ -146,7 +149,9 @@ final class SessionStore {
             },
             player: store.playerTab.map { SavedSpaceContents.SavedPinnedTab(pinnedURL: $0.pinnedURL ?? PlayerSlot.homeURL, url: $0.url, title: $0.title) },
             selectsPlayer: store.playerTab.map { $0 === selected },
-            hidesPlayer: store.showsPlayerSlot ? nil : true
+            hidesPlayer: store.showsPlayerSlot ? nil : true,
+            harvest: store.harvestTab.map { SavedSpaceContents.SavedPinnedTab(pinnedURL: $0.pinnedURL ?? HarvestSlot.homeURL, url: $0.url, title: $0.title) },
+            selectsHarvest: store.harvestTab.map { $0 === selected }
         )
     }
 
@@ -155,6 +160,9 @@ final class SessionStore {
             store.newPlayerTab(url: player.url, title: player.title)
         } else if contents.hidesPlayer == true {
             store.setShowsPlayerSlot(false)
+        }
+        if let harvest = contents.harvest {
+            store.newHarvestTab(url: harvest.url, title: harvest.title)
         }
         for savedPinnedTab in contents.pinnedTabs ?? [] {
             store.newPinnedTab(pinnedURL: savedPinnedTab.pinnedURL, url: savedPinnedTab.url, title: savedPinnedTab.title)
@@ -171,6 +179,10 @@ final class SessionStore {
         }
         if contents.selectsPlayer == true, let playerTab = store.playerTab {
             store.select(playerTab)
+            return
+        }
+        if contents.selectsHarvest == true, let harvestTab = store.harvestTab {
+            store.select(harvestTab)
             return
         }
         if let selectedPinnedIndex = contents.selectedPinnedIndex, store.pinnedTabs.indices.contains(selectedPinnedIndex) {

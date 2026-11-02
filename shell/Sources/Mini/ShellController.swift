@@ -327,6 +327,31 @@ final class ShellController: NSObject {
         store.select(player)
     }
 
+    func showHarvest() {
+        performUndoable("Show Harvest") { store.newHarvestTab(url: HarvestSlot.homeURL, title: "") }
+        refreshDisplayedTabs()
+    }
+
+    func removeHarvest() {
+        performUndoable("Remove Harvest Tab") { store.removeHarvest() }
+    }
+
+    func setHarvestTimer(of entry: HarvestEntry, running: Bool) {
+        guard let tab = store.harvestTab, tab.hasBrowser else { return }
+        mini_browser_set_harvest_timer(tab.id, entry.id, running)
+    }
+
+    private func startHarvestInBackground() {
+        guard let tab = store.harvestTab, !tab.hasBrowser else { return }
+        if tab.hostView.superview == nil {
+            tab.hostView.isHidden = true
+            tab.hostView.frame = windowController.webAreaView.bounds
+            windowController.webAreaView.addSubview(tab.hostView, positioned: .below, relativeTo: nil)
+        }
+        createBrowser(for: tab)
+        mini_browser_set_hidden(tab.id, true)
+    }
+
     func playInPlayer(_ url: String) {
         if store.playerTab == nil {
             performUndoable("Make Player Tab") { store.newPlayerTab(url: url, title: "") }
@@ -588,6 +613,7 @@ final class ShellController: NSObject {
         }
         displayedTabs = shownTabs
         playerDock.update(animated: animatingPlayer)
+        startHarvestInBackground()
     }
 
     func refocusAfterCommitIfOrphaned(_ tab: Tab) {

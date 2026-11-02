@@ -30,7 +30,7 @@ Mini.app/Contents/Frameworks/
 - Swift owns: window, sidebar, tab tree, selection, command bar, menus and key equivalents, focus decisions, session persistence. Tab ids are minted in Swift.
 - Rust owns: CEF init/shutdown, the tab-id -> Browser map, every CEF handler (display, load, life span, request, keyboard, focus, download, permission, context menu). It never draws UI.
 - The boundary is the C ABI in `core/include/mini_core.h`, nothing else. Rust calls back through the `MiniCallbacks` function-pointer table; Swift calls `mini_*` functions.
-- Page-side features (login detection, dev build overlays, WebAuthn suppression, notifications, editable focus, media, theme color, horizontal scroll room) are scripts injected at `on_load_start` that report over one console channel keyed by a per-process token.
+- Page-side features (login detection, dev build overlays, WebAuthn suppression, notifications, editable focus, media, theme color, horizontal scroll room, the Harvest timesheet) are scripts injected at `on_load_start` that report over one console channel keyed by a per-process token.
 - Each tab has a `BrowserHostView`; CEF creates the windowed (non-OSR) browser NSView inside it. `ShellController.refreshDisplayedTabs` is the only code that shows or hides host views.
 - Spaces: `ShellController.spaces` holds `Space` objects, each with its own `TabStore` and CEF request context (`Profile/Default` for the default-profile space, `Profile/Spaces/<id>` for the rest); `store` is always `currentSpace.store`.
 - Browsers are created lazily: restored tabs have no browser until first selected (or shown as the other side of a split).
@@ -54,6 +54,7 @@ Each line is expanded in the doc named at its end.
 - Auto-archive never closes the selected tab, its split partner, playing, pinned, saved or folded tabs, and closes a parent only after all its children; with Close the Day on it archives whole expired day groups instead of idle tabs. (tabs-and-undo)
 - A tab is in at most one split; split focus follows clicks, and only the selected tab may take CEF focus. (tabs-and-undo)
 - At most one Player tab per space (`TabStore.playerTab`, pinned kind, outside `pinnedTabs`); only it ever docks into the sidebar. (tabs-and-undo)
+- At most one Harvest tab per space (`TabStore.harvestTab`, pinned kind, outside `pinnedTabs`); the row exists exactly while the tab does, never docks a live view, and its browser runs hidden in the background; Harvest data is never logged or persisted, session.json keeps only its URL. (tabs-and-undo)
 - Little-window tabs live only in `ShellController.littleWindows`, never in a store, session.json, the archive or Now Playing. (tabs-and-undo)
 - Promote, tear-off and dock move the same live `Tab` and browser, with no reload. (tabs-and-undo)
 - Menu commands act on the key window's tab; find and Fill Password are main-window only. (tabs-and-undo)
@@ -103,6 +104,7 @@ Rust core (`core/`, detail in cef-and-core.md):
 - `src/page_source.rs`: main-frame source for View Source.
 - `src/page_appearance.rs`: DevTools media emulation (prefers-color-scheme, prefers-reduced-motion) and page snapshots for Page Appearance.
 - `src/link_preview.rs`: og:/twitter: link preview tags script and report parsing.
+- `src/harvest.rs`: Harvest timesheet script for harvestapp.com main frames (reads the page's own day endpoint) and the stop/start timer script.
 - `src/screenshot.rs`: the one DevTools page capture (JPEG for Page Appearance, PNG with scrollbars hidden and an element box for Copy Screenshot).
 - `src/preload.rs`: the speculation rules prefetch script for Preload on Hover.
 - `src/scroll_position.rs`: main-frame scroll fraction read and restore for the environment switch.
@@ -154,6 +156,7 @@ Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 - `SidebarSelection.swift`, `Sources/MiniRules/RowSelection.swift`: multi-select rows (pure range and toggle rules, unit tested) and the group actions. (tabs-and-undo)
 - `Downloads.swift`: downloads model and sidebar rows. (shell-ui)
 - `NowPlaying.swift`, `DominantColor.swift`: Now Playing row, mute button, artwork tint. (shell-ui)
+- `HarvestSlotView.swift`, `Sources/MiniRules/HarvestSlot.swift`: the Harvest row (running timer, today's total, sign in) with stop and resume; report parsing, elapsed time and presentation, unit tested. (shell-ui)
 - `PlayerDock.swift`, `PlayerSlotView.swift`, `Sources/MiniRules/PlayerSlot.swift`: the Player tab's sidebar slot (or the empty Player row), the docked browser's child panel and hover controls, the dock page scripts; pure phase and presentation rules, unit tested. (shell-ui)
 - `AirPlay.swift`: AirPlay video handoff, the row's route picker, the sound output fallback menu. (shell-ui)
 - `WeatherService.swift`, `WeatherRowView.swift`, `WeatherWeekView.swift`: weather row and 7-day popover. (shell-ui)

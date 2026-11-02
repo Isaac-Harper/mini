@@ -63,6 +63,7 @@ final class TabSplit {
 final class TabStore {
     private(set) var playerTab: Tab?
     private(set) var showsPlayerSlot = true
+    private(set) var harvestTab: Tab?
     private(set) var pinnedTabs: [Tab] = []
     private(set) var savedRootTabs: [Tab] = []
     private(set) var rootTabs: [Tab] = []
@@ -138,12 +139,16 @@ final class TabStore {
         observer?.tabStoreDidChangeStructure(self)
     }
 
+    var slotTabs: [Tab] {
+        [playerTab, harvestTab].compactMap(\.self)
+    }
+
     var selectableTabs: [Tab] {
-        (playerTab.map { [$0] } ?? []) + pinnedTabs + visibleTabs.flatMap { row in row.split.map { [$0.leading, $0.trailing] } ?? [row.tab] }
+        slotTabs + pinnedTabs + visibleTabs.flatMap { row in row.split.map { [$0.leading, $0.trailing] } ?? [row.tab] }
     }
 
     var allTabs: [Tab] {
-        (playerTab.map { [$0] } ?? []) + pinnedTabs + treeTabs
+        slotTabs + pinnedTabs + treeTabs
     }
 
     var treeRoots: [Tab] { savedRootTabs + rootTabs }
@@ -300,7 +305,7 @@ final class TabStore {
     }
 
     func makePlayer(_ tab: Tab) {
-        guard tab !== playerTab, !tab.url.isEmpty else { return }
+        guard tab !== playerTab, tab !== harvestTab, !tab.url.isEmpty else { return }
         precondition(tabsByIdentifier[tab.id] === tab, "Making a player of a tab the store does not hold")
         if let playerTab { demotePlayer(playerTab) }
         if tab.isPinned {
@@ -336,6 +341,31 @@ final class TabStore {
         precondition(shows || playerTab == nil, "Hiding the player slot while it holds a player")
         guard shows != showsPlayerSlot else { return }
         showsPlayerSlot = shows
+        observer?.tabStoreDidChangeStructure(self)
+    }
+
+    @discardableResult
+    func newHarvestTab(url: String, title: String) -> Tab {
+        precondition(harvestTab == nil, "A space holds one Harvest tab")
+        let tab = makeTab(url: url, title: title)
+        tab.pinnedURL = HarvestSlot.homeURL
+        harvestTab = tab
+        observer?.tabStoreDidChangeStructure(self)
+        return tab
+    }
+
+    func removeHarvest() {
+        guard let tab = harvestTab else { return }
+        harvestTab = nil
+        tabsByIdentifier[tab.id] = nil
+        let closesSelection = selectedTab === tab
+        if closesSelection {
+            selectedTab = nil
+        }
+        observer?.tabStore(self, didRemove: [tab])
+        if closesSelection {
+            select(pinnedTabs.first ?? treeRoots.first ?? playerTab)
+        }
         observer?.tabStoreDidChangeStructure(self)
     }
 
@@ -428,7 +458,7 @@ final class TabStore {
     }
 
     func move(_ tab: Tab, by offset: Int) {
-        if tab === playerTab { return }
+        if tab === playerTab || tab === harvestTab { return }
         if tab.isPinned {
             let index = position(of: tab, in: pinnedTabs)
             let destination = index + offset
@@ -450,6 +480,9 @@ final class TabStore {
         if tab === playerTab {
             playerTab = nil
             tab.pinnedURL = nil
+        } else if tab === harvestTab {
+            harvestTab = nil
+            tab.pinnedURL = nil
         } else if tab.isPinned {
             pinnedTabs.remove(at: position(of: tab, in: pinnedTabs))
             tab.pinnedURL = nil
@@ -459,7 +492,7 @@ final class TabStore {
     }
 
     func unpin(_ tab: Tab) {
-        guard tab.isPinned else { return }
+        guard tab.isPinned, tab !== harvestTab else { return }
         if tab === playerTab {
             removePlayer()
             return
@@ -492,6 +525,8 @@ final class TabStore {
     func close(_ tab: Tab) {
         if tab === playerTab {
             unloadPlayer()
+        } else if tab === harvestTab {
+            unloadHarvest()
         } else if tab.isPinned {
             unload(pinned: tab)
         } else if tab.isSaved {
@@ -541,6 +576,7 @@ final class TabStore {
         let removedTabs = allTabs
         selectedTab = nil
         playerTab = nil
+        harvestTab = nil
         pinnedTabs = []
         savedRootTabs = []
         rootTabs = []
@@ -552,7 +588,7 @@ final class TabStore {
         return removedTabs
     }
 
-    func restoreArrangement(player: Tab?, showsPlayerSlot restoredShowsPlayerSlot: Bool, pinned: [Tab], savedRoots: [Tab], roots: [Tab], splits restoredSplits: [TabSplit], selecting target: Tab?, removing removedTabs: [Tab], reviving revivedTabs: [Tab]) {
+    func restoreArrangement(player: Tab?, showsPlayerSlot restoredShowsPlayerSlot: Bool, harvest: Tab?, pinned: [Tab], savedRoots: [Tab], roots: [Tab], splits restoredSplits: [TabSplit], selecting target: Tab?, removing removedTabs: [Tab], reviving revivedTabs: [Tab]) {
         for tab in removedTabs {
             tabsByIdentifier[tab.id] = nil
         }
@@ -565,6 +601,7 @@ final class TabStore {
         }
         playerTab = player
         showsPlayerSlot = restoredShowsPlayerSlot
+        harvestTab = harvest
         pinnedTabs = pinned
         savedRootTabs = savedRoots
         rootTabs = roots
@@ -578,6 +615,24 @@ final class TabStore {
         }
         observer?.tabStoreDidChangeSplits(self)
         select(target ?? selectedTab ?? selectableTabs.first)
+        observer?.tabStoreDidChangeStructure(self)
+    }
+
+    private func unloadHarvest() {
+        guard let tab = harvestTab, let pinnedURL = tab.pinnedURL else { preconditionFailure("Unloading a Harvest tab that does not exist") }
+        let freshTab = makeTab(url: pinnedURL, title: "")
+        freshTab.pinnedURL = pinnedURL
+        freshTab.favicon = tab.favicon
+        harvestTab = freshTab
+        tabsByIdentifier[tab.id] = nil
+        let closesSelection = selectedTab === tab
+        if closesSelection {
+            selectedTab = nil
+        }
+        observer?.tabStore(self, didRemove: [tab])
+        if closesSelection {
+            select(pinnedTabs.first ?? treeRoots.first)
+        }
         observer?.tabStoreDidChangeStructure(self)
     }
 

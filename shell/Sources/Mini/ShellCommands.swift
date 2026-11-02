@@ -292,6 +292,10 @@ extension ShellController: NSMenuItemValidation {
         performUndoable("Show Player") { store.setShowsPlayerSlot(true) }
     }
 
+    @objc func showHarvestSlot(_ sender: Any?) {
+        showHarvest()
+    }
+
     @objc func archiveSelectedTabs(_ sender: Any?) {
         let tabs = archivableTabs
         if !tabs.isEmpty { archiveTabs(tabs) }
@@ -490,6 +494,8 @@ extension ShellController: NSMenuItemValidation {
             return keyLittleWindow == nil && (isPlayer || selected.map { PlayerSlot.isYouTube($0.url) } ?? false)
         case #selector(showPlayerSlot(_:)):
             return keyLittleWindow == nil && !store.showsPlayerSlot
+        case #selector(showHarvestSlot(_:)):
+            return keyLittleWindow == nil && store.harvestTab == nil
         case #selector(archiveSelectedTabs(_:)):
             let count = archivableTabs.count
             menuItem.title = count > 1 ? "Archive \(count) Tabs" : "Archive Tab"
@@ -511,7 +517,7 @@ extension ShellController: NSMenuItemValidation {
             return selected.map { $0.isSaved || store.canSave($0) } ?? false
         case #selector(togglePinnedTab(_:)):
             menuItem.title = selected?.isPinned == true ? "Unpin Tab" : "Pin Tab"
-            return selected.map { $0.isPinned || !$0.url.isEmpty } ?? false
+            return selected.map { $0 !== store.harvestTab && ($0.isPinned || !$0.url.isEmpty) } ?? false
         case #selector(setAsDefaultBrowser(_:)):
             menuItem.isHidden = DefaultBrowser.isDefault
             return true

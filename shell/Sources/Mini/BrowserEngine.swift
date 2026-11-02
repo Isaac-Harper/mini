@@ -250,6 +250,10 @@ final class BrowserEngine {
                 }
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.devBuildReported(identifier, event: buildEvent) }
             },
+            harvest_reported: { identifier, report in
+                let timesheet = HarvestTimesheet.parse(requiredString(report))
+                MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.harvestReported(identifier, timesheet: timesheet) }
+            },
             browser_closed: { identifier in
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.browserClosed(identifier) }
             },

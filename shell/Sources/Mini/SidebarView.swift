@@ -113,6 +113,11 @@ struct SpaceTabsView: View {
                     .padding(.horizontal, SidebarMetrics.edgeInset)
                     .padding(.bottom, SidebarMetrics.sectionSpacing)
             }
+            if let harvest = store.harvestTab {
+                HarvestSlotView(shell: shell, tab: harvest)
+                    .padding(.horizontal, SidebarMetrics.edgeInset)
+                    .padding(.bottom, SidebarMetrics.sectionSpacing)
+            }
             if !store.pinnedTabs.isEmpty || shell.sidebarDrag.isDraggingUnpinnedTab {
                 PinnedTabsView(shell: shell)
                     .padding(.horizontal, SidebarMetrics.edgeInset)
