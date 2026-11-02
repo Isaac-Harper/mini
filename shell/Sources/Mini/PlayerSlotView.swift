@@ -6,7 +6,6 @@ struct PlayerSlotView: View {
     let tab: Tab
 
     @Environment(\.sidebarStore) private var sidebarStore
-    @Environment(\.reportsSidebarRowFrames) private var isMainSidebar
     @Environment(\.selectionNamespace) private var namespace
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -29,20 +28,7 @@ struct PlayerSlotView: View {
     }
 
     private var slot: some View {
-        let shape = RoundedRectangle(cornerRadius: CornerMetrics.playerSlot, style: .continuous)
-        return shape.fill(.black)
-            .aspectRatio(PlayerSlot.aspectRatio, contentMode: .fit)
-            .frame(maxWidth: .infinity)
-            .overlay { SidebarFocusRing(shell: shell, tab: tab, cornerRadius: CornerMetrics.playerSlot) }
-            .onGeometryChange(for: CGRect.self, of: { $0.frame(in: .global) }) { frame in
-                guard store === shell.store else { return }
-                shell.playerDock.reportSlotFrame(frame, in: isMainSidebar ? .main : .peek)
-            }
-            .onDisappear {
-                guard store === shell.store else { return }
-                shell.playerDock.reportSlotFrame(nil, in: isMainSidebar ? .main : .peek)
-            }
-            .transition(.opacity)
+        DockSlotPlaceholder(shell: shell, tab: tab)
     }
 
     private var row: some View {
@@ -63,6 +49,33 @@ struct PlayerSlotView: View {
             shell.store.select(tab)
         }
         .transition(.opacity)
+    }
+}
+
+struct DockSlotPlaceholder: View {
+    let shell: ShellController
+    let tab: Tab
+
+    @Environment(\.sidebarStore) private var sidebarStore
+    @Environment(\.reportsSidebarRowFrames) private var isMainSidebar
+
+    private var store: TabStore { sidebarStore ?? shell.store }
+
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: CornerMetrics.playerSlot, style: .continuous)
+        shape.fill(.black)
+            .aspectRatio(PlayerSlot.aspectRatio, contentMode: .fit)
+            .frame(maxWidth: .infinity)
+            .overlay { SidebarFocusRing(shell: shell, tab: tab, cornerRadius: CornerMetrics.playerSlot) }
+            .onGeometryChange(for: CGRect.self, of: { $0.frame(in: .global) }) { frame in
+                guard store === shell.store else { return }
+                shell.playerDock.reportSlotFrame(frame, of: tab, in: isMainSidebar ? .main : .peek)
+            }
+            .onDisappear {
+                guard store === shell.store else { return }
+                shell.playerDock.reportSlotFrame(nil, of: tab, in: isMainSidebar ? .main : .peek)
+            }
+            .transition(.opacity)
     }
 }
 
@@ -147,7 +160,7 @@ struct PlayerDockControls: View {
                 .contentShape(Rectangle())
                 .onTapGesture {
                     Haptics.controlActivated(.toggle)
-                    shell.expandPlayer()
+                    dock.expand()
                 }
             if dock.isHovered, let tab = dock.dockedTab {
                 controls(for: tab)
@@ -157,12 +170,42 @@ struct PlayerDockControls: View {
         .animation(.easeOut(duration: dock.isHovered ? HoverStyle.fadeIn : HoverStyle.fadeOut), value: dock.isHovered)
         .contextMenu {
             if let tab = dock.dockedTab {
-                PlayerTabMenu(shell: shell, tab: tab)
+                if tab === shell.store.playerTab {
+                    PlayerTabMenu(shell: shell, tab: tab)
+                } else {
+                    DockedCallMenu(shell: shell, tab: tab)
+                }
             }
         }
     }
 
+    @ViewBuilder
     private func controls(for tab: Tab) -> some View {
+        if tab === shell.store.playerTab {
+            playerControls(for: tab)
+        } else {
+            callControls(for: tab)
+        }
+    }
+
+    private func callControls(for tab: Tab) -> some View {
+        GlassEffectContainer(spacing: SidebarMetrics.playerControlSpacing) {
+            VStack(spacing: 0) {
+                Spacer(minLength: 0)
+                HStack(spacing: SidebarMetrics.playerControlSpacing) {
+                    if tab.mediaCapture.microphone {
+                        control(tab.isMicrophoneMuted ? "mic.slash.fill" : "mic.fill", help: tab.isMicrophoneMuted ? "Unmute Microphone" : "Mute Microphone",
+                                feedback: .toggle, size: SidebarMetrics.playerPrimaryControlSize) { dock.toggleMicrophone() }
+                    }
+                    control("arrow.up.left.and.arrow.down.right", help: "Return to Tab", feedback: .toggle, size: SidebarMetrics.playerPrimaryControlSize) { dock.expand() }
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(SidebarMetrics.playerControlInset)
+        }
+    }
+
+    private func playerControls(for tab: Tab) -> some View {
         GlassEffectContainer(spacing: SidebarMetrics.playerControlSpacing) {
             VStack(spacing: 0) {
                 HStack(spacing: SidebarMetrics.playerControlSpacing) {

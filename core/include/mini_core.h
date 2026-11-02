@@ -289,6 +289,11 @@ typedef struct MiniCallbacks {
   // Sent on load, when the page's timer changes and at most every 60 s
   // otherwise, only when it changed. Page content: never log or persist it.
   void (*harvest_reported)(MiniTabId tab, const char *report);
+  // The tab's page started or stopped using the camera or microphone
+  // (CefDisplayHandler OnMediaAccessChange, screen capture not included).
+  // Fires on changes; both false when capture ends, also when the document
+  // goes away.
+  void (*media_capture_changed)(MiniTabId tab, bool camera, bool microphone);
   void (*browser_closed)(MiniTabId tab);
   void (*all_browsers_closed)(void);
   // Mini was launched again on this profile (CEF's already-running relaunch).
@@ -442,6 +447,12 @@ typedef enum MiniNotificationPermission {
   MINI_NOTIFICATION_DENIED = 2,
 } MiniNotificationPermission;
 void mini_browser_set_muted(MiniTabId tab, bool muted);
+// Disables (muted true) or re-enables the page's microphone tracks in every
+// frame: audio tracks from getUserMedia and their clones, including ones
+// obtained later while muted, never getDisplayMedia tracks. Re-enabling only
+// touches tracks this call disabled. Frames loaded later start in the tab's
+// current state; a main-frame navigation resets it to unmuted.
+void mini_browser_set_microphone_muted(MiniTabId tab, bool muted);
 // Pauses audible media elements in every frame (play = false) or resumes the
 // ones it paused, else the last paused element (play = true).
 void mini_browser_control_media(MiniTabId tab, bool play);

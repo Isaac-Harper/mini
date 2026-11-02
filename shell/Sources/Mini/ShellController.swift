@@ -321,12 +321,6 @@ final class ShellController: NSObject {
         performUndoable("Make Player Tab") { store.select(store.newPlayerTab(url: PlayerSlot.homeURL, title: "")) }
     }
 
-    func expandPlayer() {
-        guard let player = store.playerTab else { return }
-        clearRowSelection()
-        store.select(player)
-    }
-
     func showHarvest() {
         performUndoable("Show Harvest") { store.newHarvestTab(url: HarvestSlot.homeURL, title: "") }
         refreshDisplayedTabs()
@@ -652,7 +646,11 @@ extension ShellController: TabStoreObserver {
         if let player, previous === player, tab !== player {
             player.playerPhase = PlayerSlot.phase(afterLeavingWhilePlaying: player.isPlayingAudio)
         }
-        refreshDisplayedTabs(animatingPlayer: player != nil && (previous === player || tab === player))
+        if let previous, previous !== tab, previous !== player, store.tab(withIdentifier: previous.id) === previous {
+            leaveCall(previous, in: store)
+        }
+        let animatesDock = [previous, tab].contains { candidate in candidate.map { $0 === player || $0.callPhase == .docked } ?? false }
+        refreshDisplayedTabs(animatingPlayer: animatesDock)
         sitePrompts.refresh()
         crashOverlay.refresh()
         if tab != nil {

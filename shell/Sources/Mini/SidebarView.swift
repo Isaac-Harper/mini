@@ -104,6 +104,11 @@ struct SpaceTabsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
+            if let call = shell.playerDock.callTab(in: store), shell.playerDock.presentation(of: call, in: store) == .slot {
+                DockedCallSlotView(shell: shell, tab: call)
+                    .padding(.horizontal, SidebarMetrics.edgeInset)
+                    .padding(.bottom, SidebarMetrics.sectionSpacing)
+            }
             if let player = store.playerTab {
                 PlayerSlotView(shell: shell, tab: player)
                     .padding(.horizontal, SidebarMetrics.edgeInset)

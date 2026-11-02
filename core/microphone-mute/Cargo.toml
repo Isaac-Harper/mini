@@ -1,0 +1,9 @@
+[package]
+name = "microphone-mute"
+edition.workspace = true
+version.workspace = true
+publish.workspace = true
+
+[lib]
+name = "microphone_mute"
+path = "src/lib.rs"

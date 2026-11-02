@@ -43,6 +43,9 @@ final class Tab: Identifiable {
     @ObservationIgnored private(set) var mediaArtworkTint: NSColor?
     var isPausedFromNowPlaying = false
     var playerPhase = PlayerSlot.Phase.idle
+    var mediaCapture = CallCapture.Devices.none
+    var isMicrophoneMuted = false
+    var callPhase = PlayerSlot.Phase.idle
     var harvestTimesheet: HarvestTimesheet?
     @ObservationIgnored var harvestShownSeconds: [UInt64: Double] = [:]
     var themeColor: NSColor?

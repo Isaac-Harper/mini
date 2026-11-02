@@ -726,6 +726,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
 
 [[package]]
+name = "microphone-mute"
+version = "0.1.0"
+
+[[package]]
 name = "mini-core"
 version = "0.1.0"
 dependencies = [
@@ -733,6 +737,7 @@ dependencies = [
  "base64 0.22.1",
  "cef",
  "early-errors",
+ "microphone-mute",
  "objc2",
  "objc2-app-kit",
  "objc2-foundation",
@@ -750,6 +755,7 @@ version = "0.1.0"
 dependencies = [
  "cef",
  "early-errors",
+ "microphone-mute",
 ]
 
 [[package]]

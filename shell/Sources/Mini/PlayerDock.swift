@@ -18,7 +18,7 @@ final class PlayerDock {
 
     @ObservationIgnored private unowned let shell: ShellController
     @ObservationIgnored private var panel: PlayerDockPanel?
-    @ObservationIgnored private var slotFrames: [SidebarKind: CGRect] = [:]
+    @ObservationIgnored private var slotFrames: [SidebarKind: (tab: MiniTabId, frame: CGRect)] = [:]
     @ObservationIgnored private var needsFlight = false
     @ObservationIgnored private(set) var isUndocking = false
     @ObservationIgnored private var pictureInPictureTab: Tab?
@@ -31,21 +31,55 @@ final class PlayerDock {
     }
 
     func presentation(of tab: Tab, in store: TabStore) -> PlayerSlot.Presentation {
-        PlayerSlot.presentation(phase: tab.playerPhase, isSelected: store.selectedTab === tab, sidebar: sidebar)
+        guard tab === store.playerTab else {
+            return CallCapture.presentation(phase: tab.callPhase, devices: tab.mediaCapture, isShown: isShown(tab, in: store), sidebar: sidebar)
+        }
+        let player = PlayerSlot.presentation(phase: tab.playerPhase, isSelected: store.selectedTab === tab, sidebar: sidebar)
+        let callDocked = callTab(in: store).map { CallCapture.isDocked(presentation(of: $0, in: store)) } ?? false
+        return CallCapture.playerPresentation(player, whileCallDocked: callDocked)
     }
 
     func showsSlot(for tab: Tab) -> Bool {
         tab === shell.store.playerTab && presentation(of: tab, in: shell.store) == .slot
     }
 
-    func tabToDock(in store: TabStore) -> Tab? {
-        guard let player = store.playerTab else { return nil }
-        return [.slot, .pictureInPicture].contains(presentation(of: player, in: store)) ? player : nil
+    func callTab(in store: TabStore) -> Tab? {
+        store.allTabs.first { $0.callPhase == .docked && $0 !== store.playerTab }
     }
 
-    func reportSlotFrame(_ frame: CGRect?, in kind: SidebarKind) {
-        slotFrames[kind] = frame
+    func tabToDock(in store: TabStore) -> Tab? {
+        let call = callTab(in: store)
+        let player = store.playerTab
+        switch CallCapture.dockOwner(call: call.map { presentation(of: $0, in: store) }, player: player.map { presentation(of: $0, in: store) }) {
+        case .call: return call
+        case .player: return player
+        case nil: return nil
+        }
+    }
+
+    func reportSlotFrame(_ frame: CGRect?, of tab: Tab, in kind: SidebarKind) {
+        if let frame {
+            slotFrames[kind] = (tab.id, frame)
+        } else if slotFrames[kind]?.tab == tab.id {
+            slotFrames[kind] = nil
+        }
         applyFrame()
+    }
+
+    func expand() {
+        guard let dockedTab else { return }
+        shell.clearRowSelection()
+        shell.store.select(dockedTab)
+    }
+
+    func toggleMicrophone() {
+        guard let dockedTab else { return }
+        shell.setMicrophoneMuted(!dockedTab.isMicrophoneMuted, for: dockedTab)
+    }
+
+    private func isShown(_ tab: Tab, in store: TabStore) -> Bool {
+        guard let selected = store.selectedTab else { return false }
+        return selected === tab || store.split(containing: selected)?.partner(of: selected) === tab
     }
 
     func sidebarChanged() {
@@ -169,8 +203,13 @@ final class PlayerDock {
         needsFlight = false
         panel?.orderOut(nil)
         let hostView = tab.hostView
-        hostView.isHidden = true
-        shell.windowController.webAreaView.addSubview(hostView, positioned: .below, relativeTo: nil)
+        if let panel, hostView.isDescendant(of: panel.dockView) {
+            hostView.isHidden = true
+            shell.windowController.webAreaView.addSubview(hostView, positioned: .below, relativeTo: nil)
+        }
+        if shell.transferringTabs.contains(tab.id) {
+            run(PlayerScripts.undockStyle, in: tab)
+        }
         guard tab.hasBrowser, shell.space(containing: tab.id)?.store.tab(withIdentifier: tab.id) === tab else { return }
         run(PlayerScripts.undockStyle, in: tab)
         mini_browser_set_hidden(tab.id, true)
@@ -189,7 +228,7 @@ final class PlayerDock {
             panel.ignoresMouseEvents = true
             panel.alphaValue = 0
             needsFlight = false
-            if pictureInPictureTab == nil, dockedTab.isPlayingAudio {
+            if pictureInPictureTab == nil, dockedTab.isPlayingAudio || dockedTab.mediaCapture.camera {
                 pictureInPictureTab = dockedTab
                 run(PlayerScripts.enterPictureInPicture, in: dockedTab)
             }
@@ -238,7 +277,7 @@ final class PlayerDock {
 
     private func slotScreenFrame() -> NSRect? {
         let kind: SidebarKind = sidebar == .peeking ? .peek : .main
-        guard let frame = slotFrames[kind], frame.width > 0, let hostingView = shell.windowController.sidebarHostingView(for: kind),
+        guard let dockedTab, let slot = slotFrames[kind], slot.tab == dockedTab.id, case let frame = slot.frame, frame.width > 0, let hostingView = shell.windowController.sidebarHostingView(for: kind),
               let window = hostingView.window, window.isVisible, let contentView = window.contentView else { return nil }
         return window.convertToScreen(NSRect(x: frame.minX, y: contentView.bounds.height - frame.maxY, width: frame.width, height: frame.height))
     }

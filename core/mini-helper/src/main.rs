@@ -23,21 +23,25 @@ wrap_render_process_handler! {
             let (Some(frame), Some(context)) = (frame, context) else {
                 return;
             };
+            evaluate(context, &microphone_mute::script());
             if frame.is_main() != 1 {
                 return;
             }
-            let script = early_errors::script();
-            let mut result = None;
-            let mut exception = None;
-            context.eval(
-                Some(&CefString::from(script.as_str())),
-                None,
-                0,
-                Some(&mut result),
-                Some(&mut exception),
-            );
+            evaluate(context, &early_errors::script());
         }
     }
+}
+
+fn evaluate(context: &mut V8Context, script: &str) {
+    let mut result = None;
+    let mut exception = None;
+    context.eval(
+        Some(&CefString::from(script)),
+        None,
+        0,
+        Some(&mut result),
+        Some(&mut exception),
+    );
 }
 
 fn main() {

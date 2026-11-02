@@ -3,8 +3,8 @@ use std::ffi::c_void;
 
 use crate::{
     MiniTabId, ad_blocking, authentication, context_menu, dev_build, downloads, editable_focus,
-    error_page, favicon, harvest, horizontal_scroll, link_preview, login, media, notifications,
-    page_health, permissions,
+    error_page, favicon, harvest, horizontal_scroll, link_preview, login, media, microphone,
+    notifications, page_health, permissions,
     resource_requests::MiniResourceRequestHandler,
     state::{TabState, c_string, callbacks, with_core},
     theme_color, vitals, webauthn,
@@ -185,6 +185,15 @@ wrap_display_handler! {
             unsafe { (callbacks().status_message_changed)(self.tab, status.as_ptr()) };
         }
 
+        fn on_media_access_change(
+            &self,
+            _browser: Option<&mut Browser>,
+            has_video_access: ::std::os::raw::c_int,
+            has_audio_access: ::std::os::raw::c_int,
+        ) {
+            unsafe { (callbacks().media_capture_changed)(self.tab, has_video_access != 0, has_audio_access != 0) };
+        }
+
         fn on_fullscreen_mode_change(&self, _browser: Option<&mut Browser>, fullscreen: ::std::os::raw::c_int) {
             unsafe { (callbacks().fullscreen_mode_changed)(self.tab, fullscreen != 0) };
         }
@@ -281,6 +290,7 @@ wrap_load_handler! {
             if frame.is_main() == 1 {
                 media::reset(self.tab);
                 editable_focus::reset(self.tab);
+                microphone::reset(self.tab);
             }
             let media_script = media::script(frame, login::token());
             frame.execute_java_script(
@@ -288,6 +298,7 @@ wrap_load_handler! {
                 Some(&CefString::from(frame_url.as_str())),
                 0,
             );
+            microphone::frame_loading(self.tab, frame, &frame_url);
             if frame.is_main() == 1 {
                 let theme_script = theme_color::script(frame, login::token());
                 frame.execute_java_script(

@@ -13,6 +13,7 @@ mod horizontal_scroll;
 mod link_preview;
 mod login;
 mod media;
+mod microphone;
 mod navigation;
 mod notifications;
 mod page_appearance;
@@ -114,6 +115,7 @@ pub struct MiniCallbacks {
     pub request_failed: Option<unsafe extern "C" fn(MiniTabId, i32, *const c_char)>,
     pub dev_build_reported: Option<unsafe extern "C" fn(MiniTabId, i32, f64, *const c_char)>,
     pub harvest_reported: Option<unsafe extern "C" fn(MiniTabId, *const c_char)>,
+    pub media_capture_changed: Option<unsafe extern "C" fn(MiniTabId, bool, bool)>,
     pub browser_closed: Option<unsafe extern "C" fn(MiniTabId)>,
     pub all_browsers_closed: Option<unsafe extern "C" fn()>,
     pub app_relaunched: Option<unsafe extern "C" fn(*const *const c_char, usize)>,
@@ -693,6 +695,13 @@ pub extern "C" fn mini_close_all_browsers() {
 pub extern "C" fn mini_browser_set_muted(tab: MiniTabId, muted: bool) {
     if let Some(browser) = created_browser(tab) {
         host(&browser).set_audio_muted(muted.into());
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn mini_browser_set_microphone_muted(tab: MiniTabId, muted: bool) {
+    if let Some(browser) = created_browser(tab) {
+        microphone::set_muted(tab, &browser, muted);
     }
 }
 

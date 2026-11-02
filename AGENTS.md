@@ -53,7 +53,7 @@ Each line is expanded in the doc named at its end.
 - Tab kind follows the tree: a saved root's whole subtree is saved; closing a saved or pinned tab resets it, `remove` is the real close. (tabs-and-undo)
 - Auto-archive never closes the selected tab, its split partner, playing, pinned, saved or folded tabs, and closes a parent only after all its children; with Close the Day on it archives whole expired day groups instead of idle tabs. (tabs-and-undo)
 - A tab is in at most one split; split focus follows clicks, and only the selected tab may take CEF focus. (tabs-and-undo)
-- At most one Player tab per space (`TabStore.playerTab`, pinned kind, outside `pinnedTabs`); only it ever docks into the sidebar. (tabs-and-undo)
+- At most one Player tab per space (`TabStore.playerTab`, pinned kind, outside `pinnedTabs`). At most one live view docks into the sidebar: the Player, or a video call left while its camera runs, which wins over the Player while it lasts. (tabs-and-undo)
 - At most one Harvest tab per space (`TabStore.harvestTab`, pinned kind, outside `pinnedTabs`); the row exists exactly while the tab does, never docks a live view, and its browser runs hidden in the background; Harvest data is never logged or persisted, session.json keeps only its URL. (tabs-and-undo)
 - Little-window tabs live only in `ShellController.littleWindows`, never in a store, session.json, the archive or Now Playing. (tabs-and-undo)
 - Promote, tear-off and dock move the same live `Tab` and browser, with no reload. (tabs-and-undo)
@@ -75,6 +75,7 @@ Rust core (`core/`, detail in cef-and-core.md):
 - `core/Cargo.toml`, `core/.cargo/config.toml`: workspace (edition 2024, `cef = "=156.2.0"`, release `panic = "abort"`), deployment target pinned to 26.0.
 - `core/mini-helper/`: helper executable (sandbox init + `cef_execute_process`; its render process handler installs the early errors script).
 - `core/early-errors/`: the early errors script and key shared by the helper and `page_health.rs`.
+- `core/microphone-mute/`: the microphone mute script the helper installs in every frame, and its key.
 - `core/mini-core/src/lib.rs` (the `src/` entries below are in `core/mini-core/`): the exported ABI functions and `#[repr(C)]` mirrors of the header types.
 - `src/application.rs`: `MiniApp`; second-launch relaunch handler.
 - `src/state.rs`: main-thread core state (callbacks, request contexts per space, `TabState` per tab, pending ids).
@@ -87,6 +88,7 @@ Rust core (`core/`, detail in cef-and-core.md):
 - `src/notifications.rs`: Web Notifications shim.
 - `src/editable_focus.rs`: editable-focus script and rule.
 - `src/media.rs`: playing state, media metadata and artwork.
+- `src/microphone.rs`: `mini_browser_set_microphone_muted` and the per-tab muted state replayed into frames that load later.
 - `src/error_page.rs`: injects Mini's error page into Chromium's and handles its buttons.
 - `src/theme_color.rs`: theme-color and page background script and parser.
 - `src/dev_build.rs`: Next.js and Vite rebuild console lines and build error overlay script for dev tabs.
@@ -157,7 +159,8 @@ Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 - `Downloads.swift`: downloads model and sidebar rows. (shell-ui)
 - `NowPlaying.swift`, `DominantColor.swift`: Now Playing row, mute button, artwork tint. (shell-ui)
 - `HarvestSlotView.swift`, `Sources/MiniRules/HarvestSlot.swift`: the Harvest row (running timer, today's total, sign in) with stop and resume; report parsing, elapsed time and presentation, unit tested. (shell-ui)
-- `PlayerDock.swift`, `PlayerSlotView.swift`, `Sources/MiniRules/PlayerSlot.swift`: the Player tab's sidebar slot (or the empty Player row), the docked browser's child panel and hover controls, the dock page scripts; pure phase and presentation rules, unit tested. (shell-ui)
+- `PlayerDock.swift`, `PlayerSlotView.swift`, `Sources/MiniRules/PlayerSlot.swift`: the Player tab's sidebar slot (or the empty Player row), the docked browser's child panel and hover controls (Player or call), the dock page scripts; pure phase and presentation rules, unit tested. (shell-ui)
+- `CallControls.swift`, `Sources/MiniRules/CallCapture.swift`: camera and microphone capture per tab, the row's recording dot and microphone mute, the docked call's slot and menu; call phase, dock precedence over the Player and mute reset rules, unit tested. (shell-ui)
 - `AirPlay.swift`: AirPlay video handoff, the row's route picker, the sound output fallback menu. (shell-ui)
 - `WeatherService.swift`, `WeatherRowView.swift`, `WeatherWeekView.swift`: weather row and 7-day popover. (shell-ui)
 - `CommandBarController.swift`, `CommandBarModel.swift`, `CommandSuggestionsView.swift`: the command bar. (command-bar)

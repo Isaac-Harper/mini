@@ -74,6 +74,11 @@ private struct PinnedTabTile: View {
             TabIconView(tab: tab, size: SidebarMetrics.iconSize)
                 .devBuildState(of: tab, isOnTile: true)
                 .overlay(alignment: .topTrailing) { UnreadBadgeView(tab: tab, isOnTile: true) }
+            RecordingDot(tab: tab)
+                .padding(SidebarMetrics.accessorySpacing)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            MicrophoneToggleButton(shell: shell, tab: tab)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
         }
         .frame(maxWidth: .infinity)
         .frame(height: SidebarMetrics.pinnedTileHeight)

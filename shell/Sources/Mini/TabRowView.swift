@@ -34,6 +34,7 @@ struct TabRowView: View {
             }
             .opacity(isDimmed ? 0.5 : (isSelected || isHovered || tab.isSaved ? 1 : tab.idleFade))
             Spacer(minLength: 0)
+            CallCaptureControls(shell: shell, tab: tab)
             AudioToggleButton(shell: shell, tab: tab)
             if let savedURL = tab.savedURL, tab.hasLeftSavedURL {
                 Button {
@@ -224,6 +225,7 @@ private struct SplitTabHalfView: View {
             }
             .opacity(isPairSelected || isHovered ? 1 : tab.idleFade)
             Spacer(minLength: 0)
+            CallCaptureControls(shell: shell, tab: tab)
             AudioToggleButton(shell: shell, tab: tab)
             if isHovered {
                 Button {

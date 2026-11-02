@@ -254,6 +254,11 @@ final class BrowserEngine {
                 let timesheet = HarvestTimesheet.parse(requiredString(report))
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.harvestReported(identifier, timesheet: timesheet) }
             },
+            media_capture_changed: { identifier, camera, microphone in
+                MainActor.assumeIsolated {
+                    BrowserEngine.shared.requiredShell.mediaCaptureChanged(identifier, devices: CallCapture.Devices(camera: camera, microphone: microphone))
+                }
+            },
             browser_closed: { identifier in
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.browserClosed(identifier) }
             },

@@ -181,6 +181,7 @@ extension ShellController {
         guard let tab = liveTab(identifier) else { return }
         tab.hasCrashed = true
         tab.isLoading = false
+        applyMediaCapture(.none, to: tab)
         crashOverlay.refresh()
     }
 
