@@ -91,6 +91,7 @@ enum MainMenu {
         menu.addItem(item("Hide Sidebar", #selector(ShellController.toggleTabSidebar(_:)), "s", [.command, .control], target: commands, symbol: "sidebar.left"))
         menu.addItem(item("Split View", #selector(ShellController.toggleSplitViewCommand(_:)), "\\", [.command, .control], target: commands, symbol: "rectangle.split.2x1"))
         menu.addItem(item("Evening Tint", #selector(ShellController.toggleEveningTint(_:)), "", target: commands, symbol: "moon"))
+        menu.addItem(item("Show Next Meeting", #selector(ShellController.toggleNextMeeting(_:)), "", target: commands, symbol: "calendar"))
         menu.addItem(item("Preload on Hover", #selector(ShellController.togglePreloadOnHover(_:)), "", target: commands, symbol: "bolt"))
         menu.addItem(item("Close the Day Automatically", #selector(ShellController.toggleClosingTheDay(_:)), "", target: commands, symbol: "moon.zzz"))
         menu.addItem(.separator())

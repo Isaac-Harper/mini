@@ -11,6 +11,7 @@ final class ShellController: NSObject {
     let downloads = DownloadsModel()
     let weather = WeatherService()
     let weatherPopover = WeatherPopoverPresenter()
+    let nextMeeting = NextMeetingService()
     let vitalsPopover = VitalsPopoverPresenter()
     var deploymentEnvironmentsCache: DeploymentEnvironmentsCache?
     let reloadOptionKey = ReloadOptionKey()
@@ -202,6 +203,7 @@ final class ShellController: NSObject {
             }
         }
         weather.start()
+        nextMeeting.startIfEnabled()
         applyCachedFavicons()
         faviconCache.prune(keepingPagesAt: allSpaceTabs.flatMap { [$0.url, $0.pinnedURL ?? ""] } + archive.entries.map(\.url))
         archiveTimer = Timer.scheduledTimer(withTimeInterval: Self.archiveInterval, repeats: true) { [weak self] _ in

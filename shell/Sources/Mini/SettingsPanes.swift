@@ -58,6 +58,11 @@ struct AppearanceSettingsPane: View {
             } footer: {
                 SettingsFootnote("Warms the sidebar from sunset to sunrise.")
             }
+            Section {
+                Toggle("Next meeting", isOn: Bindable(shell.nextMeeting).isEnabled)
+            } footer: {
+                SettingsFootnote("Shows your next meeting from Calendar in the sidebar within the hour, with a button to join the call. Asks for calendar access when turned on.")
+            }
         }
         .settingsForm()
     }
