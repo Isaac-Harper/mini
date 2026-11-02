@@ -4,6 +4,12 @@ A small, quiet macOS browser for one person. Chromium renders the pages; everyth
 
 Mini is an open source exploration project: a personal, minimal browser built to explore a native Swift shell over Chromium (CEF).
 
+[![Mini keeps your video and your timer in the sidebar. Watch the 25 second film.](docs/media/mini-sidebar-poster.png)](docs/media/mini-sidebar.mp4)
+
+| Switch tabs and the video docks in the sidebar, still playing | Your Harvest timer in the sidebar, with stop and resume |
+| --- | --- |
+| ![The Player tab's video docking into the sidebar](docs/media/dock.gif) | ![The Harvest row ticking, stopped and resumed](docs/media/harvest.gif) |
+
 - No toolbar strip: the traffic lights, sidebar toggle and back/forward sit in the sidebar's top row, and the page is a rounded card that runs to the top of the window. With the sidebar hidden, point at the top-left corner to bring the controls back, or at the left edge to slide the sidebar out over the page (click the sidebar button to keep it open)
 - The sidebar takes on a light tint of the page's theme color (`<meta name="theme-color">`), off with Reduce Transparency or Increase Contrast
 - Two-finger swipe left or right on the trackpad goes back or forward (when "Swipe between pages" is on in Trackpad settings and the page has nothing left to scroll that way)
