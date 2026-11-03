@@ -83,7 +83,7 @@ final class LocalServerScanner {
         return await withTaskGroup(of: LocalServer?.self) { group in
             for listener in listeners {
                 group.addTask {
-                    await answersHTTP(port: listener.port, session: session) ? LocalServer(port: listener.port, processName: listener.command) : nil
+                    await servesWebPage(port: listener.port, session: session) ? LocalServer(port: listener.port, processName: listener.command) : nil
                 }
             }
             var servers: [LocalServer] = []
@@ -94,11 +94,25 @@ final class LocalServerScanner {
         }
     }
 
+    nonisolated static func servesWebPage(port: Int, session: URLSession) async -> Bool {
+        guard let page = await response(port: port, path: "/", session: session),
+              LocalDevelopment.servesWebPage(contentType: page.response.value(forHTTPHeaderField: "Content-Type")) else { return false }
+        guard let version = await response(port: port, path: "/json/version", session: session) else { return true }
+        return !LocalDevelopment.isDevToolsEndpoint(versionResponse: String(decoding: version.body, as: UTF8.self))
+    }
+
     nonisolated static func answersHTTP(port: Int, session: URLSession) async -> Bool {
         guard let url = URL(string: "http://localhost:\(port)/") else { return false }
         var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: probeTimeout)
         request.httpMethod = "HEAD"
         guard let (_, response) = try? await session.data(for: request) else { return false }
         return response is HTTPURLResponse
+    }
+
+    nonisolated private static func response(port: Int, path: String, session: URLSession) async -> (response: HTTPURLResponse, body: Data)? {
+        guard let url = URL(string: "http://localhost:\(port)\(path)") else { return nil }
+        let request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: probeTimeout)
+        guard let (body, response) = try? await session.data(for: request), let response = response as? HTTPURLResponse else { return nil }
+        return (response, body)
     }
 }

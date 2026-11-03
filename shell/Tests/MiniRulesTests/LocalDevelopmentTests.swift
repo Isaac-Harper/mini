@@ -27,6 +27,21 @@ struct LocalDevelopmentTests {
         #expect(LocalDevelopment.address("https://example.com:3000/", movedToPort: 3001) == nil)
     }
 
+    @Test func onlyHTMLResponsesCountAsWebPages() {
+        for contentType in ["text/html", "text/html; charset=UTF-8", "TEXT/HTML;charset=utf-8", " application/xhtml+xml "] {
+            #expect(LocalDevelopment.servesWebPage(contentType: contentType), "\(contentType)")
+        }
+        for contentType in [nil, "", "application/json", "text/plain;charset=utf-8", "text/htmlx"] as [String?] {
+            #expect(!LocalDevelopment.servesWebPage(contentType: contentType), "\(contentType ?? "nil")")
+        }
+    }
+
+    @Test func chromiumVersionEndpointMarksDevTools() {
+        #expect(LocalDevelopment.isDevToolsEndpoint(versionResponse: #"{ "Browser": "HeadlessChrome/158.0", "Protocol-Version": "1.3", "webSocketDebuggerUrl": "ws://127.0.0.1:9222/devtools/browser/a" }"#))
+        #expect(!LocalDevelopment.isDevToolsEndpoint(versionResponse: "<!doctype html><title>Not found</title>"))
+        #expect(!LocalDevelopment.isDevToolsEndpoint(versionResponse: #"{ "version": "1.4.0" }"#))
+    }
+
     @Test func lsofFieldOutputBecomesLoopbackListenersByPort() {
         let output = """
         p4012

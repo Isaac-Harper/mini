@@ -57,6 +57,15 @@ public enum LocalDevelopment {
         return listeners.sorted { $0.port < $1.port }
     }
 
+    public static func servesWebPage(contentType: String?) -> Bool {
+        guard let mediaType = contentType?.split(separator: ";").first?.trimmingCharacters(in: .whitespaces).lowercased() else { return false }
+        return mediaType == "text/html" || mediaType == "application/xhtml+xml"
+    }
+
+    public static func isDevToolsEndpoint(versionResponse: String) -> Bool {
+        versionResponse.contains("\"webSocketDebuggerUrl\"") || versionResponse.contains("\"Protocol-Version\"")
+    }
+
     public static func portShortcut(_ rawQuery: String, listeningPorts: Set<Int>) -> Int? {
         let query = rawQuery.trimmingCharacters(in: .whitespaces)
         if query.hasPrefix(":"), let port = Int(query.dropFirst()), (1...65_535).contains(port), query.dropFirst().allSatisfy(\.isNumber) {
