@@ -1,80 +1,128 @@
+<div align="center">
+
+<img src="bundle/AppIcon-1024.png" alt="Mini app icon" width="128" height="128">
+
 # Mini
 
-A small, quiet macOS browser for one person. Chromium renders the pages; everything you touch is native: an AppKit window, a SwiftUI sidebar, Liquid Glass materials, and keyboard focus that behaves like a Mac app.
+**A small, quiet browser for the Mac.**
 
-Mini is an open source exploration project: a personal, minimal browser built to explore a native Swift shell over Chromium (CEF).
+Chromium renders the pages. Everything you touch is native: an AppKit window, a SwiftUI sidebar,<br>Liquid Glass, and keyboard focus that behaves like a Mac app.
+
+[![Latest release](https://img.shields.io/github/v/release/Isaac-Harper/mini?style=flat-square&color=000&label=release)](https://github.com/Isaac-Harper/mini/releases/latest)
+[![macOS 26+](https://img.shields.io/badge/macOS-26%2B-000?style=flat-square&logo=apple)](#requirements)
+[![Apple Silicon](https://img.shields.io/badge/Apple%20Silicon-arm64-000?style=flat-square)](#requirements)
+[![MIT License](https://img.shields.io/badge/license-MIT-000?style=flat-square)](LICENSE)
+
+[Download](https://github.com/Isaac-Harper/mini/releases/latest) · [Features](#features) · [Build from source](#build-from-source) · [Keyboard](#keyboard) · [Architecture](#architecture)
+
+<br>
 
 [![Mini keeps your video and your timer in the sidebar. Watch the 25 second film.](docs/media/mini-sidebar-poster.png)](docs/media/mini-sidebar.mp4)
 
-| Switch tabs and the video docks in the sidebar, still playing | Your Harvest timer in the sidebar, with stop and resume |
-| --- | --- |
-| ![The Player tab's video docking into the sidebar](docs/media/dock.gif) | ![The Harvest row ticking, stopped and resumed](docs/media/harvest.gif) |
+</div>
 
-- No toolbar strip: the traffic lights, sidebar toggle and back/forward sit in the sidebar's top row, and the page is a rounded card that runs to the top of the window. With the sidebar hidden, point at the top-left corner to bring the controls back, or at the left edge to slide the sidebar out over the page (click the sidebar button to keep it open)
-- The sidebar takes on a light tint of the page's theme color (`<meta name="theme-color">`), off with Reduce Transparency or Increase Contrast
-- Two-finger swipe left or right on the trackpad goes back or forward (when "Swipe between pages" is on in Trackpad settings and the page has nothing left to scroll that way)
-- The address pill shows the site's host; hover it for the full address. Plain http pages (other than localhost) get a small Not Secure mark
-- Localhost, preview deployment and production are one environment switcher: the "dev :3000" or "Preview" chip in the address pill lists the same project's other environments found in the space's history, and Shift-Cmd-P cycles local, preview, production, opening the same path with the scroll position carried over
-- A localhost tab knows its project: the chip reads "mini :3000" from the server's git repository, its menu shows the branch with Reveal Project in Finder and Open in your editor, and when the dev server comes back on another port the tab follows it there
-- Local dev tabs follow their dev server (Next.js Fast Refresh and Vite): the favicon breathes while it rebuilds, a red dot marks a build error so a broken background tab is visible from the sidebar, the address pill shows "refresh 230ms" after a hot update, and the page inspector lists the build error first
-- While a page loads its tab shows a spinner and a thin accent line runs along the top of the page
-- Vertical sidebar with nested tabs (a tree), pinned tabs as favicon tiles; drag rows to reorder, onto a row to nest, or onto the pinned area to pin
-- Three kinds of tabs: pinned tiles, saved tabs and regular tabs. Saved tabs sit in their own "Saved" section under the pins, can nest, are never auto-archived, and ⌘W only unloads one back to its saved page (the dimmed row stays; a small arrow on the row goes back to the saved page after you navigate away). "Remove from Saved" or "Delete" in the row's menu let go of one for real. Drag between sections to change a tab's kind; regular tabs idle for 12 hours are archived
-- Links opened from other apps open in a little floating window with back, forward and an Open in Mini button (⌘O) that moves the live page into a tab
-- Spaces (Personal and Work to start), each with its own tabs, pins and its own cookies and logins; switch with the buttons at the bottom of the sidebar or ⌃1 to ⌃9
-- Swipe two fingers left or right on the sidebar to move to the next or previous space
-- Drag a tab out of the sidebar onto the page or off the window to tear it off into a little window, live page and all; drag a little window by its toolbar over the sidebar to dock it back
-- On a Force Touch trackpad, quiet haptic detents mark the moments that click into place: the sidebar snapping shut or open and reaching its width limits, the split divider snapping to center, the page's edge reaching a common breakpoint width, a dragged tab changing where it will land, a swipe passing the point where it commits, and a tab tearing off or docking
-- After sunset the sidebar warms very slightly, easing in and out over 20 minutes around sunset and sunrise from the weather row's forecast (View > Evening Tint)
-- Each space has a color (Space > Space Color, or right-click its button) that lightly tints the sidebar and colors the selected row, focus ring and loading line; the page's theme color blends on top
-- Split view: two tabs side by side with a draggable divider, shown as one joined row in the sidebar
-- Command bar for URLs, search (with Google suggestions) and switching tabs
-- Paste a list of links (like Safari's Copy Links) into the command bar to open them all as tabs that load when you select them; ⌘Return opens them in the background, ⌥Return nests them under the first
-- Built-in ad and tracker blocking (uBlock Origin, EasyList and EasyPrivacy lists)
-- Fill logins from Apple Passwords through a native card with Touch ID
-- Native permission prompts for camera, microphone, location and the rest
+## Why Mini
+
+Most browsers grow a toolbar, a tab strip, an extension store and an account. Mini goes the other way: one window, a vertical sidebar of nested tabs, and a page card that runs to the top of the screen. It is built for one person, with no extensions, sync or accounts, and it is an open source exploration of a native Swift shell over Chromium (CEF).
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/media/dock.gif" alt="The Player tab's video docking into the sidebar"></td>
+    <td width="50%"><img src="docs/media/harvest.gif" alt="The Harvest row ticking, stopped and resumed"></td>
+  </tr>
+  <tr>
+    <td><b>Video that follows you.</b> Switch tabs and the Player docks in the sidebar, still playing.</td>
+    <td><b>Your timer, always in view.</b> Harvest in the sidebar, with stop and resume.</td>
+  </tr>
+</table>
+
+## Features
+
+### Tabs and sidebar
+
+- **Tree tabs.** Nest tabs by dragging one onto another, reorder by dragging, and drop onto the pinned area to pin.
+- **Three kinds of tab.** Pinned tiles, Saved tabs (never archived; ⌘W unloads one back to its saved page) and regular tabs. Drag between sections to change a tab's kind.
+- **Self-cleaning.** Tabs left unselected fade from 6 hours and archive at 12; find them again in the command bar. Close the Day folds untouched tabs into dated groups instead.
+- **Split view.** Two tabs side by side with a draggable divider, shown as one joined row.
+- **Undo for tabs.** ⌘Z brings back closes (a whole group returns in place), moves, nests, pins, splits and more.
+- **Little windows.** Links from other apps open in a small floating window; ⌘O moves the live page into a tab. Drag a tab off the sidebar to tear it off, or drag a little window back to dock it, with no reload.
+- **No toolbar strip.** Traffic lights and back/forward live in the sidebar's top row. With the sidebar hidden, point at the left edge to peek it out over the page.
+
+### Spaces
+
+- **Separate profiles.** Each space has its own tabs, pins, cookies, logins and history. Switch with ⌃1 to ⌃9 or a two-finger swipe on the sidebar.
+- **Color that carries.** A space's color tints the sidebar, the selected row, the focus ring and the loading line, with the page's `theme-color` blended on top.
+- **Evening tint.** After sunset the sidebar warms very slightly, easing in over 20 minutes.
+
+### Built for web developers
+
+- **One environment switcher.** Localhost, preview deployment and production of the same project are one chip in the address pill. ⇧⌘P cycles them, keeping the path and scroll position.
+- **Dev tabs know their project.** The chip reads `mini :3000` from the server's git repository, shows the branch, opens the project in Finder or your editor, and follows the dev server to a new port.
+- **Build state on rows.** With Next.js Fast Refresh or Vite, the favicon breathes while rebuilding, a red dot marks a build error in a background tab, and the pill reads `refresh 230ms` after a hot update.
+- **Page health.** Uncaught errors, unhandled rejections and failed requests on dev and preview pages light a warning dot in the pill.
+- **Cold and warm reloads.** Hold Option over reload (it turns into a snowflake) or press ⌥⌘R; the label reads `cold 1.4s`, then `warm 210ms`.
+- **Breakpoints by hand.** Option-drag the page's right edge to resize its real viewport, with detents at 375, 768, 1024 and 1280.
+- **Page Appearance.** Show one tab in light, dark or reduced motion, whatever macOS is set to.
+- **Copy tools.** Copy Text Style (as CSS with OKLCH color), Copy Page as Markdown, Copy Screenshot of a page or a single element, Pick Color from anywhere on screen, and a link preview of how the URL will unfurl in Slack, iMessage or X.
+
+### Media and calls
+
+- **Now Playing.** Artwork, a matching tint, and play/pause for the tab that last started audio. A speaker icon mutes playing tabs.
+- **Calls.** A tab in a call shows a recording dot and a microphone mute. Leave a video call and its live view docks in the sidebar.
+- **AirPlay.** Hand a video with its own file or HLS source to an Apple TV, picking up where the page was.
+- **Next Meeting.** The meeting on now or within the hour from your Mac's calendars, with a join button that opens the call in a little window. Off by default.
+
+### Private by default
+
+- **Ad and tracker blocking** built in (uBlock Origin, EasyList and EasyPrivacy lists).
+- **Apple Passwords** fill through a native card with Touch ID. Values are never shown, stored or logged.
+- **Native permission prompts** for camera, microphone, location and the rest, reviewable in Settings.
+- **Clear Data for This Site** removes one site's cookies and storage in the current space.
+
+<details>
+<summary><b>Everything else</b></summary>
+<br>
+
+- The sidebar takes on a light tint of the page's theme color, off with Reduce Transparency or Increase Contrast
+- Two-finger swipe goes back and forward when the page has nothing left to scroll that way
+- The address pill shows the host (hover for the full address); plain http pages other than localhost get a Not Secure mark
+- A spinner on the row and a thin accent line along the top of the page while it loads
+- Quiet Force Touch haptic detents when the sidebar snaps, the split divider centers, a dragged tab changes target, a swipe commits, or a tab tears off or docks
+- Command bar for URLs, search (with Google suggestions), tabs, history and the `>` action list
+- Paste a list of links into the command bar to open them all as lazy tabs; ⌘Return opens them in the background, ⌥Return nests them under the first
 - Session restore with lazy tabs, so launch stays fast
-- History per space: recent pages in the History menu, a searchable History window (⌘Y), and frecency-ranked matches in the command bar
-- Tabs left unselected for 12 hours archive themselves (they fade gently from 6 hours on, back to full on hover); find them again in the command bar
-- Downloads progress in the sidebar; click to cancel, or to show the file in Finder
+- History per space: the History menu, a searchable History window (⌘Y) and frecency-ranked command bar matches
+- Downloads progress in the sidebar; click to cancel or show in Finder
 - A crashed page shows a Reload button instead of a blank tab
-- Hold Option over the reload button (it turns into a snowflake) or press ⌥⌘R to reload without the cache; the time beside the button then reads "cold 1.4s", and the next normal reload of that page "warm 210ms"
-- On local dev servers and preview deployments, uncaught errors, unhandled promise rejections and failed requests light the address pill's warning dot; hover the pill for the first one, click it to open the developer tools
-- Web notifications appear as macOS notifications after you allow them for a site (View > Allow Notifications from This Site turns them on or off); clicking one returns you to its tab
-- Harvest in the sidebar (Tabs > Show Harvest, per space): a row backed by a Harvest tab that keeps running in the background shows the running timer's project and task with the time ticking and a stop button, or today's total and the last entry with a resume button, all through your own Harvest login in that tab; no API token
-- A tab in a call shows a red recording dot and a microphone button that mutes and unmutes the page's microphone; switch away from a video call and its live video docks in the sidebar like the Player (the call takes the dock while it lasts, the Player gets it back after), with mute and return-to-tab on hover
-- A Now Playing row with the track's artwork (or the video poster, or the site icon), softly tinted to match, and play/pause for the tab that last started audio; a speaker icon on playing tabs mutes them
-- AirPlay from the Now Playing row: a video with its own file or HLS source plays on an Apple TV or AirPlay TV through the native device list, picking up where the page was and handing back when it ends; streamed video (YouTube and other MediaSource players) can't be handed over, so the button offers the Mac's sound output and display mirroring instead
-- A Next Meeting row in the sidebar (View > Show Next Meeting, off by default): the meeting that is on now or starts within the hour, from the Mac's own calendars (iCloud, Google, Exchange), with its calendar color and "in 4 min", "now" or "ends in 12 min"; a join button opens the Meet, Zoom, Teams, Webex or Around link in a little window, and clicking the row shows the event in Calendar. Declined and all-day events are skipped
-- A one-line weather row at the bottom of the sidebar (Open-Meteo, city-level location; hover for the 7-day forecast, click to search the weather)
-- Fullscreen video fills the whole screen; the sidebar and page card come back when it ends
-- View > Clear Data for This Site deletes that site's cookies and storage in the current space
-- View > Page Appearance shows one tab's page in light or dark, or with reduced motion, whatever macOS is set to; the switch crossfades, and a chip in the address pill says so (click it to follow the system again)
-- Option-drag the page's right edge to narrow it and test breakpoints: the page's real viewport changes, the width shows beside the edge, and it clicks into place at 375, 768, 1024 and 1280. Double-click the edge to go back to full width
-- Native right-click menus on pages: links, images, selections, spelling suggestions, Inspect Element
-- Copy Text Style in the right-click menu over selected text copies its computed font family, size, line height, weight, letter spacing and color (as OKLCH) as a CSS block
-- Hold Option and Shift in the Edit menu for Copy Page as Markdown (also in the `>` command list): the page's main content as Markdown with the title and address on top
-- Copying a page's address (⇧⌘C) shows how the link will unfurl in Slack, iMessage or X: the preview image, title and host, with a quiet note when the image is missing or the wrong shape, or the page has no title
-- Copy Screenshot (Edit menu, ⇧⌘S, or right-click the page) copies the visible page as a PNG with the card's rounded corners and no scrollbars; Copy Screenshot of Element copies just the element you right-clicked. The thumbnail in the confirmation can be dragged into other apps
-- Pick Color (Edit menu, ⇧⌘K) opens the system color loupe, copies the picked pixel as OKLCH and shows a swatch with the hex value
-- Hovering a link shows its address in a small bubble at the bottom of the page
-- Mini > Settings (⌘,) gathers the preferences in one window: default browser, Close the Day, interface size, evening tint, Next Meeting, Preload on Hover, and every site you have answered a permission prompt for, allowed ads on or zoomed, with a search field and a Reset for each; the menu items stay in sync with it
-- No extensions, sync or accounts
+- Web notifications become macOS notifications once allowed for a site; clicking one returns to its tab
+- A one-line weather row with a 7-day forecast on hover (Open-Meteo, city-level location)
+- Fullscreen video fills the screen; the sidebar and page card come back when it ends
+- Native right-click menus: links, images, selections, spelling suggestions, Inspect Element
+- A small bubble shows a hovered link's address
+- Mini > Settings (⌘,) gathers every preference and every stored site decision, with search and a Reset for each
 
-## Download
+</details>
 
-Signed and notarized builds for Apple Silicon (macOS 26 or later) are on the [Releases](https://github.com/Isaac-Harper/mini/releases) page. Unzip, move Mini to Applications and open it. There is no auto-update.
+## Install
 
-## Requirements
+Download the latest signed and notarized build from [Releases](https://github.com/Isaac-Harper/mini/releases/latest), unzip, move Mini to Applications and open it. There is no auto-update.
+
+To make Mini your default browser, choose **Mini > Set as Default Browser**.
+
+## Build from source
+
+### Requirements
 
 - macOS 26 or later on Apple Silicon
 - Xcode 27 (Swift 6.4)
 - Rust (stable) via rustup or Homebrew
 - `cmake` and `ninja`: `brew install cmake ninja`
 
-## Build and run
+### Quick start
 
 ```sh
+git clone https://github.com/Isaac-Harper/mini.git
+cd mini
 make run
 ```
 
@@ -82,52 +130,66 @@ The first build downloads the Chromium Embedded Framework (about 300 MB) into `~
 
 | Command | What it does |
 | --- | --- |
-| `make` | Builds the Rust core, the Swift shell, and assembles `build/Mini.app` |
+| `make` | Builds the Rust core and the Swift shell, and assembles `build/Mini.app` |
 | `make run` | Builds, then opens the app |
-| `make release VERSION=X.Y.Z` | Builds with a secure timestamp, notarizes and staples the app, and publishes `Mini-X.Y.Z-arm64.zip` as a GitHub release (needs a clean, pushed tree and the `lowlight-notary` profile) |
-| `make install` | Builds, quits a running Mini, copies it to `/Applications`, registers it with Launch Services and relaunches it |
+| `make install` | Builds, quits a running Mini, copies it to `/Applications`, registers it and relaunches |
+| `make test` | Runs `cargo test` and the Swift `MiniRulesTests` |
 | `make CONFIG=debug run` | Debug build |
+| `make release VERSION=X.Y.Z` | Notarizes, staples and publishes `Mini-X.Y.Z-arm64.zip` as a GitHub release (needs a clean, pushed tree and the `lowlight-notary` profile) |
 | `make clean` | Removes all build output |
 
-The build signs with the first Developer ID Application or Apple Development identity in your keychain, so the Keychain grant for Mini's cookie key survives rebuilds. Set `MINI_SIGN_IDENTITY` to pick another identity. Without one it signs ad hoc, and every rebuild asks for Keychain access again; until that prompt is answered, pages never load.
+> [!IMPORTANT]
+> The build signs with the first Developer ID Application or Apple Development identity in your keychain, so the Keychain grant for Mini's cookie key survives rebuilds. Set `MINI_SIGN_IDENTITY` to pick another. Without one it signs ad hoc, every rebuild asks for Keychain access again, and pages never load until that prompt is answered.
 
-To use Mini as your default browser, run `make install` and choose Mini > Set as Default Browser.
-
-## Proprietary codecs (local builds only)
+<details>
+<summary><b>Proprietary codecs (local builds only)</b></summary>
+<br>
 
 The stock CEF build plays VP8, VP9, AV1, Opus and other open formats, but not H.264, AAC or MP4. Those formats are covered by patent pools (Via LA for H.264 and AAC), and Chromium only compiles their decoders with `proprietary_codecs=true ffmpeg_branding=Chrome`. Google licenses them for Chrome; a CEF built with them and handed to other people needs its own license. So released builds always use the stock CEF, and the codecs build stays on your own machine.
 
 `scripts/build-cef-codecs.sh` builds CEF from source with the codecs (about three hours on an M5 and about 55 GB of free disk at its peak; the 32 GB Chromium checkout is kept for rebuilds) and installs it to `~/.local/share/cef/156.0.14-codecs/cef_macos_aarch64`. Once that folder exists, `make` and `make install` use it automatically; `MINI_CEF_CODECS=0 make` builds with the stock CEF. `make release` always uses the stock CEF and refuses to publish if the bundled framework has the codecs.
 
+</details>
+
 ## Keyboard
+
+Browser shortcuts take priority over the page, so ⌘T and ⌘W work even when a site tries to capture them. Copy, paste and select all always go to the page; ⌘Z and ⇧⌘Z go to the page while an editable element has focus, and undo tab actions otherwise.
 
 | Shortcut | Action |
 | --- | --- |
 | ⌘T | New tab (command bar) |
-| ⌥⌘T | New child tab |
 | ⌘L | Edit the current address |
-| ⌘O | Move the page in a little window into a tab |
-| ⌘W | Close tab (pinned and saved tabs reset to their page instead) |
+| ⌘W | Close tab (pinned and saved tabs reset instead) |
 | ⇧⌘T | Reopen closed tab |
-| ⌘Z, ⇧⌘Z | Undo and redo tab actions: close (a whole group comes back in place), move, nest, pin, save, split, duplicate, opening pasted links. In a text field or editable page area they undo typing instead |
+| ⌘Z, ⇧⌘Z | Undo and redo tab actions |
+| ⌃1 to ⌃9 | Switch space |
+| ⌃⌘\ | Split with the last tab, or close the split |
+| ⌃⌘S | Show or hide the sidebar |
+| ⌘\ | Fill password |
+
+<details>
+<summary><b>All shortcuts</b></summary>
+<br>
+
+| Shortcut | Action |
+| --- | --- |
+| ⌥⌘T | New child tab |
+| ⌘O | Move the page in a little window into a tab |
 | ⌃Tab, ⌃⇧Tab, ⌥⌘↓, ⌥⌘↑ | Next and previous tab |
 | ⌘1 to ⌘9 | Select tab (pinned first; ⌘9 is the last) |
-| ⌃1 to ⌃9 | Switch space |
 | ⌥⌘→, ⌥⌘← | Indent and outdent |
 | ⌥⌘\ | Collapse or expand a group |
 | ⌃⌘P | Pin or unpin tab |
 | ⌘D | Save or unsave tab |
 | ⇧⌘D | Duplicate tab (opens right below it) |
 | ⌃⇧↑, ⌃⇧↓ | Move the tab up or down among its siblings |
-| ⌃⌘S | Show or hide the sidebar |
-| ⌃⌘\ | Split the current tab with the last one you used, or close the split |
-| ⌘\ | Fill password |
+| ⇧⌘P | Cycle local, preview and production |
 | ⇧⌘C | Copy the page address (shows its link preview) |
 | ⇧⌘S | Copy a screenshot of the page |
 | ⇧⌘K | Pick a color from anywhere on screen (copies OKLCH) |
 | ⌘, | Settings |
 | ⌘Y | Show all history |
-| ⌘[, ⌘] | Back and forward (right-click or hold the arrow buttons for the history list) |
+| ⌘[, ⌘] | Back and forward (right-click or hold the arrows for the history list) |
 | ⌘R, ⌘. | Reload and stop |
 | ⌥⌘R | Reload without the cache |
 | ⌘F, ⌘G, ⇧⌘G | Find, next, previous |
@@ -138,48 +200,54 @@ The stock CEF build plays VP8, VP9, AV1, Opus and other open formats, but not H.
 
 In the sidebar: click its empty space (or press Tab when nothing has focus) to move the keyboard there. ↑ and ↓ move between pinned tabs and rows, ← and → collapse or expand a group (or go to its parent or first child), Return opens the tab, Delete closes it, and Esc or Tab returns to the page.
 
-Browser shortcuts take priority over the page, so ⌘T or ⌘W work even when a site tries to capture them. Copy, paste and select all always go to the page; ⌘Z and ⇧⌘Z go to the page while a text field or other editable element there has focus, and undo tab actions otherwise.
+</details>
 
 ## Passwords
 
-When a page has a login form, a key button appears in the address pill. Click it or press ⌘\ and Mini shows a small card with the site's address and two native fields. Click the key icon in the password field, pick a login from Apple Passwords, confirm with Touch ID, and press Return to fill the page. Mini never shows the card on its own and never stores or logs the values.
+When a page has a login form, a key button appears in the address pill. Click it or press ⌘\ and Mini shows a small card with the site's address and two native fields. Pick a login from Apple Passwords, confirm with Touch ID, and press Return to fill the page. Mini never shows the card on its own and never stores or logs the values.
 
-macOS does not know which website Mini is showing, so it lists all your logins instead of suggesting the matching one. Site-matched suggestions and passkeys need Apple's macOS Web Browser Public Key Credential entitlement, which has to be requested from Apple.
+macOS does not know which website Mini is showing, so it lists all your logins instead of the matching one. Site-matched suggestions and passkeys need Apple's Web Browser Public Key Credential entitlement. Until it is granted, Mini turns off WebAuthn in pages so sites fall back to passwords and Chromium never shows its QR code or "use your phone" dialog.
 
-Passkeys are not supported until that entitlement is granted. Mini turns off WebAuthn in pages (passkey requests fail as "not allowed" and platform authenticators report unavailable), so sites fall back to passwords and Chromium never shows its QR code or "use your phone" dialog.
-
-## Where things live
-
-- `~/Library/Application Support/Mini/Profile`: cookies, cache and site data of the Personal space (the first space, which keeps the profile Mini always used)
-- `~/Library/Application Support/Mini/Profile/Spaces/<id>`: cookies, cache and site data of every other space; deleting a space removes its folder
-- `~/Library/Application Support/Mini/session.json`: spaces and their open tabs
-- `~/Library/Application Support/Mini/archive.json`: archived tabs (newest 200)
-- Weather: the last reading is cached in Mini's user defaults (`WeatherReading`); coordinates are rounded to two decimals before they are sent to Open-Meteo and are never stored or logged
-- Next Meeting: calendar events are read through EventKit on demand and never stored, logged or sent anywhere; only the on/off setting is kept (`ShowsNextMeeting`)
-- `~/Library/Application Support/Mini/zoom-levels.json`: per-site zoom levels
-- `~/Library/Application Support/Mini/Favicons`: cached site icons, so restored tabs show their icon before they load
-- `~/Library/Application Support/Mini/permissions.json`: per-site permission decisions
-- `~/Library/Application Support/Mini/Filters`: ad block lists, refreshed weekly
-- `~/Downloads`: downloads, saved without asking
-
-## Project layout
+## Architecture
 
 ```
-core/          Rust: CEF embedding, handlers, ad blocking (cargo workspace)
+core/          Rust: CEF embedding, every Chromium handler, ad blocking (cargo workspace)
   include/     mini_core.h, the C interface between Rust and Swift
 shell/         Swift: window, sidebar, tabs, prompts, menus (SwiftPM package)
-bundle/        Info.plist for the app
-scripts/       bundle.sh assembles and signs Mini.app
+bundle/        Info.plist, entitlements and the app icon
+scripts/       bundle.sh assembles and signs Mini.app; release and codecs scripts
 ```
 
-Swift owns everything you see and every focus decision. Rust owns Chromium. They talk only through `core/include/mini_core.h`. `AGENTS.md` has the architecture notes and invariants.
+Swift owns everything you see and every focus decision. Rust owns Chromium. They talk only through `core/include/mini_core.h`. [`AGENTS.md`](AGENTS.md) has the architecture notes and invariants.
+
+<details>
+<summary><b>Where your data lives</b></summary>
+<br>
+
+| Path | Contents |
+| --- | --- |
+| `~/Library/Application Support/Mini/Profile` | Cookies, cache and site data of the Personal space |
+| `.../Mini/Profile/Spaces/<id>` | The same for every other space; deleting a space removes its folder |
+| `.../Mini/session.json` | Spaces and their open tabs |
+| `.../Mini/archive.json` | Archived tabs (newest 200) |
+| `.../Mini/zoom-levels.json` | Per-site zoom levels |
+| `.../Mini/permissions.json` | Per-site permission decisions |
+| `.../Mini/Favicons` | Cached site icons, so restored tabs show theirs before loading |
+| `.../Mini/Filters` | Ad block lists, refreshed weekly |
+| `~/Downloads` | Downloads, saved without asking |
+
+Weather caches only its last reading; coordinates are rounded to two decimals before they go to Open-Meteo and are never stored or logged. Next Meeting reads events through EventKit on demand and never stores, logs or sends them.
+
+</details>
 
 ## Known limits
 
-- One main window. The Personal space cannot be deleted, because it holds the original profile. Little windows for outside links deny permission and HTTP sign-in prompts unless the site was already allowed; open the page in Mini to answer them.
-- Web notifications only work while the page is open: Mini replaces the page's `Notification` API and `showNotification` with native macOS notifications, but a service worker cannot show notifications on its own, so push notifications for closed tabs never arrive.
+- One main window. The Personal space cannot be deleted, because it holds the original profile.
+- Little windows deny permission and HTTP sign-in prompts unless the site was already allowed; open the page in Mini to answer them.
+- Web notifications work only while the page is open. Service worker push for closed tabs never arrives.
 - Google sometimes refuses sign-in from embedded Chromium with "This browser or app may not be secure".
+- Streamed video (YouTube and other MediaSource players) cannot be handed to AirPlay; the button offers sound output and mirroring instead.
 
 ## License
 
-MIT
+[MIT](LICENSE)
