@@ -71,6 +71,7 @@ pub struct Callbacks {
     pub dev_build_reported: unsafe extern "C" fn(MiniTabId, i32, f64, *const c_char),
     pub harvest_reported: unsafe extern "C" fn(MiniTabId, *const c_char),
     pub media_capture_changed: unsafe extern "C" fn(MiniTabId, bool, bool),
+    pub external_url_requested: unsafe extern "C" fn(MiniTabId, *const c_char, *const c_char),
     pub browser_closed: unsafe extern "C" fn(MiniTabId),
     pub all_browsers_closed: unsafe extern "C" fn(),
     pub app_relaunched: unsafe extern "C" fn(*const *const c_char, usize),
@@ -208,6 +209,9 @@ impl Callbacks {
             media_capture_changed: table
                 .media_capture_changed
                 .expect("MiniCallbacks.media_capture_changed is null"),
+            external_url_requested: table
+                .external_url_requested
+                .expect("MiniCallbacks.external_url_requested is null"),
             browser_closed: table
                 .browser_closed
                 .expect("MiniCallbacks.browser_closed is null"),

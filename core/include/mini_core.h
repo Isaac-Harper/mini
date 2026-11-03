@@ -294,6 +294,14 @@ typedef struct MiniCallbacks {
   // Fires on changes; both false when capture ends, also when the document
   // goes away.
   void (*media_capture_changed)(MiniTabId tab, bool camera, bool microphone);
+  // A navigation in the tab (any frame, a redirect included) went to a URL
+  // whose scheme is not a browser scheme (zoommtg:, mailto:, slack: ...).
+  // The navigation is cancelled, so the page stays, and Chromium never hands
+  // it to the OS; the shell decides. requesting_origin is the main frame's
+  // origin (scheme://host[:port]) before the navigation, derived
+  // browser-side, empty when the page has none. The URL can carry meeting
+  // passwords: never log it beyond its scheme.
+  void (*external_url_requested)(MiniTabId tab, const char *url, const char *requesting_origin);
   void (*browser_closed)(MiniTabId tab);
   void (*all_browsers_closed)(void);
   // Mini was launched again on this profile (CEF's already-running relaunch).

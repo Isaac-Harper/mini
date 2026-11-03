@@ -1,16 +1,24 @@
 import AppKit
 import CMiniCore
+import MiniRules
 import SwiftUI
 
 enum SitePrompt {
     case permission(request: UInt64, origin: String, permissions: UInt32)
     case authentication(request: UInt64, host: String, realm: String, isProxy: Bool)
+    case externalApplication(sequence: Int, url: URL, origin: String, scheme: String, application: URL)
 
     var identity: String {
         switch self {
         case .permission(let request, _, _): "permission-\(request)"
         case .authentication(let request, _, _, _): "authentication-\(request)"
+        case .externalApplication(let sequence, _, _, _, _): "external-application-\(sequence)"
         }
+    }
+
+    var isExternalApplication: Bool {
+        if case .externalApplication = self { return true }
+        return false
     }
 }
 
@@ -21,6 +29,7 @@ final class SitePromptController {
     private var promptsByTab: [MiniTabId: [SitePrompt]] = [:]
     private let hostingView = NSHostingView(rootView: AnyView(EmptyView()))
     private var displayedPromptIdentity: String?
+    private var externalApplicationSequence = 0
 
     init(shell: ShellController, preferences: SitePreferences, windowController: MainWindowController) {
         self.shell = shell
@@ -75,6 +84,31 @@ final class SitePromptController {
         refresh()
     }
 
+    func externalURLRequested(tab identifier: MiniTabId, url address: String, requestingOrigin origin: String) {
+        guard let scheme = ExternalApplicationLinks.scheme(of: address), let url = URL(string: address) else { return }
+        let littleWindow = shell.littleWindows[identifier]
+        let application = NSWorkspace.shared.urlForApplication(toOpen: url)
+        let disposition = ExternalApplicationLinks.disposition(
+            isTabDisplayed: littleWindow != nil || shell.store.selectedTab?.id == identifier,
+            hasPendingPrompt: promptsByTab[identifier]?.contains(where: \.isExternalApplication) == true,
+            hasApplication: application != nil,
+            isAlwaysAllowed: preferences.alwaysOpens(scheme: scheme, origin: origin))
+        switch disposition {
+        case .ignore:
+            return
+        case .noApplication:
+            if littleWindow == nil { shell.toast.show("No App Opens \(scheme): Links") }
+        case .open:
+            NSWorkspace.shared.open(url)
+        case .prompt:
+            guard let application else { preconditionFailure("External application prompt without an application") }
+            externalApplicationSequence += 1
+            promptsByTab[identifier, default: []].append(
+                .externalApplication(sequence: externalApplicationSequence, url: url, origin: origin, scheme: scheme, application: application))
+            refresh()
+        }
+    }
+
     func discardPrompts(for tabs: [Tab]) {
         for tab in tabs {
             promptsByTab[tab.id] = nil
@@ -83,6 +117,13 @@ final class SitePromptController {
     }
 
     func refresh() {
+        for littleWindow in shell.littleWindows.values {
+            let prompt = promptsByTab[littleWindow.tab.id]?.first
+            littleWindow.showPrompt(identity: prompt?.identity) { [unowned self] in
+                guard let prompt else { preconditionFailure("Little window prompt view without a prompt") }
+                return view(for: prompt, in: littleWindow.tab)
+            }
+        }
         guard let tab = shell.store.selectedTab, let prompt = promptsByTab[tab.id]?.first else {
             displayedPromptIdentity = nil
             hostingView.isHidden = true
@@ -115,7 +156,29 @@ final class SitePromptController {
                     self?.answerAuthentication(tab: tab, request: request, credentials: credentials)
                 }
                 .id(prompt.identity))
+        case .externalApplication(_, let url, let origin, let scheme, let application):
+            let applicationName = SitePreferences.applicationName(at: application)
+            let rememberableOrigin = ExternalApplicationLinks.rememberableOrigin(origin)
+            return AnyView(
+                ExternalApplicationPromptView(
+                    host: SitePreferences.host(of: origin),
+                    applicationName: applicationName,
+                    applicationIcon: NSWorkspace.shared.icon(forFile: application.path),
+                    canAlwaysAllow: rememberableOrigin != nil
+                ) { [weak self] opens, alwaysAllows in
+                    self?.answerExternalApplication(tab: tab, url: url, origin: origin, scheme: scheme, opens: opens, alwaysAllows: alwaysAllows)
+                }
+                .id(prompt.identity))
         }
+    }
+
+    private func answerExternalApplication(tab: Tab, url: URL, origin: String, scheme: String, opens: Bool, alwaysAllows: Bool) {
+        removeFrontPrompt(of: tab)
+        guard opens else { return }
+        if alwaysAllows {
+            preferences.rememberAlwaysOpens(scheme: scheme, origin: origin)
+        }
+        NSWorkspace.shared.open(url)
     }
 
     private func answerPermission(tab: Tab, request: UInt64, origin: String, permissions: UInt32, allowed: Bool) {
@@ -144,7 +207,11 @@ final class SitePromptController {
         }
         displayedPromptIdentity = nil
         refresh()
-        shell.focusSelectedWebContent()
+        if let littleWindow = shell.littleWindows[tab.id] {
+            littleWindow.focusWebContent()
+        } else {
+            shell.focusSelectedWebContent()
+        }
     }
 
     private static let permissionNames: [(MiniPermission, String)] = [

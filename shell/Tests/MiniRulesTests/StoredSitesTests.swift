@@ -13,18 +13,37 @@ struct StoredSitesTests {
     private func sites(
         _ decisions: [String: StoredPermissionDecision] = [:],
         exempt: Set<String> = [],
-        zoom: [String: Double] = [:]
+        zoom: [String: Double] = [:],
+        opened: [String: Set<String>] = [:],
+        names: [String: String] = [:]
     ) -> [StoredSite] {
-        StoredSites.sites(permissionDecisions: decisions, adBlockExemptHosts: exempt, zoomLevels: zoom, kinds: kinds)
+        StoredSites.sites(
+            permissionDecisions: decisions, adBlockExemptHosts: exempt, zoomLevels: zoom,
+            alwaysOpenedSchemes: opened, applicationNames: names, kinds: kinds)
+    }
+
+    @Test func alwaysOpenedApplicationsJoinTheSiteAndNameEachAppOnce() {
+        let result = sites([
+            "https://zoom.us": StoredPermissionDecision(allowed: 1 << 1, denied: 0),
+        ], opened: [
+            "https://zoom.us": ["zoommtg", "zoomus"],
+            "https://app.example": ["vscode"],
+            "https://empty.example": [],
+        ], names: ["zoommtg": "zoom.us", "zoomus": "zoom.us"])
+        #expect(result.map(\.host) == ["app.example", "zoom.us"])
+        #expect(result[0].origins == ["https://app.example"])
+        #expect(result[0].summary == "Opens vscode: links")
+        #expect(result[1].summary == "Microphone allowed, Opens zoom.us")
+        #expect(StoredSites.matching(result, query: "opens zoom").map(\.host) == ["zoom.us"])
     }
 
     @Test func summaryListsPermissionsInKindOrderThenAdsAndZoom() {
-        let summary = StoredSites.summary(allowed: 1 << 4 | 1 << 0, denied: 1 << 3, allowsAds: true, zoomLevel: 0.5, kinds: kinds)
+        let summary = StoredSites.summary(allowed: 1 << 4 | 1 << 0, denied: 1 << 3, openedApplications: [], allowsAds: true, zoomLevel: 0.5, kinds: kinds)
         #expect(summary == "Camera allowed, Location blocked, Notifications on, Ads allowed, Zoom 110%")
     }
 
     @Test func deniedNotificationsReadOff() {
-        #expect(StoredSites.summary(allowed: 0, denied: 1 << 4, allowsAds: false, zoomLevel: nil, kinds: kinds) == "Notifications off")
+        #expect(StoredSites.summary(allowed: 0, denied: 1 << 4, openedApplications: [], allowsAds: false, zoomLevel: nil, kinds: kinds) == "Notifications off")
     }
 
     @Test func zoomPercentFollowsTheCefFactor() {

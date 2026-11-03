@@ -7,6 +7,7 @@ extension ShellController {
     func resetSiteSettings(_ site: StoredSite) {
         for origin in site.origins {
             sitePreferences.resetPermissions(forSiteAt: origin)
+            sitePreferences.forgetExternalApplications(forSiteAt: origin)
         }
         if site.allowsAds {
             sitePreferences.setAdBlockExempt(host: site.host, exempt: false)
@@ -44,7 +45,7 @@ struct SitesSettingsPane: View {
                         }
                     }
                 } footer: {
-                    SettingsFootnote("A site appears here once you answer one of its permission prompts, allow its ads or change its zoom. Reset forgets everything stored for it.")
+                    SettingsFootnote("A site appears here once you answer one of its permission prompts, always let it open an app, allow its ads or change its zoom. Reset forgets everything stored for it.")
                 }
             }
             .formStyle(.grouped)

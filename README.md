@@ -157,6 +157,7 @@ Most browsers grow a toolbar, a tab strip, an extension store and an account. Mi
 - **Ad and tracker blocking** built in (uBlock Origin, EasyList and EasyPrivacy lists).
 - **Apple Passwords** fill through a native card with Touch ID. Values are never shown, stored or logged.
 - **Native permission prompts** for camera, microphone, location and the rest, reviewable in Settings.
+- **Links to other apps ask first.** Zoom, Teams, Slack, mailto: and other app links show an "Open in Zoom?" card; tick Always allow to skip it for that site.
 - **Clear Data for This Site** removes one site's cookies and storage in the current space.
 
 <details>

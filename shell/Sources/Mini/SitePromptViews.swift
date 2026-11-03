@@ -95,6 +95,58 @@ struct PermissionPromptView: View {
     }
 }
 
+struct ExternalApplicationPromptView: View {
+    let host: String?
+    let applicationName: String
+    let applicationIcon: NSImage
+    let canAlwaysAllow: Bool
+    let respond: (_ opens: Bool, _ alwaysAllows: Bool) -> Void
+
+    @State private var alwaysAllows = false
+    @FocusState private var isFocused: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 10) {
+                Image(nsImage: applicationIcon).resizable().interpolation(.high)
+                    .frame(width: 32, height: 32)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Open in \(applicationName)?")
+                        .fontWeight(.semibold)
+                    Text(host.map { "\($0) wants to open this link in \(applicationName)." } ?? "This link opens in \(applicationName).")
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            if let host, canAlwaysAllow {
+                Toggle("Always allow \(host) to open \(applicationName)", isOn: $alwaysAllows)
+                    .toggleStyle(.checkbox)
+            }
+            HStack(spacing: 8) {
+                Spacer()
+                Button("Cancel") { respond(false, false) }
+                Button("Open") { respond(true, alwaysAllows) }
+                    .buttonStyle(.borderedProminent)
+            }
+        }
+        .font(.system(size: 13))
+        .padding(16)
+        .frame(width: 360)
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .focusable()
+        .focused($isFocused)
+        .focusEffectDisabled()
+        .onKeyPress(.return) {
+            respond(true, alwaysAllows)
+            return .handled
+        }
+        .onKeyPress(.escape) {
+            respond(false, false)
+            return .handled
+        }
+    }
+}
+
 struct AuthenticationPromptView: View {
     let host: String
     let realm: String

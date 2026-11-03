@@ -3,8 +3,8 @@ use std::ffi::c_void;
 
 use crate::{
     MiniTabId, ad_blocking, authentication, context_menu, dev_build, downloads, editable_focus,
-    error_page, favicon, harvest, horizontal_scroll, link_preview, login, media, microphone,
-    notifications, page_health, permissions,
+    error_page, external_urls, favicon, harvest, horizontal_scroll, link_preview, login, media,
+    microphone, notifications, page_health, permissions,
     resource_requests::MiniResourceRequestHandler,
     state::{TabState, c_string, callbacks, with_core},
     theme_color, vitals, webauthn,
@@ -463,14 +463,18 @@ wrap_request_handler! {
 
         fn on_before_browse(
             &self,
-            _browser: Option<&mut Browser>,
+            browser: Option<&mut Browser>,
             frame: Option<&mut Frame>,
             request: Option<&mut Request>,
             _user_gesture: ::std::os::raw::c_int,
             _is_redirect: ::std::os::raw::c_int,
         ) -> ::std::os::raw::c_int {
+            let url = CefString::from(&request.expect("navigation without a request").url()).to_string();
+            if external_urls::is_external(&url) {
+                external_urls::report(self.tab, browser.expect("navigation without a browser"), &url);
+                return 1;
+            }
             if frame.expect("navigation without a frame").is_main() == 1 {
-                let url = CefString::from(&request.expect("navigation without a request").url()).to_string();
                 page_health::main_frame_navigation_started(self.tab, &url);
             }
             0

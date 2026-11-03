@@ -47,7 +47,8 @@ Each line is expanded in the doc named at its end.
 - Every `mini_browser_*` call needs `Tab.browserState == .created`; Rust panics otherwise. Tab ids are never reused. (cef-and-core)
 - CEF never opens a top-level window: popups go into a tab or little window, a second launch goes through `app_relaunched`; only DevTools and Chromium's PiP window are exceptions. (cef-and-core)
 - Popups with an opener become child tabs via `popup_requested`; opener-less new-tab links use `open_tab_requested`. (cef-and-core)
-- Login values are never logged, persisted or echoed, and the fill origin is always derived browser-side. Notification titles, bodies and tags, page error messages and failed request URLs are never logged. (cef-and-core)
+- Login values are never logged, persisted or echoed, and the fill origin is always derived browser-side. Notification titles, bodies and tags, page error messages, failed request URLs and external app URLs (beyond the scheme) are never logged. (cef-and-core)
+- Chromium never opens another app: external scheme navigations are cancelled and only the shell opens them, after the open-in-app card or a stored always-allow, and only for a displayed tab. (shell-ui)
 - Calendar access is requested only when Next Meeting is turned on; event titles, notes, attendees and links are never logged or persisted. (shell-ui)
 - App shortcuts beat the page through `pre_key_event`, except Edit-menu shortcuts; Cmd-Z goes to tab undo only when the page has no editable focus. (shell-ui)
 - Every undoable tab action goes through `performUndoable` on the dedicated `tabUndoManager`, one explicit group per action. (tabs-and-undo)
@@ -91,6 +92,7 @@ Rust core (`core/`, detail in cef-and-core.md):
 - `src/media.rs`: playing state, media metadata and artwork.
 - `src/microphone.rs`: `mini_browser_set_microphone_muted` and the per-tab muted state replayed into frames that load later.
 - `src/error_page.rs`: injects Mini's error page into Chromium's and handles its buttons.
+- `src/external_urls.rs`: navigations to schemes Chromium does not handle (zoommtg:, mailto:) are cancelled at `on_before_browse` and handed to the shell.
 - `src/theme_color.rs`: theme-color and page background script and parser.
 - `src/dev_build.rs`: Next.js and Vite rebuild console lines and build error overlay script for dev tabs.
 - `src/horizontal_scroll.rs`: page horizontal scroll room for swipe navigation.
@@ -178,7 +180,7 @@ Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 - `ErrorPages.swift`, `Sources/MiniRules/LoadErrorPage.swift`: styled error pages and offline auto retry. (shell-ui)
 - `PageTextRequests.swift`, `Sources/MiniRules/TextStyle.swift`: request/reply for Copy Text Style and Copy Page as Markdown; computed style to CSS block and sRGB to OKLCH, unit tested. (shell-ui)
 - `CrashOverlayController.swift`: crashed page and waiting-for-localhost overlay. (shell-ui)
-- `SitePromptController.swift`, `SitePromptViews.swift`: permission and auth cards. (shell-ui)
+- `SitePromptController.swift`, `SitePromptViews.swift`, `Sources/MiniRules/ExternalApplicationLinks.swift`: permission, auth and open-in-app cards; external link scheme, origin and disposition rules unit tested. (shell-ui)
 - `LoginFillController.swift`, `LoginFillCardView.swift`: password fill card. (shell-ui)
 - `PageContextMenu.swift`: native page context menu. (shell-ui)
 - `NavigationHistory.swift`: back/forward history menus. (shell-ui)
@@ -189,7 +191,7 @@ Swift shell (`shell/`; sources in `shell/Sources/Mini/`):
 - `SwipeNavigationController.swift`: two-finger swipe back and forward. (shell-ui)
 - `ShellFullscreen.swift`: page fullscreen. (shell-ui)
 - `NotificationsController.swift`: macOS notification delivery. (shell-ui)
-- `SitePreferences.swift`: per-origin permissions, ad block exemptions, zoom levels. (shell-ui)
+- `SitePreferences.swift`: per-origin permissions, always-open apps, ad block exemptions, zoom levels. (shell-ui)
 - `FaviconCache.swift`: per-host favicon cache. (shell-ui)
 - `SiteBackgroundCache.swift`, `Sources/MiniRules/SiteBackgrounds.swift`: per-host page background shown before first paint. (shell-ui)
 - `DefaultBrowser.swift`: default-browser registration. (shell-ui)

@@ -1,5 +1,6 @@
 import AppKit
 import CMiniCore
+import SwiftUI
 
 @MainActor
 final class LittleWindowController: NSWindowController, NSWindowDelegate, NSToolbarDelegate, NSToolbarItemValidation, NSTextFieldDelegate {
@@ -9,6 +10,8 @@ final class LittleWindowController: NSWindowController, NSWindowDelegate, NSTool
     private let toolbar = NSToolbar(identifier: "LittleWindowToolbar")
     private let addressField = FadingTextField()
     private var isPromoting = false
+    private let promptHostingView = NSHostingView(rootView: AnyView(EmptyView()))
+    private var displayedPromptIdentity: String?
 
     private static let size = NSSize(width: 960, height: 680)
     private static let back = NSToolbarItem.Identifier("LittleBack")
@@ -111,7 +114,27 @@ final class LittleWindowController: NSWindowController, NSWindowDelegate, NSTool
             hostView.bottomAnchor.constraint(equalTo: container.bottomAnchor),
             hostView.topAnchor.constraint(equalTo: contentLayoutGuide.topAnchor),
         ])
+        promptHostingView.translatesAutoresizingMaskIntoConstraints = false
+        promptHostingView.isHidden = true
+        container.addSubview(promptHostingView)
+        NSLayoutConstraint.activate([
+            promptHostingView.topAnchor.constraint(equalTo: hostView.topAnchor, constant: 12),
+            promptHostingView.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+        ])
         container.layoutSubtreeIfNeeded()
+    }
+
+    func showPrompt(identity: String?, makeView: () -> AnyView) {
+        guard identity != displayedPromptIdentity else { return }
+        displayedPromptIdentity = identity
+        guard identity != nil else {
+            promptHostingView.isHidden = true
+            promptHostingView.rootView = AnyView(EmptyView())
+            return
+        }
+        promptHostingView.rootView = makeView()
+        promptHostingView.isHidden = false
+        OverlayAnimation.appear(promptHostingView)
     }
 
     func detachHostViewForPromotion() {

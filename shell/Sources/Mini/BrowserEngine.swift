@@ -259,6 +259,13 @@ final class BrowserEngine {
                     BrowserEngine.shared.requiredShell.mediaCaptureChanged(identifier, devices: CallCapture.Devices(camera: camera, microphone: microphone))
                 }
             },
+            external_url_requested: { identifier, url, requestingOrigin in
+                let url = requiredString(url)
+                let requestingOrigin = requiredString(requestingOrigin)
+                MainActor.assumeIsolated {
+                    BrowserEngine.shared.requiredShell.externalURLRequested(identifier, url: url, requestingOrigin: requestingOrigin)
+                }
+            },
             browser_closed: { identifier in
                 MainActor.assumeIsolated { BrowserEngine.shared.requiredShell.browserClosed(identifier) }
             },

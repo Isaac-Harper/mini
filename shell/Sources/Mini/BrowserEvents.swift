@@ -173,6 +173,10 @@ extension ShellController {
         sitePrompts.authenticationRequested(tab: identifier, request: request, host: host, realm: realm, isProxy: isProxy)
     }
 
+    func externalURLRequested(_ identifier: MiniTabId, url: String, requestingOrigin: String) {
+        sitePrompts.externalURLRequested(tab: identifier, url: url, requestingOrigin: requestingOrigin)
+    }
+
     func loginFieldFocused(_ identifier: MiniTabId, frameIdentifier: String, origin: String) {
         loginFill.loginFieldFocused(tab: identifier, frameIdentifier: frameIdentifier, origin: origin)
     }

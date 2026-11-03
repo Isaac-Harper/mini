@@ -1,5 +1,5 @@
+import AppKit
 import CMiniCore
-import Foundation
 import MiniRules
 import Observation
 
@@ -17,8 +17,12 @@ final class SitePreferences {
     private let zoomLevelsFileURL: URL
     private let permissionsFileURL: URL
     private let adBlockExemptionsFileURL: URL
+    private var alwaysOpenedSchemes: [String: Set<String>]
+    private let externalApplicationsFileURL: URL
 
     init(directory: URL) {
+        externalApplicationsFileURL = directory.appendingPathComponent("external-apps.json")
+        alwaysOpenedSchemes = Self.load([String: Set<String>].self, from: externalApplicationsFileURL) ?? [:]
         permissionsFileURL = directory.appendingPathComponent("permissions.json")
         adBlockExemptionsFileURL = directory.appendingPathComponent("adblock-exempt.json")
         permissionDecisions = Self.load([String: PermissionDecision].self, from: permissionsFileURL) ?? [:]
@@ -100,6 +104,31 @@ final class SitePreferences {
         pushNotificationPermission(origin: key)
     }
 
+    func alwaysOpens(scheme: String, origin: String) -> Bool {
+        guard let key = ExternalApplicationLinks.rememberableOrigin(origin) else { return false }
+        return alwaysOpenedSchemes[key]?.contains(scheme) == true
+    }
+
+    func rememberAlwaysOpens(scheme: String, origin: String) {
+        guard let key = ExternalApplicationLinks.rememberableOrigin(origin) else { return }
+        alwaysOpenedSchemes[key, default: []].insert(scheme)
+        Self.save(alwaysOpenedSchemes, to: externalApplicationsFileURL)
+    }
+
+    func forgetExternalApplications(forSiteAt address: String) {
+        guard let key = ExternalApplicationLinks.rememberableOrigin(address), alwaysOpenedSchemes.removeValue(forKey: key) != nil else { return }
+        Self.save(alwaysOpenedSchemes, to: externalApplicationsFileURL)
+    }
+
+    static func application(forScheme scheme: String) -> URL? {
+        guard let probe = URL(string: "\(scheme):") else { return nil }
+        return NSWorkspace.shared.urlForApplication(toOpen: probe)
+    }
+
+    static func applicationName(at applicationURL: URL) -> String {
+        ExternalApplicationLinks.applicationName(fromBundleFileName: FileManager.default.displayName(atPath: applicationURL.path))
+    }
+
     func zoomLevel(host: String) -> Double {
         zoomLevels[host] ?? 0
     }
@@ -152,6 +181,10 @@ final class SitePreferences {
             permissionDecisions: permissionDecisions.mapValues { StoredPermissionDecision(allowed: $0.allowed, denied: $0.denied) },
             adBlockExemptHosts: adBlockExemptHosts,
             zoomLevels: zoomLevels,
+            alwaysOpenedSchemes: alwaysOpenedSchemes,
+            applicationNames: Dictionary(uniqueKeysWithValues: Set(alwaysOpenedSchemes.values.joined()).compactMap { scheme in
+                Self.application(forScheme: scheme).map { (scheme, Self.applicationName(at: $0)) }
+            }),
             kinds: Self.permissionKinds
         )
     }

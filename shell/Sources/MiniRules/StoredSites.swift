@@ -39,12 +39,14 @@ public enum StoredSites {
         permissionDecisions: [String: StoredPermissionDecision],
         adBlockExemptHosts: Set<String>,
         zoomLevels: [String: Double],
+        alwaysOpenedSchemes: [String: Set<String>],
+        applicationNames: [String: String],
         kinds: [SitePermissionKind]
     ) -> [StoredSite] {
-        var originsByHost: [String: [String]] = [:]
-        for origin in permissionDecisions.keys {
+        var originsByHost: [String: Set<String>] = [:]
+        for origin in Set(permissionDecisions.keys).union(alwaysOpenedSchemes.filter { !$0.value.isEmpty }.keys) {
             guard let host = host(ofOrigin: origin) else { continue }
-            originsByHost[host, default: []].append(origin)
+            originsByHost[host, default: []].insert(origin)
         }
         let hosts = Set(originsByHost.keys)
             .union(adBlockExemptHosts)
@@ -55,6 +57,8 @@ public enum StoredSites {
             let denied = origins.reduce(UInt32(0)) { $0 | (permissionDecisions[$1]?.denied ?? 0) } & ~allowed
             let zoomLevel = zoomLevels[host].flatMap { $0 == 0 ? nil : $0 }
             let allowsAds = adBlockExemptHosts.contains(host)
+            let schemes = origins.reduce(Set<String>()) { $0.union(alwaysOpenedSchemes[$1] ?? []) }
+            let openedApplications = Set(schemes.map { applicationNames[$0] ?? "\($0): links" }).sorted()
             return StoredSite(
                 host: host,
                 origins: origins,
@@ -62,13 +66,16 @@ public enum StoredSites {
                 deniedPermissions: denied,
                 allowsAds: allowsAds,
                 zoomLevel: zoomLevel,
-                summary: summary(allowed: allowed, denied: denied, allowsAds: allowsAds, zoomLevel: zoomLevel, kinds: kinds)
+                summary: summary(
+                    allowed: allowed, denied: denied, openedApplications: openedApplications, allowsAds: allowsAds, zoomLevel: zoomLevel, kinds: kinds)
             )
         }
         .sorted(by: isOrderedBefore)
     }
 
-    public static func summary(allowed: UInt32, denied: UInt32, allowsAds: Bool, zoomLevel: Double?, kinds: [SitePermissionKind]) -> String {
+    public static func summary(
+        allowed: UInt32, denied: UInt32, openedApplications: [String], allowsAds: Bool, zoomLevel: Double?, kinds: [SitePermissionKind]
+    ) -> String {
         var parts: [String] = []
         for kind in kinds {
             if allowed & kind.bit != 0 {
@@ -77,6 +84,7 @@ public enum StoredSites {
                 parts.append(kind.isNotifications ? "\(kind.name) off" : "\(kind.name) blocked")
             }
         }
+        parts += openedApplications.map { "Opens \($0)" }
         if allowsAds { parts.append("Ads allowed") }
         if let zoomLevel { parts.append("Zoom \(zoomPercent(level: zoomLevel))%") }
         return parts.joined(separator: ", ")

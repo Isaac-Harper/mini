@@ -7,6 +7,7 @@ mod dev_build;
 mod downloads;
 mod editable_focus;
 mod error_page;
+mod external_urls;
 mod favicon;
 mod harvest;
 mod horizontal_scroll;
@@ -116,6 +117,8 @@ pub struct MiniCallbacks {
     pub dev_build_reported: Option<unsafe extern "C" fn(MiniTabId, i32, f64, *const c_char)>,
     pub harvest_reported: Option<unsafe extern "C" fn(MiniTabId, *const c_char)>,
     pub media_capture_changed: Option<unsafe extern "C" fn(MiniTabId, bool, bool)>,
+    pub external_url_requested:
+        Option<unsafe extern "C" fn(MiniTabId, *const c_char, *const c_char)>,
     pub browser_closed: Option<unsafe extern "C" fn(MiniTabId)>,
     pub all_browsers_closed: Option<unsafe extern "C" fn()>,
     pub app_relaunched: Option<unsafe extern "C" fn(*const *const c_char, usize)>,
