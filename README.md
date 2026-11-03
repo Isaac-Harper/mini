@@ -48,11 +48,45 @@ Most browsers grow a toolbar, a tab strip, an extension store and an account. Mi
 - **Little windows.** Links from other apps open in a small floating window; ⌘O moves the live page into a tab. Drag a tab off the sidebar to tear it off, or drag a little window back to dock it, with no reload.
 - **No toolbar strip.** Traffic lights and back/forward live in the sidebar's top row. With the sidebar hidden, point at the left edge to peek it out over the page.
 
+<table>
+  <tr>
+    <td width="50%"><img src="docs/media/features/tree-tabs.gif" alt="Tabs nest into a tree that folds away."></td>
+    <td width="50%"><img src="docs/media/features/split-view.gif" alt="Two tabs, side by side."></td>
+  </tr>
+  <tr>
+    <td>Tabs nest into a tree that folds away.</td>
+    <td>Two tabs, side by side.</td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/media/features/undo-close.gif" alt="Close a whole group. Undo brings it back."></td>
+    <td width="50%"><img src="docs/media/features/command-bar.gif" alt="Type once for tabs, history and search."></td>
+  </tr>
+  <tr>
+    <td>Close a whole group. Undo brings it back.</td>
+    <td>Type once for tabs, history and search.</td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/media/features/paste-links.gif" alt="Paste a list of links to open them all."></td>
+  </tr>
+  <tr>
+    <td>Paste a list of links to open them all.</td>
+  </tr>
+</table>
+
 ### Spaces
 
 - **Separate profiles.** Each space has its own tabs, pins, cookies, logins and history. Switch with ⌃1 to ⌃9 or a two-finger swipe on the sidebar.
 - **Color that carries.** A space's color tints the sidebar, the selected row, the focus ring and the loading line, with the page's `theme-color` blended on top.
 - **Evening tint.** After sunset the sidebar warms very slightly, easing in over 20 minutes.
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/media/features/spaces.gif" alt="Each space keeps its own tabs and color."></td>
+  </tr>
+  <tr>
+    <td>Each space keeps its own tabs and color.</td>
+  </tr>
+</table>
 
 ### Built for web developers
 
@@ -65,12 +99,58 @@ Most browsers grow a toolbar, a tab strip, an extension store and an account. Mi
 - **Page Appearance.** Show one tab in light, dark or reduced motion, whatever macOS is set to.
 - **Copy tools.** Copy Text Style (as CSS with OKLCH color), Copy Page as Markdown, Copy Screenshot of a page or a single element, Pick Color from anywhere on screen, and a link preview of how the URL will unfurl in Slack, iMessage or X.
 
+<table>
+  <tr>
+    <td width="50%"><img src="docs/media/features/environments.gif" alt="⇧⌘P cycles local, preview and production."></td>
+    <td width="50%"><img src="docs/media/features/build-state.gif" alt="Rows show rebuilds and build errors."></td>
+  </tr>
+  <tr>
+    <td>⇧⌘P cycles local, preview and production.</td>
+    <td>Rows show rebuilds and build errors.</td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/media/features/page-health.gif" alt="Page errors light a dot in the pill."></td>
+    <td width="50%"><img src="docs/media/features/reload-timing.gif" alt="Every reload is timed, cold or warm."></td>
+  </tr>
+  <tr>
+    <td>Page errors light a dot in the pill.</td>
+    <td>Every reload is timed, cold or warm.</td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/media/features/page-width.gif" alt="Drag the page edge to test breakpoints."></td>
+    <td width="50%"><img src="docs/media/features/page-appearance.gif" alt="Show one tab in light or dark."></td>
+  </tr>
+  <tr>
+    <td>Drag the page edge to test breakpoints.</td>
+    <td>Show one tab in light or dark.</td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/media/features/copy-screenshot.gif" alt="Copy a screenshot of the page."></td>
+    <td width="50%"><img src="docs/media/features/link-preview.gif" alt="See how a link will unfurl."></td>
+  </tr>
+  <tr>
+    <td>Copy a screenshot of the page.</td>
+    <td>See how a link will unfurl.</td>
+  </tr>
+</table>
+
 ### Media and calls
 
 - **Now Playing.** Artwork, a matching tint, and play/pause for the tab that last started audio. A speaker icon mutes playing tabs.
 - **Calls.** A tab in a call shows a recording dot and a microphone mute. Leave a video call and its live view docks in the sidebar.
 - **AirPlay.** Hand a video with its own file or HLS source to an Apple TV, picking up where the page was.
 - **Next Meeting.** The meeting on now or within the hour from your Mac's calendars, with a join button that opens the call in a little window. Off by default.
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/media/features/now-playing.gif" alt="What is playing stays in the sidebar."></td>
+    <td width="50%"><img src="docs/media/features/calls.gif" alt="Calls get a recording dot and mute."></td>
+  </tr>
+  <tr>
+    <td>What is playing stays in the sidebar.</td>
+    <td>Calls get a recording dot and mute.</td>
+  </tr>
+</table>
 
 ### Private by default
 

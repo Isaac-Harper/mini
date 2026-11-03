@@ -40,6 +40,10 @@ How Mini gets verified without disturbing the installed app, and the traps found
 - Renderer-initiated `window.open` to a `data:` URL is blocked by Chromium; test popups with real URLs.
 - While the print panel is up only common-mode run loop sources fire, so `DispatchQueue.main.asyncAfter` steps wait until it closes; `NSApp.abortModal()` cancels it.
 
+- agent-desktop (accessibility tree CLI) can drive a scratch instance's menus and sidebar buttons headless. It reports `APP_NOT_FOUND` for an app with the prohibited activation policy, so launch prohibited and switch to accessory once the window exists; target it as "Mini Scratch" by window id, never by app name alone. Menu item clicks (titles that change with state, like Undo, need prefix matching) and named sidebar buttons work; `press` always fails against a window that is not focused, so key shortcuts and typing go through the in-process hook. Snapshots cost 1 to 2 s each and sometimes time out with "window inventory did not stabilize", so retry once and fall back to the hook, and time footage from frames, not from the script.
+- AeroSpace tiles a scratch window into the user's workspace and can front it; reporting the window's accessibility subrole as `AXUnknown` makes it ignore the window.
+- Never enumerate on-screen windows (`CGWindowListCopyWindowInfo` in a loop) from the scratch app's main thread while recording: it hung an instance past Cmd-Q.
+
 - Close the Day takes its time as a `now:` argument (`closeTheDayIfNeeded(now:)`, `archiveIdleTabs(now:)`), so the harness drives day boundaries, the 4 am rule and group expiry with fake dates; seed `closedDay` with today's logical midnight to keep launch from folding.
 
 ## Shell
