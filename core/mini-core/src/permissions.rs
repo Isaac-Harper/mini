@@ -127,6 +127,50 @@ struct PendingPermission {
 
 thread_local! {
     static PENDING: RefCell<HashMap<u64, PendingPermission>> = RefCell::new(HashMap::new());
+    static SHOWN_PROMPTS: RefCell<HashMap<u64, u32>> = RefCell::new(HashMap::new());
+    static ACCEPTING_PROMPTS: RefCell<HashMap<MiniTabId, u32>> = RefCell::new(HashMap::new());
+}
+
+fn reshows_accepted_requests(accepting_prompt: Option<u32>, requested_prompt: u32) -> bool {
+    accepting_prompt.is_some_and(|accepted| requested_prompt & !accepted == 0)
+}
+
+fn prompt_shown(tab: MiniTabId, prompt_id: u64, requested_prompt: u32) -> bool {
+    let accepting = ACCEPTING_PROMPTS.with_borrow(|accepting| accepting.get(&tab).copied());
+    if reshows_accepted_requests(accepting, requested_prompt) {
+        return false;
+    }
+    SHOWN_PROMPTS.with_borrow_mut(|shown| shown.insert(prompt_id, requested_prompt));
+    true
+}
+
+fn prompt_settled(tab: MiniTabId, prompt_id: u64, result: PermissionRequestResult) {
+    let Some(requested_prompt) = SHOWN_PROMPTS.with_borrow_mut(|shown| shown.remove(&prompt_id))
+    else {
+        return;
+    };
+    if result != PermissionRequestResult::ACCEPT {
+        return;
+    }
+    ACCEPTING_PROMPTS.with_borrow_mut(|accepting| accepting.insert(tab, requested_prompt));
+    let mut task = AcceptedPromptApplied::new(tab);
+    assert_eq!(
+        post_task(ThreadId::UI, Some(&mut task)),
+        1,
+        "cannot post the accepted permission prompt cleanup to the UI thread"
+    );
+}
+
+wrap_task! {
+    struct AcceptedPromptApplied {
+        tab: MiniTabId,
+    }
+
+    impl Task {
+        fn execute(&self) {
+            ACCEPTING_PROMPTS.with_borrow_mut(|accepting| accepting.remove(&self.tab));
+        }
+    }
 }
 
 fn request(tab: MiniTabId, origin: &str, permissions: u32, callback: PendingCallback) {
@@ -306,6 +350,10 @@ wrap_permission_handler! {
             callback: Option<&mut PermissionPromptCallback>,
         ) -> ::std::os::raw::c_int {
             let callback = callback.expect("permission prompt without a callback").clone();
+            if !prompt_shown(self.tab, prompt_id, requested_permissions) {
+                callback.cont(PermissionRequestResult::DISMISS);
+                return 1;
+            }
             request_prompt(self.tab, &normalized_origin(requesting_origin), prompt_id, requested_permissions, callback);
             1
         }
@@ -314,8 +362,9 @@ wrap_permission_handler! {
             &self,
             _browser: Option<&mut Browser>,
             prompt_id: u64,
-            _result: PermissionRequestResult,
+            result: PermissionRequestResult,
         ) {
+            prompt_settled(self.tab, prompt_id, result);
             prompt_dismissed(prompt_id);
         }
     }
@@ -335,6 +384,27 @@ mod tests {
         assert_eq!(granted_media(audio | video, CAMERA | SCREEN_CAPTURE), video);
         assert_eq!(granted_media(audio, CAMERA | MICROPHONE), audio);
         assert_eq!(granted_media(audio | video, 0), 0);
+    }
+
+    #[test]
+    fn reshown_accepted_requests_are_only_subsets_of_the_accepting_prompt() {
+        let camera = prompt::CEF_PERMISSION_TYPE_CAMERA_STREAM as u32;
+        let microphone = prompt::CEF_PERMISSION_TYPE_MIC_STREAM as u32;
+        let geolocation = prompt::CEF_PERMISSION_TYPE_GEOLOCATION as u32;
+        assert!(reshows_accepted_requests(Some(camera | microphone), camera));
+        assert!(reshows_accepted_requests(
+            Some(camera | microphone),
+            camera | microphone
+        ));
+        assert!(!reshows_accepted_requests(
+            Some(camera | microphone),
+            geolocation
+        ));
+        assert!(!reshows_accepted_requests(
+            Some(camera),
+            camera | microphone
+        ));
+        assert!(!reshows_accepted_requests(None, camera));
     }
 
     #[test]
