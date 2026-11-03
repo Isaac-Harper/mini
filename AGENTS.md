@@ -234,4 +234,4 @@ Bundle and scripts (detail in signing-release-codecs.md):
 
 ## Status
 
-v0.5.1 is the latest release (signed, notarized, stock CEF): the Next Meeting row, call controls with the docked call, and the Google Meet camera crash fix, on top of v0.5.0's Harvest row and v0.4.0's Settings, dev tab projects, build state on rows, Pick Color and the page inspector card. Local builds and `make install` use the proprietary-codecs CEF when installed; releases never do. `git log v0.5.1..HEAD` lists unreleased work.
+v0.5.2 is the latest release (signed, notarized, stock CEF): links to other apps open after a prompt, and the command bar lists only local servers that serve a web page, on top of v0.5.1's Next Meeting row, call controls and Meet crash fix, v0.5.0's Harvest row and v0.4.0's Settings and developer tools. Local builds and `make install` use the proprietary-codecs CEF when installed; releases never do. `git log v0.5.2..HEAD` lists unreleased work.
