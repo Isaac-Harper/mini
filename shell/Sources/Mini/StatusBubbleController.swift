@@ -23,6 +23,7 @@ final class StatusBubbleController {
         label.font = .systemFont(ofSize: 12)
         label.textColor = .secondaryLabelColor
         label.lineBreakMode = .byTruncatingMiddle
+        label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         label.translatesAutoresizingMaskIntoConstraints = false
         let content = NSView()
         content.translatesAutoresizingMaskIntoConstraints = false
