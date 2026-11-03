@@ -278,6 +278,13 @@ struct SidebarActionRow: View {
     }
 }
 
+private extension AnyTransition {
+    static var pillSlotSwap: AnyTransition { .asymmetric(
+        insertion: .opacity.animation(.easeOut(duration: 0.12).delay(0.12)),
+        removal: .opacity.animation(.easeIn(duration: 0.12))
+    ) }
+}
+
 private struct AddressPill: View {
     let shell: ShellController
 
@@ -345,8 +352,22 @@ private struct AddressPill: View {
                     if isEditing { endEditing() }
                 }
                 if let selected, !isEditing {
-                    AddressPillBadges(shell: shell, tab: selected)
-                        .padding(.leading, SidebarMetrics.accessorySpacing)
+                    ZStack(alignment: .trailing) {
+                        if let reloadDuration = selected.reloadDurationText {
+                            Text(reloadDuration)
+                                .font(InterfaceFont.caption)
+                                .foregroundStyle(.secondary)
+                                .monospacedDigit()
+                                .lineLimit(1)
+                                .fixedSize()
+                                .transition(.pillSlotSwap)
+                                .accessibilityLabel(selected.reloadDurationSpokenText)
+                        } else {
+                            AddressPillBadges(shell: shell, tab: selected)
+                                .transition(.pillSlotSwap)
+                        }
+                    }
+                    .padding(.leading, SidebarMetrics.accessorySpacing)
                 }
                 if let selected, selected.hasLoginForm, selected.hasBrowser {
                     Button {
@@ -362,16 +383,6 @@ private struct AddressPill: View {
                     .focusable(false)
                     .hapticFeedback(.press)
                     .glassTooltip("Fill Password")
-                }
-                if let selected, let reloadDuration = selected.reloadDurationText {
-                    Text(reloadDuration)
-                        .font(InterfaceFont.caption)
-                        .foregroundStyle(.secondary)
-                        .monospacedDigit()
-                        .lineLimit(1)
-                        .fixedSize()
-                        .transition(.opacity)
-                        .accessibilityLabel(selected.reloadDurationSpokenText)
                 }
                 if let selected, !selected.url.isEmpty {
                     let reloadsCold = !selected.isLoading && shell.reloadOptionKey.isHeld
